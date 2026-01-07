@@ -5,8 +5,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.digitaltok.databinding.ActivityFaqBinding
 import com.example.digitaltok.ui.theme.FaqItem
+import androidx.activity.ComponentActivity
 
-class FaqActivity : AppCompatActivity() {
+class FaqActivity : ComponentActivity() {
 
     private lateinit var binding: ActivityFaqBinding
 

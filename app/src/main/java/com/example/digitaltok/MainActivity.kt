@@ -1,47 +1,18 @@
 package com.example.digitaltok
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.digitaltok.ui.theme.DigitalTokTheme
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            DigitalTokTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
-        }
-    }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+        // FAQ 화면으로 바로 이동
+        startActivity(Intent(this, FaqActivity::class.java))
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    DigitalTokTheme {
-        Greeting("Android")
+        // MainActivity는 종료 (뒤로가기 시 Hello 화면으로 돌아가지 않게)
+        finish()
     }
 }
