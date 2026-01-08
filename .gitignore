@@ -1,41 +1,35 @@
-# --- Android Studio & IDE Settings ---
-.gradle
-.idea/
-*.iml
-*.ipr
-*.iws
+# Gradle files
+.gradle/
+build/
 
-# --- Local Configuration ---
+# Local configuration file (sdk path, etc)
 local.properties
 
-# --- Build Outputs ---
-build/
-/build
-bin/
-gen/
+# Log/OS Files
+*.log
 
-# --- System Files ---
-.DS_Store
-Thumbs.db
-
-# --- Caching & Temp Files ---
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.externalNativeBuild
-.cxx
+# Android Studio generated files and folders
 captures/
-/captures
+.externalNativeBuild/
+.cxx/
+*.aab
+*.apk
+output-metadata.json
 
-# --- Security & Keys ---
+# IntelliJ
+*.iml
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+
+# Keystore files
 *.jks
 *.keystore
-*.p12
-*.key
+
+# Google Services (e.g. APIs or Firebase)
 google-services.json
 
-# --- Log Files ---
-*.log
+# Android Profiling
+*.hprof
+.DS_Store
