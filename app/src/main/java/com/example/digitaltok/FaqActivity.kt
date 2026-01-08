@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.digitaltok.databinding.ActivityFaqBinding
 import com.example.digitaltok.ui.theme.FaqItem
 import androidx.activity.ComponentActivity
+import com.example.digitaltok.LastItemBottomSpaceDecoration
 
 class FaqActivity : ComponentActivity() {
 
@@ -34,6 +35,9 @@ class FaqActivity : ComponentActivity() {
                 "현재는 하나의 DigitalTok만 연결할 수 있습니다."
             )
         )
+        val bottomPx = (140 * resources.displayMetrics.density).toInt()
+        binding.rvFaq.addItemDecoration(LastItemBottomSpaceDecoration(bottomPx))
+
 
         binding.rvFaq.layoutManager = LinearLayoutManager(this)
         binding.rvFaq.adapter = FaqAdapter(faqList)
