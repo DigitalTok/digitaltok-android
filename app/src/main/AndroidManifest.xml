@@ -13,6 +13,7 @@
         android:theme="@style/Theme.DigitalTok">
 
         <activity android:name=".FaqActivity" />
+        <activity android:name=".SupportActivity" />
 
         <activity
             android:name=".MainActivity"
