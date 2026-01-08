@@ -4,15 +4,22 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -28,7 +35,7 @@ fun OnboardingScreen(
 ) {
     var page by remember { mutableStateOf(0) }
 
-    // ✅ 4개 온보딩 페이지 데이터 (텍스트/색상/이미지)
+    // 🔹 온보딩 페이지 데이터
     val pages = listOf(
         OnboardingPageData(
             title = "DigitalTok에\n오신 것을 환영합니다",
@@ -64,83 +71,105 @@ fun OnboardingScreen(
             .background(Color.White)
             .padding(horizontal = 24.dp, vertical = 24.dp)
     ) {
-        // 상단 "건너뛰기"
+        // 🔹 상단 건너뛰기 버튼
         SkipButton(
-            modifier = Modifier
-                .align(Alignment.TopEnd),
+            modifier = Modifier.align(Alignment.TopEnd),
             onSkip = onFinish
         )
 
         Column(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
 
-            // 상단 여백
             Spacer(modifier = Modifier.height(32.dp))
 
-            // ● 큰 원 + 이모지
+            // 🔹 원형 그라데이션 + 아이콘
             PageCircle(pages[page])
 
-            // 중앙 텍스트 영역
+            // 🔹 텍스트 영역
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(top = 32.dp)
             ) {
+
+                // 타이틀
                 Text(
                     text = pages[page].title,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        lineHeight = 20.8.sp,
+                        fontWeight = FontWeight(400),
+                        color = Color(0xFF0A0A0A),
+                        textAlign = TextAlign.Center
+                    )
                 )
+
                 Spacer(modifier = Modifier.height(12.dp))
+
+                // 설명 텍스트
                 Text(
                     text = pages[page].desc,
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp,
-                    color = Color(0xFF4A5565),
-                    textAlign = TextAlign.Center
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        lineHeight = 24.sp,
+                        fontWeight = FontWeight(400),
+                        color = Color(0xFF4A5565),
+                        textAlign = TextAlign.Center
+                    )
                 )
             }
 
-            // 하단 인디케이터 + 버튼
+            // 🔹 하단 indicator + 버튼 영역 (Figma 값 적용)
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(132.dp)                 // 전체 높이
+                    .padding(start = 32.dp, end = 32.dp), // 좌우 32
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.Top
             ) {
+
+                // 인디케이터
                 PageIndicator(
                     total = pages.size,
-                    selected = page,
-                    modifier = Modifier.padding(bottom = 24.dp)
+                    selected = page
                 )
 
+                Spacer(modifier = Modifier.height(32.dp)) // 인디케이터 ↔ 버튼 사이 32dp
+
+                // 버튼 Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // 이전 버튼
+
+                    // ◀ 이전 버튼 (회색 테두리, radius 14, 162x60)
                     OutlinedButton(
                         onClick = { if (page > 0) page-- },
                         enabled = page > 0,
                         modifier = Modifier
-                            .weight(1f)
-                            .height(56.dp)
+                            .width(162.dp)
+                            .height(60.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(
+                            width = 2.dp,
+                            color = Color(0xFFD1D5DC)
+                        )
                     ) {
-                        Text(text = "이전")
+                        Text("이전")
                     }
 
-                    // 다음 / 시작하기 버튼
+                    // ▶ 다음 / 시작하기 버튼 (파란 배경, radius 14, 162x60)
                     PrimaryButton(
                         text = if (isLast) "시작하기" else "다음",
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .width(162.dp)
+                            .height(60.dp)
                     ) {
-                        if (isLast) {
-                            onFinish()
-                        } else {
-                            page++
-                        }
+                        if (isLast) onFinish() else page++
                     }
                 }
             }
@@ -152,7 +181,7 @@ fun OnboardingScreen(
 private fun PageCircle(data: OnboardingPageData) {
     Box(
         modifier = Modifier
-            .size(288.dp)  // 피그마 원 288x288 근접
+            .size(288.dp)
             .background(
                 brush = Brush.linearGradient(data.gradient),
                 shape = CircleShape
@@ -162,7 +191,7 @@ private fun PageCircle(data: OnboardingPageData) {
         Image(
             painter = painterResource(id = data.emoji),
             contentDescription = null,
-            modifier = Modifier.size(128.dp),   // 피그마 128x128
+            modifier = Modifier.size(128.dp),
             contentScale = ContentScale.Fit
         )
     }
