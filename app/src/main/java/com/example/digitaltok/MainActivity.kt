@@ -1,18 +1,22 @@
+// MainActivity.kt : 오른쪽(HELP) 버튼 클릭 시 activity_help.xml(HelpActivity)로 이동
 package com.example.digitaltok
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
+import com.example.digitaltok.databinding.ActivityMainBinding
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        // FAQ 화면으로 바로 이동
-        startActivity(Intent(this, FaqActivity::class.java))
-
-        // MainActivity는 종료 (뒤로가기 시 Hello 화면으로 돌아가지 않게)
-        finish()
+        binding.btnNavHelp.setOnClickListener {
+            startActivity(Intent(this, HelpActivity::class.java))
+        }
     }
 }
