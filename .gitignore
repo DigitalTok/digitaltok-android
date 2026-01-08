@@ -1,15 +1,41 @@
-*.iml
+# --- Android Studio & IDE Settings ---
 .gradle
-/local.properties
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# --- Local Configuration ---
+local.properties
+
+# --- Build Outputs ---
+build/
+/build
+bin/
+gen/
+
+# --- System Files ---
+.DS_Store
+Thumbs.db
+
+# --- Caching & Temp Files ---
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
 .externalNativeBuild
 .cxx
-local.properties
+captures/
+/captures
+
+# --- Security & Keys ---
+*.jks
+*.keystore
+*.p12
+*.key
+google-services.json
+
+# --- Log Files ---
+*.log
