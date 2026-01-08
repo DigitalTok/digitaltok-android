@@ -2,12 +2,10 @@ package com.example.digitaltok
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.digitaltok.databinding.ActivityFaqBinding
 import com.example.digitaltok.ui.theme.FaqItem
 import androidx.activity.ComponentActivity
-import com.example.digitaltok.LastItemBottomSpaceDecoration
 
 class FaqActivity : ComponentActivity() {
 
