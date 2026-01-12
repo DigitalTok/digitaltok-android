@@ -1,8 +1,6 @@
 package com.yourcompany.digitaltok.ui.home
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
@@ -11,325 +9,126 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yourcompany.digitaltok.R
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.yourcompany.digitaltok.ui.components.BottomNavBar
-import com.yourcompany.digitaltok.ui.components.HomeTab
+
+private object Variables {
+    val Gray1 = Color(0xFFA0A0A0)
+    val Point = Color(0xFF3AADFF)
+}
 
 @Composable
 fun HomeScreen() {
+    val navController = rememberNavController()
+
     Scaffold(
-        containerColor = Color(0xFFF3F4F6), // 배경 회색
-        bottomBar = {
-            BottomNavBar(
-                selected = HomeTab.HOME,
-                onTabSelected = { /* TODO: 다른 탭으로 이동 연결 */ }
-            )
-        }
+        bottomBar = { BottomNavBar(navController) }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 24.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+        NavHost(
+            navController = navController,
+            startDestination = "home",
+            modifier = Modifier.padding(innerPadding)
         ) {
-            HomeHeaderCard()
-            QuickActionSection()
-            DeviceSection()
+            composable("home") { HomeTab() }
+            composable("device") { CenterText("기기 연결") }
+            composable("decorate") { CenterText("꾸미기") }
+            composable("settings") { CenterText("설정") }
         }
     }
 }
 
 @Composable
-private fun HomeHeaderCard() {
+private fun HomeTab() {
     Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(192.dp)
-            .shadow(
-                elevation = 15.dp,
-                spotColor = Color(0x1A000000),
-                ambientColor = Color(0x1A000000),
-                shape = RoundedCornerShape(24.dp)
-            )
-            .background(
-                color = Color.White,
-                shape = RoundedCornerShape(24.dp)
-            )
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalAlignment = Alignment.Start
+            .fillMaxSize()
+            .background(Color.White)
     ) {
-        // 상단 "DigitalTok" 텍스트 두 줄
-        Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
+        Spacer(Modifier.height(18.dp))
+
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Text(
+                text = "당신만의 그립톡",
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    lineHeight = 14.sp,
+                    fontWeight = FontWeight(500),
+                    color = Variables.Gray1
+                )
+            )
+            Spacer(Modifier.height(6.dp))
             Text(
                 text = "DigitalTok",
                 style = TextStyle(
-                    fontSize = 24.sp,
-                    lineHeight = 32.sp,
-                    fontWeight = FontWeight(400),
-                    color = Color(0xFF0A0A0A)
-                )
-            )
-            Text(
-                text = "스마트한 소통, 개성 표현",
-                style = TextStyle(
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp,
-                    fontWeight = FontWeight(400),
-                    color = Color(0xFF6A7282)
+                    fontSize = 26.sp,
+                    lineHeight = 26.sp,
+                    fontWeight = FontWeight(600),
+                    color = Color(0xFF121212)
                 )
             )
         }
 
-        // 가운데 업로드 카드 (카메라 위, 텍스트 아래 – 피그마처럼)
+        Spacer(Modifier.height(14.dp))
+
+        // 회색 바(디자인용)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(112.dp)
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFF2B7FFF),
-                            Color(0xFF9810FA)
-                        )
-                    ),
-                    shape = RoundedCornerShape(24.dp)
-                ),
-            contentAlignment = Alignment.Center
+                .height(75.dp)
+                .background(Color(0xFFD9D9D9))
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        // 중앙 카드(이미지는 네가 최종에서 연결)
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+            Box(
+                modifier = Modifier
+                    .shadow(20.dp, RoundedCornerShape(10.dp))
+                    .size(288.dp)
+                    .background(Color.White, RoundedCornerShape(10.dp))
+                    .padding(10.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_upload_camera),
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                    contentScale = ContentScale.Fit
-                )
-                Text(
-                    text = "사진 업로드",
-                    style = TextStyle(
-                        fontSize = 20.sp,
-                        lineHeight = 28.sp,
-                        fontWeight = FontWeight(400),
-                        color = Color.White
-                    )
-                )
-                Text(
-                    text = "앨범에서 선택하기",
-                    style = TextStyle(
-                        fontSize = 14.sp,
-                        lineHeight = 20.sp,
-                        fontWeight = FontWeight(400),
-                        color = Color.White
-                    )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFFF4F4F4), RoundedCornerShape(10.dp))
                 )
             }
         }
+
+        Spacer(Modifier.height(18.dp))
+
+        Text(
+            text = "터치하여 이미지 변경",
+            style = TextStyle(
+                fontSize = 16.sp,
+                lineHeight = 22.4.sp,
+                fontWeight = FontWeight(600),
+                color = Variables.Point
+            ),
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
     }
 }
 
 @Composable
-private fun QuickActionSection() {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+private fun CenterText(text: String) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "빠른액션",
-            style = TextStyle(
-                fontSize = 18.sp,
-                lineHeight = 28.sp,
-                fontWeight = FontWeight(400),
-                color = Color(0xFF0A0A0A)
-            )
-        )
-
-        // 바깥 카드
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(94.dp)
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFFE5E7EB),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .background(
-                    color = Color.White,
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(start = 17.dp, top = 17.dp, end = 17.dp, bottom = 1.dp)
-        ) {
-            // 안쪽 회색 박스
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp)
-                    .background(
-                        color = Color(0xFFF9FAFB),
-                        shape = RoundedCornerShape(14.dp)
-                    )
-                    .padding(horizontal = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_quick_star),
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Text(
-                                text = "즐겨찾기 템플릿",
-                                style = TextStyle(
-                                    fontSize = 14.sp,
-                                    lineHeight = 20.sp,
-                                    fontWeight = FontWeight(400),
-                                    color = Color(0xFF0A0A0A)
-                                )
-                            )
-                            Text(
-                                text = "빠르게 적용하기",
-                                style = TextStyle(
-                                    fontSize = 12.sp,
-                                    lineHeight = 16.sp,
-                                    fontWeight = FontWeight(400),
-                                    color = Color(0xFF6A7282)
-                                )
-                            )
-                        }
-                    }
-
-                    // 화살표
-                    Text(
-                        text = "›",
-                        style = TextStyle(
-                            fontSize = 20.sp,
-                            lineHeight = 24.sp,
-                            fontWeight = FontWeight(400),
-                            color = Color(0xFF9CA3AF)
-                        )
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DeviceSection() {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = "장치 (Device)",
-            style = TextStyle(
-                fontSize = 18.sp,
-                lineHeight = 28.sp,
-                fontWeight = FontWeight(400),
-                color = Color(0xFF0A0A0A)
-            )
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(94.dp)
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFFE5E7EB),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .background(
-                    color = Color.White,
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(start = 17.dp, top = 17.dp, end = 17.dp, bottom = 1.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp)
-                    .background(
-                        color = Color(0xFFF9FAFB),
-                        shape = RoundedCornerShape(14.dp)
-                    )
-                    .padding(horizontal = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_device_satellite),
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Text(
-                                text = "장치 추가",
-                                style = TextStyle(
-                                    fontSize = 14.sp,
-                                    lineHeight = 20.sp,
-                                    fontWeight = FontWeight(400),
-                                    color = Color(0xFF0A0A0A)
-                                )
-                            )
-                            Text(
-                                text = "NFC로 연결하기",
-                                style = TextStyle(
-                                    fontSize = 12.sp,
-                                    lineHeight = 16.sp,
-                                    fontWeight = FontWeight(400),
-                                    color = Color(0xFF6A7282)
-                                )
-                            )
-                        }
-                    }
-
-                    Text(
-                        text = "›",
-                        style = TextStyle(
-                            fontSize = 20.sp,
-                            lineHeight = 24.sp,
-                            fontWeight = FontWeight(400),
-                            color = Color(0xFF9CA3AF)
-                        )
-                    )
-                }
-            }
-        }
+        Text(text)
     }
 }
