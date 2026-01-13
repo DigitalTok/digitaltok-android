@@ -1,12 +1,15 @@
 package com.yourcompany.digitaltok.ui.home
 
 import android.view.View
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +24,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentContainerView
+import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -70,6 +74,29 @@ fun HomeScreen() {
         ) {
             composable("home") { HomeTab() }
             composable("device") {
+                val context = LocalContext.current
+                val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
+
+                // FragmentManager의 백스택 변경을 실시간으로 관찰하여 상태를 업데이트 (생명주기 관리!)
+                val backStackEntryCount by produceState(
+                    initialValue = fragmentManager?.backStackEntryCount ?: 0,
+                    key1 = fragmentManager
+                ) {
+                    val listener = FragmentManager.OnBackStackChangedListener {
+                        value = fragmentManager?.backStackEntryCount ?: 0
+                    }
+                    fragmentManager?.addOnBackStackChangedListener(listener)
+                    awaitDispose {
+                        fragmentManager?.removeOnBackStackChangedListener(listener)
+                    }
+                }
+
+                // 'device' 탭 내에서 프래그먼트 백스택이 있을 때만 BackHandler를 활성화
+                // 이렇게 하면 FragmentManager가 우선적으로 뒤로가기 이벤트를 처리
+                BackHandler(enabled = backStackEntryCount > 0) {
+                    fragmentManager?.popBackStack()
+                }
+
                 ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) {
                     DeviceConnectFragment()
                 }

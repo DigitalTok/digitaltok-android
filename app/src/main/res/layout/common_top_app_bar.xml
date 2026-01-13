@@ -6,10 +6,8 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/white"
-        android:paddingTop="24dp"
-        android:paddingBottom="18dp">
+        android:layout_height="69dp"
+        android:background="@android:color/white">
 
         <TextView
             android:id="@+id/backButton"
@@ -18,6 +16,8 @@
             android:layout_marginStart="24dp"
             android:clickable="true"
             android:focusable="true"
+            android:gravity="center"
+            android:minHeight="48dp"
             android:padding="8dp"
             android:text="&lt; 뒤로"
             android:textColor="#155DFC"

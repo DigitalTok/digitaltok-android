@@ -1,16 +1,20 @@
 package com.yourcompany.digitaltok.ui.device
 
+import android.content.Context
+import android.content.Intent
+import android.nfc.NfcManager
 import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.yourcompany.digitaltok.databinding.FragmentDeviceConnectBinding
 
 class DeviceConnectFragment : Fragment() {
 
     private var _binding: FragmentDeviceConnectBinding? = null
-    // This property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
 
     override fun onCreateView(
@@ -24,18 +28,37 @@ class DeviceConnectFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 공용 상단 바의 제목을 이 화면에 맞게 변경합니다.
-        binding.topAppBar.titleTextView.text = "장치 (Device)"
-
-        // 뒤로가기 버튼 클릭 이벤트 설정
-        binding.topAppBar.backButton.setOnClickListener {
-            // 이전 화면으로 돌아가는 동작을 처리합니다.
+        binding.connectTopAppBar.titleTextView.text = "장치 (Device)"
+        binding.connectTopAppBar.backButton.setOnClickListener {
             activity?.onBackPressedDispatcher?.onBackPressed()
         }
 
-        // NFC 연결 시작 버튼 클릭 이벤트 설정
         binding.nfcConnectButton.setOnClickListener {
-            // TODO: NFC 연결 시작 로직 구현
+            checkNfcAndProceed()
+        }
+    }
+
+    private fun checkNfcAndProceed() {
+        val nfcManager = context?.getSystemService(Context.NFC_SERVICE) as? NfcManager
+        val nfcAdapter = nfcManager?.defaultAdapter
+
+        if (nfcAdapter != null) {
+            if (!nfcAdapter.isEnabled) {
+                // NFC가 꺼져있으면 확인 다이얼로그 표시
+                MaterialAlertDialogBuilder(requireContext())
+                    .setMessage("NFC가 켜져 있지 않습니다. 설정에서 NFC 기능을 켜주세요.")
+                    .setNegativeButton("취소") { dialog, _ -> dialog.dismiss() }
+                    .setPositiveButton("확인") { _, _ ->
+                        startActivity(Intent(Settings.ACTION_NFC_SETTINGS))
+                    }
+                    .show()
+            } else {
+                // NFC가 켜져있으면 DeviceSearchingFragment로 화면 전환
+                parentFragmentManager.beginTransaction()
+                    .replace((requireView().parent as ViewGroup).id, DeviceSearchingFragment())
+                    .addToBackStack(null)
+                    .commit()
+            }
         }
     }
 

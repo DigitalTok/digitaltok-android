@@ -70,4 +70,11 @@ dependencies {
     implementation("androidx.compose.ui:ui-viewbinding")
     implementation("androidx.fragment:fragment-ktx:1.8.1") // Fragment 사용을 위한 필수 라이브러리
 
+    // Network
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
+
 }
