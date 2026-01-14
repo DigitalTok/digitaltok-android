@@ -1,4 +1,4 @@
-package com.example.digitaltok.ui.theme
+package com.yourcompany.digitaltok.ui.components.digitaltok.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

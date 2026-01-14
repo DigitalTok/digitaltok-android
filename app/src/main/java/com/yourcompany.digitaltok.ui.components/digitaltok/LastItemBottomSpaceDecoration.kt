@@ -1,4 +1,4 @@
-package com.example.digitaltok
+package com.yourcompany.digitaltok.ui.components.digitaltok
 
 import android.graphics.Rect
 import android.view.View

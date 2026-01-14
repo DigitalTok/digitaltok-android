@@ -1,4 +1,4 @@
-package com.example.digitaltok.ui.theme
+package com.yourcompany.digitaltok.ui.components.digitaltok.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

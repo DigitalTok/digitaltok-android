@@ -11,12 +11,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DigitalTok">
 
-        <activity android:name=".SupportActivity" />
-        <activity android:name=".FaqActivity" />
-        <activity android:name=".HelpActivity" />
+        <activity android:name="com.yourcompany.digitaltok.ui.components.digitaltok.SupportActivity" />
+        <activity android:name="com.yourcompany.digitaltok.ui.components.digitaltok.FaqActivity" />
+        <activity android:name="com.yourcompany.digitaltok.ui.components.digitaltok.HelpActivity" />
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.yourcompany.digitaltok.ui.components.digitaltok.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.DigitalTok">

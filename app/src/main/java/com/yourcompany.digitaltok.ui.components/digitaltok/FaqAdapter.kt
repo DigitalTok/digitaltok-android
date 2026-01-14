@@ -1,4 +1,4 @@
-package com.example.digitaltok
+package com.yourcompany.digitaltok.ui.components.digitaltok
 
 import android.view.LayoutInflater
 import android.view.ViewGroup

@@ -1,5 +1,5 @@
 // MainActivity.kt : 오른쪽(HELP) 버튼 클릭 시 activity_help.xml(HelpActivity)로 이동
-package com.example.digitaltok
+package com.yourcompany.digitaltok.ui.components.digitaltok
 
 import android.content.Intent
 import android.os.Bundle
