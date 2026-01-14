@@ -1,27 +1,63 @@
 package com.yourcompany.digitaltok.ui.home
 
+import android.view.View
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentContainerView
+import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.commit
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.yourcompany.digitaltok.ui.components.BottomNavBar
+import com.yourcompany.digitaltok.ui.decorate.DecorateFragment
+import com.yourcompany.digitaltok.ui.device.DeviceConnectFragment
 
 private object Variables {
     val Gray1 = Color(0xFFA0A0A0)
     val Point = Color(0xFF3AADFF)
+}
+
+// Fragment를 Compose에서 표시하는 컴포저블 함수
+@Composable
+private fun ComposableFragmentContainer(modifier: Modifier = Modifier, fragment: () -> Fragment) {
+    val containerId = remember { View.generateViewId() }
+    val context = LocalContext.current
+    AndroidView(
+        factory = {
+            FragmentContainerView(it).apply { id = containerId }
+        },
+        modifier = modifier,
+        update = {
+            val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
+            if (fragmentManager != null && fragmentManager.findFragmentById(containerId) == null) {
+                fragmentManager.commit {
+                    setReorderingAllowed(true)
+                    add(containerId, fragment())
+                }
+            }
+        }
+    )
 }
 
 @Composable
@@ -37,9 +73,42 @@ fun HomeScreen() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") { HomeTab() }
-            composable("device") { CenterText("기기 연결") }
-            composable("decorate") { CenterText("꾸미기") }
-            composable("settings") { CenterText("설정") }
+            composable("device") {
+                val context = LocalContext.current
+                val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
+
+                // FragmentManager의 백스택 변경을 실시간으로 관찰하여 상태를 업데이트 (생명주기 관리!)
+                val backStackEntryCount by produceState(
+                    initialValue = fragmentManager?.backStackEntryCount ?: 0,
+                    key1 = fragmentManager
+                ) {
+                    val listener = FragmentManager.OnBackStackChangedListener {
+                        value = fragmentManager?.backStackEntryCount ?: 0
+                    }
+                    fragmentManager?.addOnBackStackChangedListener(listener)
+                    awaitDispose {
+                        fragmentManager?.removeOnBackStackChangedListener(listener)
+                    }
+                }
+
+                // 'device' 탭 내에서 프래그먼트 백스택이 있을 때만 BackHandler를 활성화
+                // 이렇게 하면 FragmentManager가 우선적으로 뒤로가기 이벤트를 처리
+                BackHandler(enabled = backStackEntryCount > 0) {
+                    fragmentManager?.popBackStack()
+                }
+
+                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) {
+                    DeviceConnectFragment()
+                }
+            }
+            composable("decorate") {
+                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) {
+                    DecorateFragment()
+                }
+            }
+            composable("settings") {
+                CenterText("설정") //Fragment 설정 필요합니다!
+            }
         }
     }
 }
@@ -77,7 +146,6 @@ private fun HomeTab() {
 
         Spacer(Modifier.height(14.dp))
 
-        // 회색 바(디자인용)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -87,9 +155,9 @@ private fun HomeTab() {
 
         Spacer(Modifier.height(24.dp))
 
-        // 중앙 카드(이미지는 네가 최종에서 연결)
         Box(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth(),
             contentAlignment = Alignment.TopCenter
         ) {
             Box(
