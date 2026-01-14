@@ -5,15 +5,15 @@ import android.os.Bundle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.digitaltok.ui.theme.FaqItem
 import androidx.activity.ComponentActivity
-import com.yourcompany.digitaltok.databinding.ActivityFaqBinding
+import com.yourcompany.digitaltok.databinding.FragmentFaqBinding
 
 class FaqActivity : ComponentActivity() {
 
-    private lateinit var binding: ActivityFaqBinding
+    private lateinit var binding: FragmentFaqBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityFaqBinding.inflate(layoutInflater)
+        binding = FragmentFaqBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         binding.connectTopAppBar.titleTextView.text = "자주 묻는 질문"
