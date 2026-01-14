@@ -6,15 +6,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- (임시) 상단바 자리: 공용 상단바 받으면 교체 -->
-    <View
-        android:id="@+id/topBarPlaceholder"
-        android:layout_width="0dp"
-        android:layout_height="56dp"
-        android:background="@android:color/transparent"
-        app:layout_constraintTop_toTopOf="parent"
+    <include
+        android:id="@+id/connectTopAppBar"
+        layout="@layout/common_top_app_bar"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- (임시) 제목 -->
 
@@ -28,7 +25,7 @@
         android:paddingTop="24dp"
         android:paddingBottom="16dp"
         android:clipToPadding="false"
-        app:layout_constraintTop_toBottomOf="@id/topBarPlaceholder"
+        app:layout_constraintTop_toBottomOf="@id/connectTopAppBar"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

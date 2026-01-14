@@ -1,11 +1,11 @@
-package com.yourcompany.digitaltok.ui.components.digitaltok
+package com.yourcompany.digitaltok.ui.faq
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.digitaltok.databinding.ActivityFaqBinding
 import com.example.digitaltok.ui.theme.FaqItem
 import androidx.activity.ComponentActivity
+import com.yourcompany.digitaltok.databinding.ActivityFaqBinding
 
 class FaqActivity : ComponentActivity() {
 
@@ -15,6 +15,11 @@ class FaqActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityFaqBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        binding.connectTopAppBar.titleTextView.text = "자주 묻는 질문"
+        binding.connectTopAppBar.backButton.setOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
+        }
 
         val faqList = listOf(
             FaqItem(

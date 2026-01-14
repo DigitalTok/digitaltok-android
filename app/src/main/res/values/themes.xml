@@ -10,6 +10,4 @@
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
         <item name="postSplashScreenTheme">@style/Theme.DigitalTok</item>
     </style>
-
-    <style name="Theme.DigitalTok" parent="Theme.MaterialComponents.DayNight.NoActionBar" />
 </resources>

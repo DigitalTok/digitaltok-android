@@ -1,11 +1,11 @@
-package com.yourcompany.digitaltok.ui.components.digitaltok
+package com.yourcompany.digitaltok.ui.faq
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.example.digitaltok.databinding.ItemFaqBinding
-import com.example.digitaltok.databinding.ItemFaqSupportBinding
 import com.example.digitaltok.ui.theme.FaqItem
+import com.yourcompany.digitaltok.databinding.ItemFaqBinding
+import com.yourcompany.digitaltok.databinding.ItemFaqSupportBinding
 
 class FaqAdapter(
     private val items: List<FaqItem>,

@@ -5,15 +5,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- 임시 상단바 자리 -->
-    <View
-        android:id="@+id/topBarPlaceholder"
-        android:layout_width="0dp"
-        android:layout_height="69dp"
-        android:background="@android:color/transparent"
-        app:layout_constraintTop_toTopOf="parent"
+    <include
+        android:id="@+id/connectTopAppBar"
+        layout="@layout/common_top_app_bar"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- 섹션 타이틀 -->
     <TextView
@@ -28,7 +25,7 @@
         android:textStyle="normal"
         android:lineHeight="20sp"
         android:textColor="#4A5565"
-        app:layout_constraintTop_toBottomOf="@id/topBarPlaceholder"
+        app:layout_constraintTop_toBottomOf="@id/connectTopAppBar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

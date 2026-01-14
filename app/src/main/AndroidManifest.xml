@@ -18,9 +18,9 @@
         android:usesCleartextTraffic="true">
         android:theme="@style/Theme.DigitalTok">
 
-        <activity android:name="com.yourcompany.digitaltok.ui.components.digitaltok.SupportActivity" />
-        <activity android:name="com.yourcompany.digitaltok.ui.components.digitaltok.FaqActivity" />
-        <activity android:name="com.yourcompany.digitaltok.ui.components.digitaltok.HelpActivity" />
+        <activity android:name="com.yourcompany.digitaltok.ui.faq.SupportActivity" />
+        <activity android:name="com.yourcompany.digitaltok.ui.faq.FaqActivity" />
+        <activity android:name="com.yourcompany.digitaltok.ui.faq.HelpActivity" />
 
         <activity
             android:name=".MainActivity"
