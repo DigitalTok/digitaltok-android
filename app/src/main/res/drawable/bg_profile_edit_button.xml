@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- 반투명 흰색 (20%) -->
+    <solid android:color="#33FFFFFF" />
+
+    <!-- 모서리 둥글기 -->
+    <corners android:radius="14dp" />
+
+</shape>

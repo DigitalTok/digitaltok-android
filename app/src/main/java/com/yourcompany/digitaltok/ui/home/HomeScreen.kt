@@ -32,6 +32,7 @@ import androidx.navigation.compose.rememberNavController
 import com.yourcompany.digitaltok.ui.components.BottomNavBar
 import com.yourcompany.digitaltok.ui.decorate.DecorateFragment
 import com.yourcompany.digitaltok.ui.device.DeviceConnectFragment
+import com.yourcompany.digitaltok.ui.faq.HelpFragment
 
 private object Variables {
     val Gray1 = Color(0xFFA0A0A0)
@@ -101,13 +102,39 @@ fun HomeScreen() {
                     DeviceConnectFragment()
                 }
             }
+
             composable("decorate") {
                 ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) {
                     DecorateFragment()
                 }
             }
+
             composable("settings") {
-                CenterText("설정") //Fragment 설정 필요합니다!
+                val context = LocalContext.current
+                val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
+
+                // FragmentManager 백스택 변경 감지 (device와 동일)
+                val backStackEntryCount by produceState(
+                    initialValue = fragmentManager?.backStackEntryCount ?: 0,
+                    key1 = fragmentManager
+                ) {
+                    val listener = FragmentManager.OnBackStackChangedListener {
+                        value = fragmentManager?.backStackEntryCount ?: 0
+                    }
+                    fragmentManager?.addOnBackStackChangedListener(listener)
+                    awaitDispose {
+                        fragmentManager?.removeOnBackStackChangedListener(listener)
+                    }
+                }
+
+                // settings 탭 내에서 프래그먼트 백스택이 있을 때만 뒤로가기 처리
+                BackHandler(enabled = backStackEntryCount > 0) {
+                    fragmentManager?.popBackStack()
+                }
+
+                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) {
+                    HelpFragment()
+                }
             }
         }
     }

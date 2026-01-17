@@ -16,6 +16,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DigitalTok"
         android:usesCleartextTraffic="true">
+        android:theme="@style/Theme.DigitalTok">
+
+        <activity android:name="com.yourcompany.digitaltok.ui.faq.SupportActivity" />
+        <activity android:name="com.yourcompany.digitaltok.ui.faq.FaqActivity" />
+        <activity android:name="com.yourcompany.digitaltok.ui.faq.HelpActivity" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -23,8 +29,10 @@
             android:theme="@style/Theme.DigitalTok.Splash"
             android:launchMode="singleTop">
 
+            android:theme="@style/Theme.DigitalTok">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
