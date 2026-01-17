@@ -5,16 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- (임시) 하단 네비 자리 -->
-    <View
-        android:id="@+id/bottomNavPlaceholder"
-        android:layout_width="0dp"
-        android:layout_height="48dp"
-        android:background="@android:color/transparent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
     <!-- 스크롤 영역 -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollContainer"
@@ -23,7 +13,7 @@
         android:fillViewport="true"
         android:overScrollMode="never"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/bottomNavPlaceholder"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
