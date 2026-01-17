@@ -24,7 +24,6 @@ class NfcDisabledFragment : DialogFragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentDeviceNfcDisabledBinding.inflate(inflater, container, false)
-        // 다이얼로그의 배경을 투명하게 설정하여, 커스텀 레이아웃의 CardView가 잘 보이도록 함
         dialog?.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog?.window?.requestFeature(Window.FEATURE_NO_TITLE)
         return binding.root
@@ -33,15 +32,14 @@ class NfcDisabledFragment : DialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 확인 버튼 클릭 시 NFC 설정 화면으로 이동 후 다이얼로그 닫기
         binding.btnConfirm.setOnClickListener {
             startActivity(Intent(Settings.ACTION_NFC_SETTINGS))
-            dismiss()
+            dismiss() // 설정으로 이동 후에는 바로 닫는 것이 자연스러움
         }
 
-        // 취소 버튼 클릭 시 다이얼로그 닫기
         binding.btnCancel.setOnClickListener {
-            dismiss()
+            // 사용자가 뒤로가기 버튼을 누른 것과 동일하게 동작
+            requireActivity().onBackPressedDispatcher.onBackPressed()
         }
     }
 

@@ -1,14 +1,24 @@
 package com.yourcompany.digitaltok.ui.home
 
 import android.view.View
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -26,9 +36,11 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.yourcompany.digitaltok.ui.MainViewModel
 import com.yourcompany.digitaltok.ui.components.BottomNavBar
 import com.yourcompany.digitaltok.ui.decorate.DecorateFragment
 import com.yourcompany.digitaltok.ui.device.DeviceConnectFragment
@@ -76,30 +88,39 @@ fun HomeScreen() {
             composable("home") { HomeTab() }
             composable("device") {
                 val context = LocalContext.current
-                val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
+                val activity = context as FragmentActivity
+                val mainViewModel: MainViewModel = viewModel(viewModelStoreOwner = activity)
+                val isDeviceConnected by mainViewModel.isDeviceConnected.observeAsState(initial = false)
 
-                // FragmentManager의 백스택 변경을 실시간으로 관찰하여 상태를 업데이트 (생명주기 관리!)
-                val backStackEntryCount by produceState(
-                    initialValue = fragmentManager?.backStackEntryCount ?: 0,
-                    key1 = fragmentManager
-                ) {
-                    val listener = FragmentManager.OnBackStackChangedListener {
-                        value = fragmentManager?.backStackEntryCount ?: 0
+                if (isDeviceConnected) {
+                    // 기기가 이미 연결된 경우, 토스트 메시지를 보여주고 홈 탭 내용을 표시
+                    HomeTab()
+                    LaunchedEffect(Unit) {
+                        Toast.makeText(context, "이미 기기가 연결되어 있습니다.", Toast.LENGTH_SHORT).show()
                     }
-                    fragmentManager?.addOnBackStackChangedListener(listener)
-                    awaitDispose {
-                        fragmentManager?.removeOnBackStackChangedListener(listener)
+                } else {
+                    // 기기가 연결되지 않은 경우, 연결 프래그먼트를 표시
+                    val fragmentManager = activity.supportFragmentManager
+                    val backStackEntryCount by produceState(
+                        initialValue = fragmentManager.backStackEntryCount,
+                        key1 = fragmentManager
+                    ) {
+                        val listener = FragmentManager.OnBackStackChangedListener {
+                            value = fragmentManager.backStackEntryCount
+                        }
+                        fragmentManager.addOnBackStackChangedListener(listener)
+                        awaitDispose {
+                            fragmentManager.removeOnBackStackChangedListener(listener)
+                        }
                     }
-                }
 
-                // 'device' 탭 내에서 프래그먼트 백스택이 있을 때만 BackHandler를 활성화
-                // 이렇게 하면 FragmentManager가 우선적으로 뒤로가기 이벤트를 처리
-                BackHandler(enabled = backStackEntryCount > 0) {
-                    fragmentManager?.popBackStack()
-                }
+                    BackHandler(enabled = backStackEntryCount > 0) {
+                        fragmentManager.popBackStack()
+                    }
 
-                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) {
-                    DeviceConnectFragment()
+                    ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) {
+                        DeviceConnectFragment()
+                    }
                 }
             }
 
@@ -113,7 +134,6 @@ fun HomeScreen() {
                 val context = LocalContext.current
                 val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
 
-                // FragmentManager 백스택 변경 감지 (device와 동일)
                 val backStackEntryCount by produceState(
                     initialValue = fragmentManager?.backStackEntryCount ?: 0,
                     key1 = fragmentManager
@@ -127,7 +147,6 @@ fun HomeScreen() {
                     }
                 }
 
-                // settings 탭 내에서 프래그먼트 백스택이 있을 때만 뒤로가기 처리
                 BackHandler(enabled = backStackEntryCount > 0) {
                     fragmentManager?.popBackStack()
                 }

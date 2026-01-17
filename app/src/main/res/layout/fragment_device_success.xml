@@ -59,7 +59,7 @@
             app:layout_constraintTop_toBottomOf="@id/successTitle" />
 
         <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/primaryButton"
+            android:id="@+id/decoButton"
             android:layout_width="0dp"
             android:layout_height="56dp"
             android:layout_marginStart="24dp"
@@ -70,12 +70,12 @@
             android:textColor="@android:color/white"
             android:textSize="16sp"
             android:stateListAnimator="@null"
-            app:layout_constraintBottom_toTopOf="@+id/secondaryButton"
+            app:layout_constraintBottom_toTopOf="@+id/homeButton"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
 
         <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/secondaryButton"
+            android:id="@+id/homeButton"
             android:layout_width="0dp"
             android:layout_height="56dp"
             android:layout_marginStart="24dp"
