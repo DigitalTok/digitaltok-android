@@ -29,7 +29,7 @@ class HelpFragment : Fragment() {
         // 상단바
         binding.connectTopAppBar.titleTextView.text = "설정"
         binding.connectTopAppBar.backButton.setOnClickListener {
-            parentFragmentManager.popBackStack()
+            requireActivity().onBackPressedDispatcher.onBackPressed()
         }
 
         binding.rowFaq.setOnClickListener {

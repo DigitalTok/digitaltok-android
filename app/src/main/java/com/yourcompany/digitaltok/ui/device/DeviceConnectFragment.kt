@@ -1,15 +1,12 @@
 package com.yourcompany.digitaltok.ui.device
 
 import android.content.Context
-import android.content.Intent
 import android.nfc.NfcManager
 import android.os.Bundle
-import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.yourcompany.digitaltok.databinding.FragmentDeviceConnectBinding
 
 class DeviceConnectFragment : Fragment() {
@@ -30,6 +27,7 @@ class DeviceConnectFragment : Fragment() {
 
         binding.connectTopAppBar.titleTextView.text = "장치 (Device)"
         binding.connectTopAppBar.backButton.setOnClickListener {
+            // 이 프래그먼트는 백스택의 가장 처음이므로, 네비게이션 컴포넌트가 뒤로가기를 처리하도록 함
             activity?.onBackPressedDispatcher?.onBackPressed()
         }
 
@@ -44,14 +42,8 @@ class DeviceConnectFragment : Fragment() {
 
         if (nfcAdapter != null) {
             if (!nfcAdapter.isEnabled) {
-                // NFC가 꺼져있으면 확인 다이얼로그 표시
-                MaterialAlertDialogBuilder(requireContext())
-                    .setMessage("NFC가 켜져 있지 않습니다. 설정에서 NFC 기능을 켜주세요.")
-                    .setNegativeButton("취소") { dialog, _ -> dialog.dismiss() }
-                    .setPositiveButton("확인") { _, _ ->
-                        startActivity(Intent(Settings.ACTION_NFC_SETTINGS))
-                    }
-                    .show()
+                // NFC가 꺼져있으면 직접 만든 NfcDisabledFragment를 다이얼로그로 띄움
+                NfcDisabledFragment().show(parentFragmentManager, "NfcDisabledDialog")
             } else {
                 // NFC가 켜져있으면 DeviceSearchingFragment로 화면 전환
                 parentFragmentManager.beginTransaction()
