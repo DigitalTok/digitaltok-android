@@ -35,6 +35,7 @@
             android:paddingStart="4dp"
             android:src="@drawable/none_profile"
             android:contentDescription="@null"
+            android:scaleType="centerCrop"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
