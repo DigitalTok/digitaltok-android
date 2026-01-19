@@ -7,9 +7,8 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.digitaltok.ui.theme.FaqItem
-import com.yourcompany.digitaltok.R
 import com.yourcompany.digitaltok.databinding.FragmentFaqBinding
-import com.yourcompany.digitaltok.databinding.ItemFaqSupportBinding
+
 
 class FaqFragment : Fragment() {
 
