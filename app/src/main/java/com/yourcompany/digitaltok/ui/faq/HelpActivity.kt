@@ -20,9 +20,6 @@ class HelpActivity : AppCompatActivity() {
             onBackPressedDispatcher.onBackPressed()
         }
 
-        binding.tvPersonal.paintFlags =
-            binding.tvPersonal.paintFlags or Paint.UNDERLINE_TEXT_FLAG
-
 
         binding.rowFaq.setOnClickListener {
             startActivity(Intent(this, FaqActivity::class.java))

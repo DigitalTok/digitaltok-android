@@ -35,8 +35,6 @@ class HelpFragment : Fragment() {
         binding.rowFaq.setOnClickListener {
             startActivity(Intent(requireContext(), FaqActivity::class.java))
         }
-        binding.tvPersonal.paintFlags =
-            binding.tvPersonal.paintFlags or Paint.UNDERLINE_TEXT_FLAG
 
         binding.rowSupport.setOnClickListener {
             startActivity(Intent(requireContext(), SupportActivity::class.java))

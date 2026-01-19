@@ -2,10 +2,11 @@ package com.yourcompany.digitaltok.ui.faq
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.ComponentActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.digitaltok.ui.theme.FaqItem
-import androidx.activity.ComponentActivity
 import com.yourcompany.digitaltok.databinding.FragmentFaqBinding
+import com.yourcompany.digitaltok.databinding.ItemFaqSupportBinding
 
 class FaqActivity : ComponentActivity() {
 
@@ -16,11 +17,13 @@ class FaqActivity : ComponentActivity() {
         binding = FragmentFaqBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // 상단바
         binding.connectTopAppBar.titleTextView.text = "자주 묻는 질문"
         binding.connectTopAppBar.backButton.setOnClickListener {
             onBackPressedDispatcher.onBackPressed()
         }
 
+        // FAQ 데이터
         val faqList = listOf(
             FaqItem(
                 "디링은 어떻게 사용하나요?",
@@ -39,19 +42,16 @@ class FaqActivity : ComponentActivity() {
                 "현재는 하나의 디링에 연결할 수 있습니다."
             )
         )
-        val bottomPx = (140 * resources.displayMetrics.density).toInt()
-        binding.rvFaq.addItemDecoration(LastItemBottomSpaceDecoration(bottomPx))
 
-
+        // RecyclerView (FAQ만)
         binding.rvFaq.layoutManager = LinearLayoutManager(this)
-        binding.rvFaq.adapter = FaqAdapter(
-            items = faqList,
-            onSupportClick = {
-                // "고객 지원" 화면 전환
-                val intent = Intent(this, SupportActivity::class.java)
-                startActivity(intent)
-            }
-        )
+        binding.rvFaq.adapter = FaqAdapter(faqList)
 
+        // ✅ 고정 CTA 클릭 처리 (include 된 item_faq_support.xml)
+        // include는 보통 View로 잡히므로 bind로 내부 버튼 접근
+        val ctaBinding = ItemFaqSupportBinding.bind(binding.ctaSupport.root)
+        ctaBinding.btnContactSupport.setOnClickListener {
+            startActivity(Intent(this, SupportActivity::class.java))
+        }
     }
 }
