@@ -1,7 +1,5 @@
 package com.yourcompany.digitaltok.ui.faq
 
-import android.content.Intent
-import android.graphics.Paint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -29,15 +27,29 @@ class HelpFragment : Fragment() {
         // 상단바
         binding.connectTopAppBar.titleTextView.text = "설정"
         binding.connectTopAppBar.backButton.setOnClickListener {
-            requireActivity().onBackPressedDispatcher.onBackPressed()
+            parentFragmentManager.popBackStack()
         }
 
+        // ✅ FAQ로 이동 (Activity X, Fragment replace)
         binding.rowFaq.setOnClickListener {
-            startActivity(Intent(requireContext(), FaqActivity::class.java))
+            val containerId = id // HelpFragment가 올라간 FragmentContainerView id
+            if (containerId != View.NO_ID) {
+                parentFragmentManager.beginTransaction()
+                    .replace(containerId, FaqFragment())
+                    .addToBackStack(null)
+                    .commit()
+            }
         }
 
+        // ✅ Support로 이동 (Activity X, Fragment replace)
         binding.rowSupport.setOnClickListener {
-            startActivity(Intent(requireContext(), SupportActivity::class.java))
+            val containerId = id
+            if (containerId != View.NO_ID) {
+                parentFragmentManager.beginTransaction()
+                    .replace(containerId, SupportFragment())
+                    .addToBackStack(null)
+                    .commit()
+            }
         }
     }
 

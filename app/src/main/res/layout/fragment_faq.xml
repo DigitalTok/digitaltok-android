@@ -15,16 +15,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- 임시 네비(빈공간): 맨 아래 고정 -->
-    <View
-        android:id="@+id/emptyBottomSpace"
-        android:layout_width="0dp"
-        android:layout_height="86dp"
-        android:background="@android:color/transparent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
     <!-- 하단 CTA: emptyBottomSpace 바로 위에 고정 -->
     <include
         android:id="@+id/ctaSupport"
@@ -33,7 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="19dp"
         android:layout_marginEnd="17dp"
-        app:layout_constraintBottom_toTopOf="@id/emptyBottomSpace"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

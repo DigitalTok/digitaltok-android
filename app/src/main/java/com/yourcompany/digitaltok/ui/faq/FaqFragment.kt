@@ -1,29 +1,40 @@
 package com.yourcompany.digitaltok.ui.faq
 
-import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.digitaltok.ui.theme.FaqItem
+import com.yourcompany.digitaltok.R
 import com.yourcompany.digitaltok.databinding.FragmentFaqBinding
 import com.yourcompany.digitaltok.databinding.ItemFaqSupportBinding
 
-class FaqActivity : ComponentActivity() {
+class FaqFragment : Fragment() {
 
-    private lateinit var binding: FragmentFaqBinding
+    private var _binding: FragmentFaqBinding? = null
+    private val binding get() = _binding!!
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = FragmentFaqBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentFaqBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
-        // 상단바
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // ✅ 상단바
         binding.connectTopAppBar.titleTextView.text = "자주 묻는 질문"
         binding.connectTopAppBar.backButton.setOnClickListener {
-            onBackPressedDispatcher.onBackPressed()
+            parentFragmentManager.popBackStack()
         }
 
-        // FAQ 데이터
+        // ✅ FAQ 데이터
         val faqList = listOf(
             FaqItem(
                 "디링은 어떻게 사용하나요?",
@@ -43,15 +54,25 @@ class FaqActivity : ComponentActivity() {
             )
         )
 
-        // RecyclerView (FAQ만)
-        binding.rvFaq.layoutManager = LinearLayoutManager(this)
+        // ✅ RecyclerView
+        binding.rvFaq.layoutManager = LinearLayoutManager(requireContext())
         binding.rvFaq.adapter = FaqAdapter(faqList)
 
-        // ✅ 고정 CTA 클릭 처리 (include 된 item_faq_support.xml)
-        // include는 보통 View로 잡히므로 bind로 내부 버튼 접근
-        val ctaBinding = ItemFaqSupportBinding.bind(binding.ctaSupport.root)
-        ctaBinding.btnContactSupport.setOnClickListener {
-            startActivity(Intent(this, SupportActivity::class.java))
+        // ✅ CTA 클릭 처리: SupportFragment로 교체 (네비 유지)
+        binding.ctaSupport.btnContactSupport.setOnClickListener {
+            val containerId = id  // 지금 FaqFragment가 붙어있는 FragmentContainerView id
+
+            if (containerId != View.NO_ID) {
+                parentFragmentManager.beginTransaction()
+                    .replace(containerId, SupportFragment())
+                    .addToBackStack(null)
+                    .commit()
+            }
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
