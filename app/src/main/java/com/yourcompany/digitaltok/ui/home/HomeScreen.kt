@@ -39,20 +39,17 @@ private object Variables {
     val Point = Color(0xFF3AADFF)
 }
 
-// Fragment를 Compose에서 표시하는 컴포저블 함수
 @Composable
 private fun ComposableFragmentContainer(modifier: Modifier = Modifier, fragment: () -> Fragment) {
     val containerId = remember { View.generateViewId() }
     val context = LocalContext.current
     AndroidView(
-        factory = {
-            FragmentContainerView(it).apply { id = containerId }
-        },
+        factory = { FragmentContainerView(it).apply { id = containerId } },
         modifier = modifier,
         update = {
-            val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
-            if (fragmentManager != null && fragmentManager.findFragmentById(containerId) == null) {
-                fragmentManager.commit {
+            val fm = (context as? FragmentActivity)?.supportFragmentManager
+            if (fm != null && fm.findFragmentById(containerId) == null) {
+                fm.commit {
                     setReorderingAllowed(true)
                     add(containerId, fragment())
                 }
@@ -74,11 +71,11 @@ fun HomeScreen() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") { HomeTab() }
+
             composable("device") {
                 val context = LocalContext.current
                 val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
 
-                // FragmentManager의 백스택 변경을 실시간으로 관찰하여 상태를 업데이트 (생명주기 관리!)
                 val backStackEntryCount by produceState(
                     initialValue = fragmentManager?.backStackEntryCount ?: 0,
                     key1 = fragmentManager
@@ -87,33 +84,24 @@ fun HomeScreen() {
                         value = fragmentManager?.backStackEntryCount ?: 0
                     }
                     fragmentManager?.addOnBackStackChangedListener(listener)
-                    awaitDispose {
-                        fragmentManager?.removeOnBackStackChangedListener(listener)
-                    }
+                    awaitDispose { fragmentManager?.removeOnBackStackChangedListener(listener) }
                 }
 
-                // 'device' 탭 내에서 프래그먼트 백스택이 있을 때만 BackHandler를 활성화
-                // 이렇게 하면 FragmentManager가 우선적으로 뒤로가기 이벤트를 처리
                 BackHandler(enabled = backStackEntryCount > 0) {
                     fragmentManager?.popBackStack()
                 }
 
-                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) {
-                    DeviceConnectFragment()
-                }
+                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) { DeviceConnectFragment() }
             }
 
             composable("decorate") {
-                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) {
-                    DecorateFragment()
-                }
+                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) { DecorateFragment() }
             }
 
             composable("settings") {
                 val context = LocalContext.current
                 val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
 
-                // FragmentManager 백스택 변경 감지 (device와 동일)
                 val backStackEntryCount by produceState(
                     initialValue = fragmentManager?.backStackEntryCount ?: 0,
                     key1 = fragmentManager
@@ -122,19 +110,14 @@ fun HomeScreen() {
                         value = fragmentManager?.backStackEntryCount ?: 0
                     }
                     fragmentManager?.addOnBackStackChangedListener(listener)
-                    awaitDispose {
-                        fragmentManager?.removeOnBackStackChangedListener(listener)
-                    }
+                    awaitDispose { fragmentManager?.removeOnBackStackChangedListener(listener) }
                 }
 
-                // settings 탭 내에서 프래그먼트 백스택이 있을 때만 뒤로가기 처리
                 BackHandler(enabled = backStackEntryCount > 0) {
                     fragmentManager?.popBackStack()
                 }
 
-                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) {
-                    HelpFragment()
-                }
+                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) { HelpFragment() }
             }
         }
     }
@@ -183,8 +166,7 @@ private fun HomeTab() {
         Spacer(Modifier.height(24.dp))
 
         Box(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.TopCenter
         ) {
             Box(
@@ -215,15 +197,5 @@ private fun HomeTab() {
             ),
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
-    }
-}
-
-@Composable
-private fun CenterText(text: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text)
     }
 }
