@@ -7,38 +7,86 @@ import com.yourcompany.digitaltok.data.network.RetrofitClient
 
 /**
  * 장치 관련 데이터 처리를 담당하는 클래스.
- * 가이드에 따라 API 호출 결과를 Result로 래핑하여 반환하고, 상세한 오류 처리를 수행합니다.
  */
 class DeviceRepository {
 
     private val apiService = RetrofitClient.apiService
 
-    suspend fun registerDevice(nfcUid: String, deviceName: String): Result<DeviceData> = try {
+    // nfcUid를 deviceId로 사용하여 서버에 장치 등록을 요청
+    suspend fun registerDevice(nfcUid: String): Result<DeviceData> = try {
+        // 기존의 nfcUid를 deviceId로 사용합니다.
         val response = apiService.registerDevice(
-            DeviceRegistrationRequest(nfcUid = nfcUid, deviceName = deviceName)
+            DeviceRegistrationRequest(deviceId = nfcUid)
         )
 
+        // isSuccessful은 HTTP Status Code (200-299)를 확인합니다.
         if (response.isSuccessful) {
             val body = response.body()
-            if (body?.data != null) {
-                // 성공: Status 2xx 이고, body와 data가 모두 존재
-                Log.d("DeviceRepository", "Device registration successful: ${body.data}")
-                Result.success(body.data)
+            // body가 null이 아니고, 서버 응답의 isSuccess가 true이며, 실제 데이터(result)가 null이 아닐 때 성공으로 처리합니다.
+            if (body != null && body.isSuccess && body.result != null) {
+                Log.d("DeviceRepository", "기기 연결 성공 ${body.result}")
+                Result.success(body.result)
             } else {
-                // 실패: Status 2xx 이지만, body 또는 data가 null
-                val errorMessage = body?.message ?: "Response body or data is null"
+                // Status 2xx 이지만, 서버가 isSuccess:false를 반환했거나 데이터가 없는 경우
+                val errorMessage = body?.message ?: "Response body, isSuccess, or result is problematic"
                 Log.e("DeviceRepository", "Device registration failed: $errorMessage")
                 Result.failure(RuntimeException(errorMessage))
             }
         } else {
-            // 실패: Status 4xx, 5xx 등
-            val errorBody = response.errorBody()?.string() ?: "Unknown error"
-            Log.e("DeviceRepository", "Device registration error: ${response.code()} - $errorBody")
+            // 실패: Status 4xx, 5xx 등 (HTTP 에러)
+            val errorBody = response.errorBody()?.string() ?: "Unknown HTTP error"
+            Log.e("DeviceRepository", "Device registration HTTP error: ${response.code()} - $errorBody")
             Result.failure(RuntimeException("API Error ${response.code()}: $errorBody"))
         }
     } catch (e: Exception) {
-        // 실패: 네트워크 오류 등
-        Log.e("DeviceRepository", "Network error: ${e.message}", e)
+        // 실패: 네트워크 연결 오류 등
+        Log.e("DeviceRepository", "Network or other exception: ${e.message}", e)
+        Result.failure(e)
+    }
+
+    suspend fun getDeviceById(deviceId: Int): Result<DeviceData> = try {
+        val response = apiService.getDeviceById(deviceId)
+
+        if (response.isSuccessful) {
+            val body = response.body()
+            if (body != null && body.isSuccess && body.result != null) {
+                Log.d("DeviceRepository", "기기 상태 조회 성공 ${body.result}")
+                Result.success(body.result)
+            } else {
+                val errorMessage = body?.message ?: "Response body, isSuccess, or result is problematic"
+                Log.e("DeviceRepository", "Get device by ID failed: $errorMessage")
+                Result.failure(RuntimeException(errorMessage))
+            }
+        } else {
+            val errorBody = response.errorBody()?.string() ?: "Unknown HTTP error"
+            Log.e("DeviceRepository", "Get device by ID HTTP error: ${response.code()} - $errorBody")
+            Result.failure(RuntimeException("API Error ${response.code()}: $errorBody"))
+        }
+    } catch (e: Exception) {
+        Log.e("DeviceRepository", "Network or other exception: ${e.message}", e)
+        Result.failure(e)
+    }
+
+    suspend fun deleteDevice(deviceId: Int): Result<DeviceData> = try {
+        val response = apiService.deleteDevice(deviceId)
+
+        if (response.isSuccessful) {
+            val body = response.body()
+            if (body != null && body.isSuccess && body.result != null) {
+                Log.d("DeviceRepository", "기기 연결 해제 성공 ${body.result}")
+                Result.success(body.result)
+            } else {
+                val errorMessage = body?.message ?: "Response body, isSuccess, or result is problematic"
+                Log.e("DeviceRepository", "Device deletion failed: $errorMessage")
+                Result.failure(RuntimeException(errorMessage))
+            }
+        } else {
+            val errorBody = response.errorBody()?.string() ?: "Unknown HTTP error"
+            Log.e("DeviceRepository", "Device deletion HTTP error: ${response.code()} - $errorBody")
+            Result.failure(RuntimeException("API Error ${response.code()}: $errorBody"))
+        }
+    } catch (e: Exception) {
+        Log.e("DeviceRepository", "Network or other exception: ${e.message}", e)
         Result.failure(e)
     }
 }

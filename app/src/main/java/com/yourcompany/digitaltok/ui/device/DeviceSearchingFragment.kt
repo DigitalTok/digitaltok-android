@@ -83,11 +83,8 @@ class DeviceSearchingFragment : Fragment() {
             if (tag != null) {
                 val uid = bytesToHexString(tag.id)
                 Log.d("NFC", "Tag detected with UID: $uid")
-                // TODO: 실제 장치 이름은 어떻게 정할지 논의 필요. 임시로 UID 사용
-                val deviceName = "MyDevice-$uid"
-
                 // 2. 태그가 감지되면, ViewModel을 통해 서버에 등록 요청
-                deviceViewModel.registerDevice(uid, deviceName)
+                deviceViewModel.registerDevice(uid)
 
                 // 3. 태그 처리가 완료되었음을 알림 (중복 처리 방지)
                 nfcViewModel.tagHandled()

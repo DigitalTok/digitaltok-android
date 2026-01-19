@@ -9,5 +9,18 @@
     <color name="white">#FFFFFFFF</color>
     <color name="gray4A">#4A5565</color>
     <color name="gray6A">#6A7282</color>
+    <color name="Main_100">#36ABFF</color>
+    <color name="Main_10">#1A3BADFF</color>
+    <color name="text_gray_1">#505050</color>
+    <color name="text_gray_2">#767676</color>
+    <color name="text_gray_3">#999999</color>
+    <color name="text_black">#111111</color>
+    <color name="Error">#FF6666</color>
+    <color name="Success">#00C950</color>
+    <color name="Default">#E0E0E0</color>
+    <color name="gray_bg">#F4F4F4</color>
+
+
+
 
 </resources>

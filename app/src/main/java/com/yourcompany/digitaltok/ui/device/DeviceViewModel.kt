@@ -19,15 +19,42 @@ class DeviceViewModel : ViewModel() {
     private val _registrationResult = MutableLiveData<Result<DeviceData>>()
     val registrationResult: LiveData<Result<DeviceData>> = _registrationResult
 
+    // 특정 장치의 상세 정보 조회 결과를 관찰하기 위한 LiveData
+    private val _deviceDetailsResult = MutableLiveData<Result<DeviceData>>()
+    val deviceDetailsResult: LiveData<Result<DeviceData>> = _deviceDetailsResult
+
+    // 장치 삭제 결과를 관찰하기 위한 LiveData
+    private val _deletionResult = MutableLiveData<Result<DeviceData>>()
+    val deletionResult: LiveData<Result<DeviceData>> = _deletionResult
     /**
-     * NFC 태그 UID와 장치 이름을 사용하여 서버에 장치 등록을 요청합니다.
+     * NFC 태그 UID를 사용하여 서버에 장치 등록을 요청
      * 이 함수가 호출되면, viewModelScope에 의해 백그라운드에서 서버 통신이 실행되고,
      * 그 결과는 registrationResult LiveData에 저장됩니다.
      */
-    fun registerDevice(nfcUid: String, deviceName: String) {
+    fun registerDevice(nfcUid: String) {
         viewModelScope.launch {
-            val result = repository.registerDevice(nfcUid, deviceName)
+            val result = repository.registerDevice(nfcUid)
             _registrationResult.postValue(result)
+        }
+    }
+    /**
+     * 장치 ID를 사용하여 서버에 상세 정보 조회를 요청합니다.
+     * 결과는 deviceDetailsResult LiveData에 저장됩니다.
+     */
+    fun getDeviceById(deviceId: Int) {
+        viewModelScope.launch {
+            val result = repository.getDeviceById(deviceId)
+            _deviceDetailsResult.postValue(result)
+        }
+    }
+    /**
+     * 장치 ID를 사용하여 서버에서 장치를 삭제합니다.
+     * 결과는 deletionResult LiveData에 저장됩니다.
+     */
+    fun deleteDevice(deviceId: Int) {
+        viewModelScope.launch {
+            val result = repository.deleteDevice(deviceId)
+            _deletionResult.postValue(result)
         }
     }
 }

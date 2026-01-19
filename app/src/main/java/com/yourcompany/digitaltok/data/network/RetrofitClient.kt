@@ -12,8 +12,8 @@ import java.util.concurrent.TimeUnit
  */
 object RetrofitClient {
 
-    // TODO: 실제 서버의 기본 URL로 수정해야 합니다.
-    private const val BASE_URL = "http://your.api.base.url/"
+    // 서버의 기본 URL
+    private const val BASE_URL = "http://3.37.213.174:8080/api/"
 
     // 로그 출력을 위한 인터셉터
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
