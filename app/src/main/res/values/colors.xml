@@ -9,5 +9,8 @@
     <color name="white">#FFFFFFFF</color>
     <color name="gray4A">#4A5565</color>
     <color name="gray6A">#6A7282</color>
+    <color name="dt_primary">#155DFC</color>
+    <color name="dt_gray_disabled">#D1D5DC</color>
+     <color name="dt_black_50">#0A0A0A80</color>
 
 </resources>

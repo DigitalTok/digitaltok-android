@@ -23,7 +23,8 @@ import com.yourcompany.digitaltok.R
 @Composable
 fun AuthStartScreen(
     modifier: Modifier = Modifier,
-    onSignupSuccess: () -> Unit = {}
+    onLoginClick: () -> Unit = {},
+    onSignupClick: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -33,8 +34,6 @@ fun AuthStartScreen(
     ) {
         Spacer(Modifier.height(56.dp))
 
-        // 로고(있으면)
-        // 너가 가진 로고 리소스 이름에 맞춰서 바꿔도 됨
         Image(
             painter = painterResource(id = R.drawable.splash_logo),
             contentDescription = null,
@@ -112,15 +111,36 @@ fun AuthStartScreen(
                 )
             )
             Image(
-                painter = painterResource(id = R.drawable.eye_closed), // 네 리소스 이름에 맞춰
+                painter = painterResource(id = R.drawable.eye_closed),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp)
             )
         }
 
-        Spacer(Modifier.height(24.dp))
+        // ✅ 피그마 규격 로그인 버튼(324x48, radius 4, padding 12/16)
+        Spacer(Modifier.height(12.dp))
+        Button(
+            onClick = onLoginClick,
+            modifier = Modifier
+                .width(324.dp)
+                .height(48.dp),
+            shape = RoundedCornerShape(4.dp),
+            contentPadding = PaddingValues(start = 12.dp, top = 16.dp, end = 12.dp, bottom = 16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF36ABFF))
+        ) {
+            Text(
+                text = "로그인",
+                style = TextStyle(
+                    fontSize = 16.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight(700),
+                    color = Color.White
+                )
+            )
+        }
 
-        // 또는 (가운데)
+        Spacer(Modifier.height(18.dp))
+
         Row(
             modifier = Modifier.width(324.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -143,7 +163,7 @@ fun AuthStartScreen(
         Spacer(Modifier.height(18.dp))
 
         Button(
-            onClick = onSignupSuccess,
+            onClick = onSignupClick,
             modifier = Modifier
                 .width(324.dp)
                 .height(44.dp),
