@@ -23,3 +23,4 @@ interface ApiService {
     @DELETE("v1/devices/{deviceId}")
     suspend fun deleteDevice(@Path("deviceId") deviceId: Int): Response<ApiResponse<DeviceData>>
 }
+
