@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.activity)
     implementation("androidx.compose.runtime:runtime-livedata") // LiveData를 Compose에서 사용하기 위한 라이브러리
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
