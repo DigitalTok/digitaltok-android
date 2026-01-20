@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="28dp">
+
+        <!-- 상단바 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/btnBack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="‹ 뒤로"
+                android:textSize="14sp"
+                android:textColor="#155DFC" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="회원가입"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#0A0A0A" />
+        </LinearLayout>
+
+        <!-- 이메일(아이디) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="이메일 (아이디)"
+            android:textSize="14sp"
+            android:textColor="#364153" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/etEmail"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_input_gray"
+                android:paddingHorizontal="16dp"
+                android:hint="example@email.com"
+                android:inputType="textEmailAddress"
+                android:textColor="#0A0A0A"
+                android:textColorHint="#800A0A0A" />
+
+            <Button
+                android:id="@+id/btnCheckEmail"
+                android:layout_width="88dp"
+                android:layout_height="52dp"
+                android:layout_marginStart="10dp"
+                android:text="중복확인"
+                android:textSize="14sp"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/bg_btn_blue" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvEmailStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textSize="12sp"
+            android:textColor="#FB2C36"
+            android:visibility="gone"
+            android:text="올바른 이메일 형식이 아닙니다" />
+
+        <!-- 비밀번호 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="비밀번호"
+            android:textSize="14sp"
+            android:textColor="#364153" />
+
+        <EditText
+            android:id="@+id/etPassword"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_input_gray"
+            android:paddingHorizontal="16dp"
+            android:hint="최소 6자 이상"
+            android:inputType="textPassword"
+            android:textColor="#0A0A0A"
+            android:textColorHint="#800A0A0A" />
+
+        <TextView
+            android:id="@+id/tvPwStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textSize="12sp"
+            android:textColor="#16A34A"
+            android:visibility="gone"
+            android:text="안전한 비밀번호입니다" />
+
+        <!-- 비밀번호 확인 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="비밀번호 확인"
+            android:textSize="14sp"
+            android:textColor="#364153" />
+
+        <EditText
+            android:id="@+id/etPasswordConfirm"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_input_gray"
+            android:paddingHorizontal="16dp"
+            android:hint="비밀번호를 다시 입력하세요"
+            android:inputType="textPassword"
+            android:textColor="#0A0A0A"
+            android:textColorHint="#800A0A0A" />
+
+        <TextView
+            android:id="@+id/tvPwConfirmStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textSize="12sp"
+            android:textColor="#FB2C36"
+            android:visibility="gone"
+            android:text="비밀번호가 일치하지 않습니다" />
+
+        <!-- 약관 박스 (일단 UI만) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/bg_terms_box"
+            android:padding="14dp"
+            android:orientation="vertical">
+
+            <CheckBox
+                android:id="@+id/cbTerms1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="[필수] DiRing 서비스 이용약관 보기"
+                android:textSize="12sp"
+                android:textColor="#4A5565" />
+
+            <CheckBox
+                android:id="@+id/cbTerms2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="[필수] 개인정보 수집 및 이용 동의 보기"
+                android:textSize="12sp"
+                android:textColor="#4A5565" />
+
+            <CheckBox
+                android:id="@+id/cbTerms3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="[선택] 마케팅 정보 수신 및 이벤트 알림 동의 보기"
+                android:textSize="12sp"
+                android:textColor="#6A7282" />
+        </LinearLayout>
+
+        <!-- 회원가입 버튼 -->
+        <Button
+            android:id="@+id/btnSignup"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="22dp"
+            android:text="회원가입"
+            android:textColor="#FFFFFF"
+            android:enabled="false"
+            android:background="@drawable/bg_btn_gray" />
+
+        <!-- 하단 로그인 링크 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="이미 계정이 있으신가요? "
+                android:textSize="12sp"
+                android:textColor="#4A5565" />
+
+            <TextView
+                android:id="@+id/tvGoLogin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="로그인"
+                android:textSize="12sp"
+                android:textColor="#155DFC" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

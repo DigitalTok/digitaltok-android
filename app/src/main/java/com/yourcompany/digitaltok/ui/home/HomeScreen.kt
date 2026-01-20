@@ -51,20 +51,17 @@ private object Variables {
     val Point = Color(0xFF3AADFF)
 }
 
-// Fragment를 Compose에서 표시하는 컴포저블 함수
 @Composable
 private fun ComposableFragmentContainer(modifier: Modifier = Modifier, fragment: () -> Fragment) {
     val containerId = remember { View.generateViewId() }
     val context = LocalContext.current
     AndroidView(
-        factory = {
-            FragmentContainerView(it).apply { id = containerId }
-        },
+        factory = { FragmentContainerView(it).apply { id = containerId } },
         modifier = modifier,
         update = {
-            val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
-            if (fragmentManager != null && fragmentManager.findFragmentById(containerId) == null) {
-                fragmentManager.commit {
+            val fm = (context as? FragmentActivity)?.supportFragmentManager
+            if (fm != null && fm.findFragmentById(containerId) == null) {
+                fm.commit {
                     setReorderingAllowed(true)
                     add(containerId, fragment())
                 }
@@ -86,8 +83,27 @@ fun HomeScreen() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") { HomeTab() }
+
             composable("device") {
                 val context = LocalContext.current
+                val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
+
+                val backStackEntryCount by produceState(
+                    initialValue = fragmentManager?.backStackEntryCount ?: 0,
+                    key1 = fragmentManager
+                ) {
+                    val listener = FragmentManager.OnBackStackChangedListener {
+                        value = fragmentManager?.backStackEntryCount ?: 0
+                    }
+                    fragmentManager?.addOnBackStackChangedListener(listener)
+                    awaitDispose { fragmentManager?.removeOnBackStackChangedListener(listener) }
+                }
+
+                BackHandler(enabled = backStackEntryCount > 0) {
+                    fragmentManager?.popBackStack()
+                }
+
+                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) { DeviceConnectFragment() }
                 val activity = context as FragmentActivity
                 val mainViewModel: MainViewModel = viewModel(viewModelStoreOwner = activity)
                 val isDeviceConnected by mainViewModel.isDeviceConnected.observeAsState(initial = false)
@@ -125,9 +141,7 @@ fun HomeScreen() {
             }
 
             composable("decorate") {
-                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) {
-                    DecorateFragment()
-                }
+                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) { DecorateFragment() }
             }
 
             composable("settings") {
@@ -142,18 +156,14 @@ fun HomeScreen() {
                         value = fragmentManager?.backStackEntryCount ?: 0
                     }
                     fragmentManager?.addOnBackStackChangedListener(listener)
-                    awaitDispose {
-                        fragmentManager?.removeOnBackStackChangedListener(listener)
-                    }
+                    awaitDispose { fragmentManager?.removeOnBackStackChangedListener(listener) }
                 }
 
                 BackHandler(enabled = backStackEntryCount > 0) {
                     fragmentManager?.popBackStack()
                 }
 
-                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) {
-                    HelpFragment()
-                }
+                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) { HelpFragment() }
             }
         }
     }
@@ -202,8 +212,7 @@ private fun HomeTab() {
         Spacer(Modifier.height(24.dp))
 
         Box(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.TopCenter
         ) {
             Box(
@@ -234,15 +243,5 @@ private fun HomeTab() {
             ),
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
-    }
-}
-
-@Composable
-private fun CenterText(text: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text)
     }
 }

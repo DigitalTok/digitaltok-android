@@ -3,8 +3,9 @@ package com.yourcompany.digitaltok.ui.components
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.PersonOutline
-import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material.icons.outlined.PhoneAndroid
+import androidx.compose.material.icons.outlined.StarOutline
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -27,9 +28,7 @@ private data class BottomItem(
 )
 
 @Composable
-fun BottomNavBar(
-    navController: NavController
-) {
+fun BottomNavBar(navController: NavController) {
     val items = listOf(
         BottomItem("home", "홈", Icons.Outlined.Home),
         BottomItem("device", "기기 연결", Icons.Outlined.PhoneAndroid),
@@ -43,6 +42,7 @@ fun BottomNavBar(
     NavigationBar(containerColor = Color.White) {
         items.forEach { item ->
             val selected = currentRoute == item.route
+
             NavigationBarItem(
                 selected = selected,
                 onClick = {
@@ -54,7 +54,7 @@ fun BottomNavBar(
                         }
                     }
                 },
-                icon = { androidx.compose.material3.Icon(item.icon, contentDescription = item.label) },
+                icon = { Icon(item.icon, contentDescription = item.label) },
                 label = { Text(item.label) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = AppColors.Point,
