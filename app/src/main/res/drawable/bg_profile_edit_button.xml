@@ -2,10 +2,9 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
 
-    <!-- 반투명 흰색 (20%) -->
-    <solid android:color="#33FFFFFF" />
+    <solid android:color="#36ABFF" />
 
     <!-- 모서리 둥글기 -->
-    <corners android:radius="14dp" />
+    <corners android:radius="4dp" />
 
 </shape>
