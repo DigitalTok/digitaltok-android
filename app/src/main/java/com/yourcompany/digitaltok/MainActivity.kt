@@ -90,7 +90,7 @@ fun AppNavHost(
 
         composable("signup") {
             AuthStartScreen(
-                onLoginClick = { onOpenEmailLogin() },
+                onLoginClick = { navController.navigate("home") },
                 onSignupClick = { onOpenSignUp() }
             )
         }
