@@ -9,22 +9,16 @@
         android:layout_height="69dp"
         android:background="@android:color/white">
 
-        <TextView
+        <ImageView
             android:id="@+id/backButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            android:minHeight="48dp"
-            android:padding="8dp"
-            android:text="&lt; 뒤로"
-            android:textColor="#155DFC"
-            android:textSize="16sp"
+            android:src="@drawable/ic_left_arrow"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            />
 
         <TextView
             android:id="@+id/titleTextView"
@@ -33,6 +27,7 @@
             android:text="제목"
             android:textColor="@android:color/black"
             android:textSize="18sp"
+            android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
