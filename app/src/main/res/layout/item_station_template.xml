@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="72dp"
+    android:background="@android:color/white"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp">
+
+    <!-- 왼쪽 아이콘(원형 배지) -->
+    <ImageView
+        android:id="@+id/ivBadge"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:src="@drawable/station1"
+        android:contentDescription="@null"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+    <!-- 역명 -->
+    <TextView
+        android:id="@+id/tvStationName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="시청"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_black"
+        app:layout_constraintStart_toEndOf="@id/ivBadge"
+        app:layout_constraintTop_toTopOf="@id/ivBadge"
+        app:layout_constraintEnd_toStartOf="@id/ivChevron"
+        android:layout_marginStart="12dp"/>
+
+    <!-- 호선 -->
+    <TextView
+        android:id="@+id/tvLine"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="1호선"
+        android:textSize="12sp"
+        android:textColor="@color/Text1"
+        app:layout_constraintStart_toStartOf="@id/tvStationName"
+        app:layout_constraintTop_toBottomOf="@id/tvStationName"
+        app:layout_constraintEnd_toStartOf="@id/ivChevron"
+        android:layout_marginTop="4dp"/>
+
+    <!-- 오른쪽 화살표 -->
+    <ImageView
+        android:id="@+id/ivChevron"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:src="@drawable/arrow_right"
+        android:contentDescription="@null"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

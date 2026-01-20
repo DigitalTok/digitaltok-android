@@ -67,7 +67,7 @@
                     android:layout_marginStart="26dp"
                     android:layout_marginTop="19dp"
                     android:text="이름"
-                    android:textColor="#767676"
+                    android:textColor="@color/text_gray_2"
                     android:textSize="12sp"
                     app:layout_constraintStart_toEndOf="@id/ivProfile"
                     app:layout_constraintTop_toTopOf="@id/ivProfile" />
@@ -80,7 +80,7 @@
                     android:layout_marginStart="26dp"
                     android:layout_marginBottom="19dp"
                     android:text="정재원"
-                    android:textColor="#111111"
+                    android:textColor="@color/text_black"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     app:layout_constraintStart_toEndOf="@id/ivProfile"
@@ -104,7 +104,7 @@
                     android:maxLines="2"
                     android:ellipsize="end"
                     android:text="이름은 자동생성되며, 이메일은 로그인 및 알림 수신에 사용됩니다."
-                    android:textColor="#36ABFF"
+                    android:textColor="@color/Main_100"
                     android:textSize="12sp"
                     app:layout_constraintTop_toBottomOf="@id/ivProfile"
                     app:layout_constraintStart_toStartOf="parent"
@@ -133,7 +133,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="이메일"
-                    android:textColor="#A0A0A0"
+                    android:textColor="@color/gray1"
                     android:textSize="14sp"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
@@ -179,7 +179,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="jaewon12@gmail.com"
-                        android:textColor="#767676"
+                        android:textColor="@color/text_gray_2"
                         android:textSize="12sp"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
@@ -191,6 +191,7 @@
                         android:layout_height="18dp"
                         android:src="@drawable/edit_image"
                         android:contentDescription="@null"
+                        app:tint="@color/text_gray_2"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent" />
@@ -219,7 +220,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:text="계정관리"
-                    android:textColor="#999999"
+                    android:textColor="@color/text_gray_3"
                     android:textSize="14sp"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
@@ -239,7 +240,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:text="로그아웃"
-                        android:textColor="#FF6666"
+                        android:textColor="@color/Error"
                         android:textSize="14sp"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
@@ -250,7 +251,7 @@
                         android:layout_width="7dp"
                         android:layout_height="14dp"
                         android:src="@drawable/vector_1"
-                        app:tint="#FF6666"
+                        app:tint="@color/Error"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
@@ -261,7 +262,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:text="회원 탈퇴"
-                        android:textColor="#505050"
+                        android:textColor="@color/text_gray_1"
                         android:textSize="14sp"
                         app:layout_constraintStart_toStartOf="parent"
                         android:layout_marginTop="20dp"
@@ -274,7 +275,7 @@
                         android:layout_width="7dp"
                         android:layout_height="14dp"
                         android:src="@drawable/vector_1"
-                        app:tint="#505050"
+                        app:tint="@color/text_gray_1"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
