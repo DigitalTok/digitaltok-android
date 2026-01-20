@@ -31,7 +31,7 @@ class HelpFragment : Fragment() {
         // 상단바
         binding.connectTopAppBar.titleTextView.text = "설정"
         binding.connectTopAppBar.backButton.setOnClickListener {
-            parentFragmentManager.popBackStack()
+            activity?.onBackPressedDispatcher?.onBackPressed()
         }
 
         // 프로필 편집 → ProfileEditFragment
