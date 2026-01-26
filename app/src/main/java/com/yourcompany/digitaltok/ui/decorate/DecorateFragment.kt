@@ -37,7 +37,7 @@ class DecorateFragment : Fragment() {
     private lateinit var btnSend: com.google.android.material.button.MaterialButton
 
     private lateinit var gridAdapter: DecorateAdapter
-    private lateinit var templateAdapter: StationTemplateAdapter
+    private lateinit var templateAdapter: TemplateAdapter
 
     private enum class Tab { RECENT, TEMPLATE }
     private var currentTab: Tab = Tab.RECENT
@@ -51,12 +51,19 @@ class DecorateFragment : Fragment() {
         }
     }
 
-    private val stationTemplates = listOf(
-        StationTemplateItem("st1", "시청", "1호선", R.drawable.ic_launcher_foreground),
-        StationTemplateItem("st2", "용산", "1호선", R.drawable.ic_launcher_foreground),
-        StationTemplateItem("st3", "강남", "2호선", R.drawable.ic_launcher_foreground),
-        StationTemplateItem("st4", "압구정", "3호선", R.drawable.ic_launcher_foreground),
-        StationTemplateItem("st5", "이촌", "4호선", R.drawable.ic_launcher_foreground),
+    private val templateList = listOf(
+        TemplateItem(
+            id = "template_transport",
+            title = "교통약자 좌석",
+            desc = "교통약자 좌석",
+            thumbRes = R.drawable.blank_img
+        ),
+        TemplateItem(
+            id = "template_station",
+            title = "지하철역",
+            desc = "지하철 노선별로 정리된 템플릿",
+            thumbRes = R.drawable.blank_img
+        )
     )
 
     // 카메라 촬영 저장용 Uri
@@ -119,10 +126,19 @@ class DecorateFragment : Fragment() {
         }
         rvGrid.adapter = gridAdapter
 
-        // 역명 템플릿 리스트
+        // 템플릿 리스트(2개)
         rvTemplateList.layoutManager = LinearLayoutManager(requireContext())
-        templateAdapter = StationTemplateAdapter(stationTemplates) { item ->
-            Toast.makeText(requireContext(), "템플릿 선택: ${item.stationName}", Toast.LENGTH_SHORT).show()
+        templateAdapter = TemplateAdapter(templateList) { item ->
+            when (item.id) {
+                "template_transport" -> {
+                    Toast.makeText(requireContext(), "교통약자 좌석 템플릿", Toast.LENGTH_SHORT).show()
+                    // TODO: 교통약자 좌석 템플릿 상세/적용 화면 이동
+                }
+                "template_station" -> {
+                    Toast.makeText(requireContext(), "지하철역 템플릿", Toast.LENGTH_SHORT).show()
+                    // TODO: 지하철역(노선별) 화면 이동
+                }
+            }
         }
         rvTemplateList.adapter = templateAdapter
 
@@ -161,11 +177,12 @@ class DecorateFragment : Fragment() {
         rvTemplateList.visibility = if (isRecent) View.GONE else View.VISIBLE
         sendContainer.visibility = if (isRecent) View.VISIBLE else View.GONE
 
-        tvCount.text = if (isRecent) {
+        if (isRecent) {
             val filled = recentItems.count { it.imageUri != null }
-            "최근 사용한 사진 ($filled/$maxSlots)"
+            tvCount.text = "최근 사용한 사진 ($filled/$maxSlots)"
+            tvCount.visibility = View.VISIBLE
         } else {
-            "템플릿"
+            tvCount.visibility = View.GONE
         }
 
         updateSendButtonUI()

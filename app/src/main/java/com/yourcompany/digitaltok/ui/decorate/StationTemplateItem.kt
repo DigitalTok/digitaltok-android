@@ -1,8 +1,8 @@
 package com.yourcompany.digitaltok.ui.decorate
 
-data class StationTemplateItem(
+data class TemplateItem(
     val id: String,
-    val stationName: String,
-    val lineText: String,
-    val badgeRes: Int
+    val title: String,
+    val desc: String,
+    val thumbRes: Int
 )
