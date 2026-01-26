@@ -4,6 +4,8 @@ import android.Manifest
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,10 +18,13 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
+import java.io.File
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.yourcompany.digitaltok.R
-import java.io.File
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 
 class DecorateFragment : Fragment() {
 
@@ -37,9 +42,12 @@ class DecorateFragment : Fragment() {
     private enum class Tab { RECENT, TEMPLATE }
     private var currentTab: Tab = Tab.RECENT
 
+    private val maxSlots = 15
+
+    // 초기: 회색 무지 15칸(이미지 없음)
     private val recentItems = mutableListOf<DecorateItem>().apply {
-        repeat(15) { idx ->
-            add(DecorateItem("recent_$idx", imageRes = R.drawable.splash_logo, isFavorite = true))
+        repeat(maxSlots) { idx ->
+            add(DecorateItem(id = "slot_$idx")) // imageUri=null, imageRes=null
         }
     }
 
@@ -54,14 +62,14 @@ class DecorateFragment : Fragment() {
     // 카메라 촬영 저장용 Uri
     private var pendingCameraUri: Uri? = null
 
-    // ✅ 갤러리(시스템 Photo Picker)
+    // 갤러리(시스템 Photo Picker)
     private val pickImageLauncher =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             if (uri == null) return@registerForActivityResult
             addRecentImage(uri)
         }
 
-    // ✅ 카메라(촬영 후 Uri에 저장)
+    // 카메라(촬영 후 Uri에 저장)
     private val takePictureLauncher =
         registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             val uri = pendingCameraUri
@@ -69,7 +77,7 @@ class DecorateFragment : Fragment() {
             addRecentImage(uri)
         }
 
-    // ✅ 카메라 권한 요청
+    // 카메라 권한 요청
     private val requestCameraPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) openCameraInternal()
@@ -95,8 +103,18 @@ class DecorateFragment : Fragment() {
         btnSend = view.findViewById(R.id.btnSend)
 
         // 최근 사진 그리드
-        rvGrid.layoutManager = GridLayoutManager(requireContext(), 3)
+        val spanCount = 3
+        rvGrid.layoutManager = GridLayoutManager(requireContext(), spanCount)
+
+        // 간격(좌우 12dp, 상하 13dp) ItemDecoration
+        val hSpace = resources.getDimensionPixelSize(R.dimen.grid_spacing_horizontal)
+        val vSpace = resources.getDimensionPixelSize(R.dimen.grid_spacing_vertical)
+        if (rvGrid.itemDecorationCount == 0) {
+            rvGrid.addItemDecoration(GridSpacingItemDecoration(spanCount, hSpace, vSpace))
+        }
+
         gridAdapter = DecorateAdapter(recentItems) {
+            // 아이템 선택/해제될 때 버튼 UI 갱신
             updateSendButtonUI()
         }
         rvGrid.adapter = gridAdapter
@@ -131,6 +149,7 @@ class DecorateFragment : Fragment() {
             }
         }
 
+        updateCountUI()
         updateSendButtonUI()
     }
 
@@ -143,7 +162,8 @@ class DecorateFragment : Fragment() {
         sendContainer.visibility = if (isRecent) View.VISIBLE else View.GONE
 
         tvCount.text = if (isRecent) {
-            "최근 사용한 사진 (${recentItems.size}/${recentItems.size})"
+            val filled = recentItems.count { it.imageUri != null }
+            "최근 사용한 사진 ($filled/$maxSlots)"
         } else {
             "템플릿"
         }
@@ -160,32 +180,96 @@ class DecorateFragment : Fragment() {
         btnSend.text = if (hasSelected) "이미지 전송하기" else "+ 내 이미지 추가"
     }
 
-    private fun showAddImageDialog() {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("이미지 가져오기")
-            .setItems(arrayOf("갤러리에서 가져오기", "카메라에서 가져오기")) { _, which ->
-                when (which) {
-                    0 -> openGallery()
-                    1 -> openCamera()
-                }
-            }
-            .setNegativeButton("취소", null)
-            .show()
+    private fun updateCountUI() {
+        if (currentTab != Tab.RECENT) return
+        val filled = recentItems.count { it.imageUri != null }
+        tvCount.text = "최근 사용한 사진 ($filled/$maxSlots)"
     }
 
-    // ✅ 갤러리 열기(시스템 Photo Picker)
+
+
+    private fun showAddImageDialog() {
+        val dialogView = layoutInflater.inflate(
+            R.layout.bottom_sheet_image_picker,
+            null,
+            false
+        )
+
+        val dialog = MaterialAlertDialogBuilder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        // 카메라
+        dialogView.findViewById<TextView>(R.id.tvCamera).setOnClickListener {
+            dialog.dismiss()
+            openCamera()
+        }
+
+        // 갤러리
+        dialogView.findViewById<TextView>(R.id.tvGallery).setOnClickListener {
+            dialog.dismiss()
+            openGallery()
+        }
+
+        // 돌아가기
+        dialogView.findViewById<MaterialButton>(R.id.btnCancel).setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
+
+        dialog.window?.apply {
+            // 다이얼로그 창 자체 배경을 투명으로
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        }
+
+        // 🔽 여기부터 "위치 제어" 핵심
+        dialog.window?.let { window ->
+            window.setGravity(Gravity.BOTTOM)
+
+            // 1️⃣ 네비게이션 바 높이(px)
+            val navBarHeightPx = run {
+                val resId = resources.getIdentifier(
+                    "navigation_bar_height",
+                    "dimen",
+                    "android"
+                )
+                if (resId > 0) resources.getDimensionPixelSize(resId) else 0
+            }
+
+            // 2️⃣ 16dp → px
+            val margin16dpPx = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                32f,
+                resources.displayMetrics
+            ).toInt()
+
+            // 3️⃣ 최종 y 오프셋 = 네비게이션바 + 16dp
+            val params = window.attributes
+            params.y = navBarHeightPx + margin16dpPx
+            window.attributes = params
+
+            // (선택) 가로 폭 꽉 차게
+            window.setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+    }
+
+
+
+
     private fun openGallery() {
         pickImageLauncher.launch(
             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
         )
     }
 
-    // ✅ 카메라 열기 (권한 먼저 요청)
     private fun openCamera() {
         requestCameraPermission.launch(Manifest.permission.CAMERA)
     }
 
-    // ✅ 권한 승인 후 실제 카메라 실행
     private fun openCameraInternal() {
         val uri = createImageUriForCamera()
         pendingCameraUri = uri
@@ -193,29 +277,28 @@ class DecorateFragment : Fragment() {
     }
 
     private fun addRecentImage(uri: Uri) {
-        recentItems.add(
-            0,
-            DecorateItem(
-                id = "user_${System.currentTimeMillis()}",
-                imageUri = uri,
-                isFavorite = true
-            )
+        val newItem = DecorateItem(
+            id = "user_${System.currentTimeMillis()}",
+            imageUri = uri
         )
+
+        // 맨 앞에 추가하고, 15개 유지
+        recentItems.add(0, newItem)
+        if (recentItems.size > maxSlots) {
+            recentItems.removeAt(recentItems.lastIndex)
+        }
+
         gridAdapter.submitList(recentItems.toList())
 
-        tvCount.text = "최근 사용한 사진 (${recentItems.size}/${recentItems.size})"
+        updateCountUI()
         updateSendButtonUI()
     }
 
-    // ✅ 카메라가 저장할 Uri 생성(FileProvider)
     private fun createImageUriForCamera(): Uri {
         val imagesDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         val imageFile = File(imagesDir, "camera_${System.currentTimeMillis()}.jpg")
 
-        // ✅ 가장 안전: manifest의 ${applicationId}.fileprovider 와 항상 일치
         val authority = "${requireContext().packageName}.fileprovider"
-
-
         return FileProvider.getUriForFile(requireContext(), authority, imageFile)
     }
 }
