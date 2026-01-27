@@ -8,35 +8,33 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.yourcompany.digitaltok.R
 
-class StationTemplateAdapter(
-    private var items: List<StationTemplateItem>,
-    private val onClick: (StationTemplateItem) -> Unit
-) : RecyclerView.Adapter<StationTemplateAdapter.VH>() {
-
-    fun submitList(newItems: List<StationTemplateItem>) {
-        items = newItems
-        notifyDataSetChanged()
-    }
+class TemplateAdapter(
+    private val items: List<TemplateItem>,
+    private val onClick: (TemplateItem) -> Unit
+) : RecyclerView.Adapter<TemplateAdapter.VH>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-        val v = LayoutInflater.from(parent.context)
+        val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_station_template, parent, false)
-        return VH(v)
+        return VH(view)
     }
 
-    override fun getItemCount() = items.size
+    override fun getItemCount(): Int = items.size
 
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = items[position]
-        holder.badge.setImageResource(item.badgeRes)
-        holder.name.text = item.stationName
-        holder.line.text = item.lineText
+
+        holder.thumb.setImageResource(item.thumbRes)
+        holder.title.text = item.title
+        holder.desc.text = item.desc
+
         holder.itemView.setOnClickListener { onClick(item) }
     }
 
-    class VH(v: View) : RecyclerView.ViewHolder(v) {
-        val badge: ImageView = v.findViewById(R.id.ivBadge)
-        val name: TextView = v.findViewById(R.id.tvStationName)
-        val line: TextView = v.findViewById(R.id.tvLine)
+    class VH(view: View) : RecyclerView.ViewHolder(view) {
+        val thumb: ImageView = view.findViewById(R.id.ivThumb)
+        val title: TextView = view.findViewById(R.id.tvName)
+        val desc: TextView = view.findViewById(R.id.tvDesc)
+        val divider: View = view.findViewById(R.id.divider)
     }
 }
