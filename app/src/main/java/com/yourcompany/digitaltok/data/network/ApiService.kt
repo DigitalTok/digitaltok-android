@@ -29,7 +29,7 @@ interface ApiService {
     suspend fun deleteDevice(@Path("deviceId") deviceId: Int): Response<ApiResponse<DeviceData>>
 
     @Multipart
-    @POST("api/images")
+    @POST("images")
     suspend fun uploadImage(
         @Query("imageName") imageName: String,
         @Part file: MultipartBody.Part

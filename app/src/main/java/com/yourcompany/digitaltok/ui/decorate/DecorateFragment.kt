@@ -11,13 +11,16 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -30,6 +33,9 @@ import com.yourcompany.digitaltok.R
 import java.io.File
 
 class DecorateFragment : Fragment() {
+
+    private val viewModel: DecorateViewModel by viewModels()
+    private var loadingDialog: AlertDialog? = null
 
     // ----- Top / Tabs -----
     private lateinit var toggleTabs: MaterialButtonToggleGroup
@@ -146,6 +152,8 @@ class DecorateFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        observeViewModel()
 
         // ----- bind -----
         toggleTabs = view.findViewById(R.id.toggleTabs)
@@ -267,8 +275,14 @@ class DecorateFragment : Fragment() {
             if (selected == null) {
                 showAddImageDialog()
             } else {
-                Toast.makeText(requireContext(), "선택한 이미지 전송: ${selected.id}", Toast.LENGTH_SHORT).show()
-                // TODO: NFC 전송 로직 연결
+                selected.imageUri?.let { uri ->
+                    val imageFile = uriToFile(uri)
+                    if (imageFile != null) {
+                        viewModel.uploadImage(imageFile)
+                    } else {
+                        Toast.makeText(requireContext(), "이미지 파일을 준비할 수 없습니다.", Toast.LENGTH_SHORT).show()
+                    }
+                } ?: Toast.makeText(requireContext(), "선택된 이미지가 없습니다.", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -523,5 +537,63 @@ class DecorateFragment : Fragment() {
 
         val authority = "${requireContext().packageName}.fileprovider"
         return FileProvider.getUriForFile(requireContext(), authority, imageFile)
+    }
+
+    // -------------------- VIEWMODEL & UPLOAD --------------------
+
+    private fun observeViewModel() {
+        viewModel.uploadState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is DecorateViewModel.UploadUiState.Loading -> {
+                    showLoadingDialog()
+                }
+                is DecorateViewModel.UploadUiState.Success -> {
+                    hideLoadingDialog()
+                    Toast.makeText(requireContext(), "이미지 업로드 성공!", Toast.LENGTH_SHORT).show()
+                }
+                is DecorateViewModel.UploadUiState.Error -> {
+                    hideLoadingDialog()
+                    Toast.makeText(requireContext(), "업로드 실패: ${state.message}", Toast.LENGTH_LONG).show()
+                }
+                is DecorateViewModel.UploadUiState.Idle -> {
+                    hideLoadingDialog()
+                }
+            }
+        }
+    }
+
+    private fun uriToFile(uri: Uri): File? {
+        return try {
+            val inputStream = requireContext().contentResolver.openInputStream(uri) ?: return null
+            // Create a temporary file in the cache directory
+            val file = File(requireContext().cacheDir, "upload_${System.currentTimeMillis()}.jpg")
+            file.outputStream().use { fileOut ->
+                inputStream.copyTo(fileOut)
+            }
+            inputStream.close()
+            file
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    private fun showLoadingDialog() {
+        if (loadingDialog == null) {
+            val progressBar = ProgressBar(requireContext()).apply {
+                val padding = 100
+                setPadding(padding, padding, padding, padding)
+            }
+            loadingDialog = MaterialAlertDialogBuilder(requireContext())
+                .setTitle("업로드 중...")
+                .setView(progressBar)
+                .setCancelable(false)
+                .create()
+        }
+        loadingDialog?.show()
+    }
+
+    private fun hideLoadingDialog() {
+        loadingDialog?.dismiss()
     }
 }
