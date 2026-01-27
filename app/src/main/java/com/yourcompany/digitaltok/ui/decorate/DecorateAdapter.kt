@@ -15,16 +15,38 @@ class DecorateAdapter(
     /** 현재 선택된 아이템 id */
     private var selectedId: String? = null
 
+    // 여러 개 즐겨찾기(별 체크) 허용
+    private val pinnedIds = linkedSetOf<String>() // 순서 유지(Set)
+
     /** 리스트 교체 (탭 변경 시 사용) */
     fun submitList(newItems: List<DecorateItem>) {
         items = newItems
         selectedId = null
+
+        val idSet = newItems.map { it.id }.toHashSet()
+        pinnedIds.retainAll(idSet)
+
         notifyDataSetChanged()
     }
 
     /** 선택된 아이템 반환 */
     fun getSelectedItem(): DecorateItem? {
         return items.firstOrNull { it.id == selectedId }
+    }
+
+    // 별 토글 + 즐겨찾기 항목들을 위로 정렬
+    private fun togglePinAndReorder(item: DecorateItem) {
+        if (pinnedIds.contains(item.id)) pinnedIds.remove(item.id) else pinnedIds.add(item.id)
+
+        // 즐겨찾기(true) 먼저, 그 다음 원래 순서 유지
+        val reordered = items
+            .withIndex()
+            .sortedWith(compareByDescending<IndexedValue<DecorateItem>> { pinnedIds.contains(it.value.id) }
+                .thenBy { it.index })
+            .map { it.value }
+
+        items = reordered
+        notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DecorateViewHolder {
@@ -38,16 +60,26 @@ class DecorateAdapter(
     override fun onBindViewHolder(holder: DecorateViewHolder, position: Int) {
         val item = items[position]
 
-        // 썸네일 (Uri 우선, 없으면 drawable)
+        // 썸네일 (Uri 우선, 없으면 drawable, 둘 다 없으면 "무지 배경"만 보이게)
         when {
-            item.imageUri != null -> holder.ivThumb.setImageURI(item.imageUri)
-            item.imageRes != null -> holder.ivThumb.setImageResource(item.imageRes)
-            else -> holder.ivThumb.setImageResource(R.drawable.splash_logo)
+            item.imageUri != null -> {
+                holder.ivThumb.visibility = View.VISIBLE
+                holder.ivThumb.setImageURI(item.imageUri)
+            }
+            item.imageRes != null -> {
+                holder.ivThumb.visibility = View.VISIBLE
+                holder.ivThumb.setImageResource(item.imageRes)
+            }
+            else -> {
+                holder.ivThumb.setImageDrawable(null)
+                holder.ivThumb.visibility = View.GONE
+            }
         }
 
-        // 즐겨찾기 별 (지금은 항상 표시, 나중에 로직 분기 가능)
+        // 별 표시
         holder.ivStar.visibility = View.VISIBLE
-        // if (item.isFavorite) View.VISIBLE else View.GONE
+        holder.ivStar.isSelected = pinnedIds.contains(item.id)
+        holder.ivStar.bringToFront()
 
         // 선택 테두리
         holder.viewSelectedBorder.visibility =
@@ -58,6 +90,11 @@ class DecorateAdapter(
             selectedId = if (selectedId == item.id) null else item.id
             notifyDataSetChanged()
             onItemClick(item)
+        }
+
+        // 별 클릭: 여러 개 체크 + 즐겨찾기들은 위로 모으기
+        holder.ivStar.setOnClickListener {
+            togglePinAndReorder(item)
         }
     }
 
