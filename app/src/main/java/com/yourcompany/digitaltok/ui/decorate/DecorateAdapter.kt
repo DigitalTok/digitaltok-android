@@ -9,7 +9,8 @@ import com.yourcompany.digitaltok.R
 
 class DecorateAdapter(
     private var items: List<DecorateItem>,
-    private val onItemClick: (DecorateItem) -> Unit
+    private val onItemClick: (DecorateItem) -> Unit,
+    private val onFavoriteClick: (String, Boolean) -> Unit // (imageId, isFavorite)
 ) : RecyclerView.Adapter<DecorateAdapter.DecorateViewHolder>() {
 
     /** 현재 선택된 아이템 id */
@@ -36,7 +37,16 @@ class DecorateAdapter(
 
     // 별 토글 + 즐겨찾기 항목들을 위로 정렬
     private fun togglePinAndReorder(item: DecorateItem) {
-        if (pinnedIds.contains(item.id)) pinnedIds.remove(item.id) else pinnedIds.add(item.id)
+        val isCurrentlyFavorite = pinnedIds.contains(item.id)
+        val newFavoriteState = !isCurrentlyFavorite
+
+        onFavoriteClick(item.id, newFavoriteState) // ViewModel에 알림
+
+        if (newFavoriteState) {
+            pinnedIds.add(item.id)
+        } else {
+            pinnedIds.remove(item.id)
+        }
 
         // 즐겨찾기(true) 먼저, 그 다음 원래 순서 유지
         val reordered = items

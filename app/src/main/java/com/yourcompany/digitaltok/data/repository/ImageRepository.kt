@@ -29,4 +29,17 @@ class ImageRepository {
             Result.failure(e) // 모든 예외를 Result.failure로 감싸서 반환
         }
     }
+
+    suspend fun updateFavoriteStatus(imageId: String, isFavorite: Boolean): Result<Unit> {
+        return try {
+            val response = apiService.updateFavoriteStatus(imageId, mapOf("isFavorite" to isFavorite))
+            if (response.isSuccessful && response.body()?.isSuccess == true) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "Unknown error"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

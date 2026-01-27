@@ -181,7 +181,13 @@ class DecorateFragment : Fragment() {
             rvGrid.addItemDecoration(GridSpacingItemDecoration(spanCount, hSpace, vSpace))
         }
 
-        gridAdapter = DecorateAdapter(recentItems) { updateSendButtonUI() }
+        gridAdapter = DecorateAdapter(
+            items = recentItems,
+            onItemClick = { updateSendButtonUI() },
+            onFavoriteClick = { imageId, isFavorite ->
+                viewModel.toggleFavoriteStatus(imageId, isFavorite)
+            }
+        )
         rvGrid.adapter = gridAdapter
 
         // ----- template menu (2 items) -----
@@ -557,6 +563,26 @@ class DecorateFragment : Fragment() {
                 }
                 is DecorateViewModel.UploadUiState.Idle -> {
                     hideLoadingDialog()
+                }
+            }
+        }
+
+        viewModel.favoriteState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is DecorateViewModel.FavoriteUiState.Loading -> {
+                    // 로딩 중 UI 표시가 필요하다면 여기에 구현 (예: 작은 스피너 표시)
+                }
+                is DecorateViewModel.FavoriteUiState.Success -> {
+                    val message = if (state.isFavorite) "즐겨찾기에 추가했습니다." else "즐겨찾기에서 해제했습니다."
+                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                }
+                is DecorateViewModel.FavoriteUiState.Error -> {
+                    Toast.makeText(requireContext(), "오류: ${state.message}", Toast.LENGTH_SHORT).show()
+                    // 참고: API 에러 발생 시, 어댑터의 UI 상태를 원래대로 되돌리는 로직을 추가하면
+                    // 더 안정적인 사용자 경험을 제공할 수 있습니다.
+                }
+                is DecorateViewModel.FavoriteUiState.Idle -> {
+                    // 아무것도 안 함
                 }
             }
         }
