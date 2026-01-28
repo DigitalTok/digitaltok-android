@@ -28,29 +28,18 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <ImageView
-            android:id="@+id/ivProfile"
-            android:layout_width="77dp"
-            android:layout_height="77dp"
-            android:paddingStart="4dp"
-            android:src="@drawable/none_profile"
-            android:contentDescription="@null"
-            android:scaleType="centerCrop"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
         <TextView
             android:id="@+id/tvUserName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="26dp"
             android:text="정재원님"
-            android:textColor="#111111"
+            android:textColor="@color/text_black"
             android:textSize="18sp"
             android:textStyle="bold"
             android:layout_marginTop="21dp"
-            app:layout_constraintStart_toEndOf="@id/ivProfile"
-            app:layout_constraintTop_toTopOf="@id/ivProfile"
+            app:layout_constraintStart_toStartOf="@id/bannerProfile"
+            app:layout_constraintTop_toTopOf="@id/bannerProfile"
             app:layout_constraintEnd_toEndOf="parent" />
 
         <TextView
@@ -58,11 +47,12 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="26dp"
+            android:layout_marginTop="6dp"
             android:text="jaewon12@gmail.com"
             android:textStyle="normal"
-            android:textColor="#767676"
+            android:textColor="@color/text_gray_2"
             android:textSize="12sp"
-            app:layout_constraintStart_toEndOf="@id/ivProfile"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvUserName"
             app:layout_constraintEnd_toEndOf="parent" />
 
@@ -70,14 +60,14 @@
             android:id="@+id/btnEditProfile"
             android:layout_width="0dp"
             android:layout_height="48dp"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="39dp"
             android:background="@drawable/bg_profile_edit_button"
             android:gravity="center"
             android:text="프로필 편집"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:layout_constraintTop_toBottomOf="@id/ivProfile"
+            app:layout_constraintTop_toBottomOf="@id/tvUserEmail"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -104,7 +94,7 @@
             android:text="도움말"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:textColor="#999999"
+            android:textColor="@color/text_gray_3"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
@@ -134,7 +124,7 @@
                     android:layout_height="wrap_content"
                     android:text="자주 묻는 질문"
                     android:textSize="14sp"
-                    android:textColor="#505050"
+                    android:textColor="@color/text_gray_1"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -147,7 +137,7 @@
                     android:layout_height="14dp"
                     android:src="@drawable/vector_1"
                     android:textSize="18sp"
-                    app:tint="#505050"
+                    app:tint="@color/text_gray_1"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent" />
@@ -171,7 +161,7 @@
                     android:layout_height="wrap_content"
                     android:text="고객 지원"
                     android:textSize="14sp"
-                    android:textColor="#505050"
+                    android:textColor="@color/text_gray_1"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -184,7 +174,7 @@
                     android:layout_height="14dp"
                     android:src="@drawable/vector_1"
                     android:textSize="18sp"
-                    app:tint="#505050"
+                    app:tint="@color/text_gray_1"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent" />
@@ -218,7 +208,7 @@
             android:text="정보"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:textColor="#A0A0A0"
+            android:textColor="@color/gray1"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
@@ -238,7 +228,7 @@
                 android:layout_height="wrap_content"
                 android:text="앱 버전"
                 android:textSize="14sp"
-                android:textColor="#505050"
+                android:textColor="@color/text_gray_1"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
@@ -249,7 +239,7 @@
                 android:layout_height="wrap_content"
                 android:text="DT v 1.12.6"
                 android:textSize="14sp"
-                android:textColor="#A0A0A0"
+                android:textColor="@color/gray1"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
