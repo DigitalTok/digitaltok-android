@@ -70,3 +70,12 @@ data class RecentImage(
     @SerializedName("lastUsedAt")
     val lastUsedAt: String
 )
+
+data class ImagePreview(
+    @SerializedName("imageId")
+    val imageId: Int,
+    @SerializedName("previewUrl")
+    val previewUrl: String,
+    @SerializedName("updatedAt")
+    val updatedAt: String
+)
