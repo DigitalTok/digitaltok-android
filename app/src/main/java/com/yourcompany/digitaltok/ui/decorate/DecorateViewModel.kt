@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yourcompany.digitaltok.data.model.ImageUploadResult
+import com.yourcompany.digitaltok.data.model.RecentImagesResponse
 import com.yourcompany.digitaltok.data.repository.ImageRepository
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -37,6 +38,33 @@ class DecorateViewModel : ViewModel() {
 
     private val _favoriteState = MutableLiveData<FavoriteUiState>(FavoriteUiState.Idle)
     val favoriteState: LiveData<FavoriteUiState> = _favoriteState
+
+    // 최근 이미지 목록 UI 상태
+    sealed class RecentImagesUiState {
+        object Idle : RecentImagesUiState()
+        object Loading : RecentImagesUiState()
+        data class Success(val response: RecentImagesResponse) : RecentImagesUiState()
+        data class Error(val message: String) : RecentImagesUiState()
+    }
+
+    private val _recentImagesState = MutableLiveData<RecentImagesUiState>(RecentImagesUiState.Idle)
+    val recentImagesState: LiveData<RecentImagesUiState> = _recentImagesState
+
+    init {
+        fetchRecentImages()
+    }
+
+    fun fetchRecentImages() {
+        viewModelScope.launch {
+            _recentImagesState.value = RecentImagesUiState.Loading
+            val result = imageRepository.getRecentImages()
+            result.onSuccess {
+                _recentImagesState.value = RecentImagesUiState.Success(it)
+            }.onFailure {
+                _recentImagesState.value = RecentImagesUiState.Error(it.message ?: "최근 이미지 목록을 불러오는데 실패했습니다.")
+            }
+        }
+    }
 
     fun uploadImage(imageFile: File) {
         viewModelScope.launch {

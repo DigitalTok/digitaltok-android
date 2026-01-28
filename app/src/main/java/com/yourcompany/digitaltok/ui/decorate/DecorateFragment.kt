@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -154,6 +155,7 @@ class DecorateFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         observeViewModel()
+        setupOnBackPressed()
 
         // ----- bind -----
         toggleTabs = view.findViewById(R.id.toggleTabs)
@@ -294,6 +296,25 @@ class DecorateFragment : Fragment() {
 
         updateCountUI()
         updateSendButtonUI()
+    }
+
+    // -------------------- BACK PRESS --------------------
+    private fun setupOnBackPressed() {
+        val callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // 템플릿 탭의 하위 메뉴(좌석 리스트, 역 리스트 등)에 있을 경우
+                if (currentTab == Tab.TEMPLATE && currentScreen != TemplateScreen.MENU) {
+                    // 이전 화면인 템플릿 메뉴로 돌아감
+                    showTemplateMenu()
+                } else {
+                    // 그 외의 경우(최근 사진 탭, 템플릿 첫 화면)에는 기본 뒤로가기 동작 수행
+                    // 콜백을 비활성화하고, 액티비티의 기본 뒤로가기 로직을 다시 호출
+                    isEnabled = false
+                    requireActivity().onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
     }
 
     // -------------------- TAB CONTROL --------------------
@@ -556,6 +577,8 @@ class DecorateFragment : Fragment() {
                 is DecorateViewModel.UploadUiState.Success -> {
                     hideLoadingDialog()
                     Toast.makeText(requireContext(), "이미지 업로드 성공!", Toast.LENGTH_SHORT).show()
+                    // 새 이미지가 업로드되었으니, 최근 목록을 새로고침합니다.
+                    viewModel.fetchRecentImages()
                 }
                 is DecorateViewModel.UploadUiState.Error -> {
                     hideLoadingDialog()
@@ -584,6 +607,52 @@ class DecorateFragment : Fragment() {
                 is DecorateViewModel.FavoriteUiState.Idle -> {
                     // 아무것도 안 함
                 }
+            }
+        }
+
+        viewModel.recentImagesState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is DecorateViewModel.RecentImagesUiState.Loading -> {
+                    // 로딩 UI 표시 없음 (사용자 요청)
+                }
+                is DecorateViewModel.RecentImagesUiState.Success -> {
+                    val recentApiItems = state.response.items
+
+                    // 1. API 응답을 UI 모델 (DecorateItem) 리스트로 변환
+                    val newItems = recentApiItems.map {
+                        DecorateItem(
+                            id = it.imageId.toString(),
+                            imageUri = Uri.parse(it.previewUrl) // 서버 URL을 Uri로 변환
+                        )
+                    }
+
+                    // 2. 즐겨찾기 된 이미지 ID들을 Set으로 준비
+                    val pinnedIds = recentApiItems
+                        .filter { it.isFavorite }
+                        .map { it.imageId.toString() }
+                        .toSet()
+
+                    // 3. Fragment의 메인 리스트를 교체
+                    recentItems.clear()
+                    recentItems.addAll(newItems)
+
+                    // 4. 최대 슬롯(15개)에 맞춰 빈 아이템 추가
+                    val emptySlots = maxSlots - newItems.size
+                    if (emptySlots > 0) {
+                        repeat(emptySlots) { idx -> recentItems.add(DecorateItem(id = "slot_$idx")) }
+                    }
+
+                    // 5. 어댑터에 최종 리스트와 즐겨찾기 정보 전달
+                    gridAdapter.submitList(recentItems.toList(), pinnedIds)
+
+                    // 6. 상단 카운트 UI 업데이트
+                    updateCountUI()
+                }
+                is DecorateViewModel.RecentImagesUiState.Error -> {
+                    Toast.makeText(requireContext(), "최근 이미지 로딩 실패: ${state.message}", Toast.LENGTH_SHORT).show()
+                    // TODO: 이미지 로딩 실패 시 UI/UX 개선 (예: 재시도 버튼 표시)
+                }
+                else -> { /* Idle */ }
             }
         }
     }

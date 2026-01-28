@@ -4,6 +4,7 @@ import com.yourcompany.digitaltok.data.model.ApiResponse
 import com.yourcompany.digitaltok.data.model.DeviceData
 import com.yourcompany.digitaltok.data.model.DeviceRegistrationRequest
 import com.yourcompany.digitaltok.data.model.ImageUploadResult
+import com.yourcompany.digitaltok.data.model.RecentImagesResponse
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
@@ -33,4 +34,7 @@ interface ApiService {
         @Path("imageId") imageId: String,
         @Body payload: Map<String, Boolean>
     ): Response<ApiResponse<Unit>>
+
+    @GET("images/recent")
+    suspend fun getRecentImages(): Response<ApiResponse<RecentImagesResponse>>
 }

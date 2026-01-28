@@ -44,3 +44,29 @@ data class ImageMapping(
     @SerializedName("lastUsedAt")
     val lastUsedAt: String
 )
+
+/**
+ * GET /images/recent API의 `result` 필드에 해당하는 데이터 클래스
+ */
+data class RecentImagesResponse(
+    @SerializedName("count")
+    val count: Int,
+    @SerializedName("items")
+    val items: List<RecentImage>
+)
+
+/**
+ * GET /images/recent API 응답의 `items` 배열에 포함된 개별 이미지 정보
+ */
+data class RecentImage(
+    @SerializedName("imageId")
+    val imageId: Int,
+    @SerializedName("previewUrl")
+    val previewUrl: String,
+    @SerializedName("imageName")
+    val imageName: String,
+    @SerializedName("isFavorite")
+    val isFavorite: Boolean,
+    @SerializedName("lastUsedAt")
+    val lastUsedAt: String
+)
