@@ -11,13 +11,17 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -30,6 +34,9 @@ import com.yourcompany.digitaltok.R
 import java.io.File
 
 class DecorateFragment : Fragment() {
+
+    private val viewModel: DecorateViewModel by viewModels()
+    private var loadingDialog: AlertDialog? = null
 
     // ----- Top / Tabs -----
     private lateinit var toggleTabs: MaterialButtonToggleGroup
@@ -147,6 +154,9 @@ class DecorateFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        observeViewModel()
+        setupOnBackPressed()
+
         // ----- bind -----
         toggleTabs = view.findViewById(R.id.toggleTabs)
         tvCount = view.findViewById(R.id.tvCount)
@@ -173,7 +183,13 @@ class DecorateFragment : Fragment() {
             rvGrid.addItemDecoration(GridSpacingItemDecoration(spanCount, hSpace, vSpace))
         }
 
-        gridAdapter = DecorateAdapter(recentItems) { updateSendButtonUI() }
+        gridAdapter = DecorateAdapter(
+            items = recentItems,
+            onItemClick = { updateSendButtonUI() },
+            onFavoriteClick = { imageId, isFavorite ->
+                viewModel.toggleFavoriteStatus(imageId, isFavorite)
+            }
+        )
         rvGrid.adapter = gridAdapter
 
         // ----- template menu (2 items) -----
@@ -267,13 +283,38 @@ class DecorateFragment : Fragment() {
             if (selected == null) {
                 showAddImageDialog()
             } else {
-                Toast.makeText(requireContext(), "선택한 이미지 전송: ${selected.id}", Toast.LENGTH_SHORT).show()
-                // TODO: NFC 전송 로직 연결
+                selected.imageUri?.let { uri ->
+                    val imageFile = uriToFile(uri)
+                    if (imageFile != null) {
+                        viewModel.uploadImage(imageFile)
+                    } else {
+                        Toast.makeText(requireContext(), "이미지 파일을 준비할 수 없습니다.", Toast.LENGTH_SHORT).show()
+                    }
+                } ?: Toast.makeText(requireContext(), "선택된 이미지가 없습니다.", Toast.LENGTH_SHORT).show()
             }
         }
 
         updateCountUI()
         updateSendButtonUI()
+    }
+
+    // -------------------- BACK PRESS --------------------
+    private fun setupOnBackPressed() {
+        val callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // 템플릿 탭의 하위 메뉴(좌석 리스트, 역 리스트 등)에 있을 경우
+                if (currentTab == Tab.TEMPLATE && currentScreen != TemplateScreen.MENU) {
+                    // 이전 화면인 템플릿 메뉴로 돌아감
+                    showTemplateMenu()
+                } else {
+                    // 그 외의 경우(최근 사진 탭, 템플릿 첫 화면)에는 기본 뒤로가기 동작 수행
+                    // 콜백을 비활성화하고, 액티비티의 기본 뒤로가기 로직을 다시 호출
+                    isEnabled = false
+                    requireActivity().onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
     }
 
     // -------------------- TAB CONTROL --------------------
@@ -523,5 +564,131 @@ class DecorateFragment : Fragment() {
 
         val authority = "${requireContext().packageName}.fileprovider"
         return FileProvider.getUriForFile(requireContext(), authority, imageFile)
+    }
+
+    // -------------------- VIEWMODEL & UPLOAD --------------------
+
+    private fun observeViewModel() {
+        viewModel.uploadState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is DecorateViewModel.UploadUiState.Loading -> {
+                    showLoadingDialog()
+                }
+                is DecorateViewModel.UploadUiState.Success -> {
+                    hideLoadingDialog()
+                    Toast.makeText(requireContext(), "이미지 업로드 성공!", Toast.LENGTH_SHORT).show()
+                    // 새 이미지가 업로드되었으니, 최근 목록을 새로고침합니다.
+                    viewModel.fetchRecentImages()
+                }
+                is DecorateViewModel.UploadUiState.Error -> {
+                    hideLoadingDialog()
+                    Toast.makeText(requireContext(), "업로드 실패: ${state.message}", Toast.LENGTH_LONG).show()
+                }
+                is DecorateViewModel.UploadUiState.Idle -> {
+                    hideLoadingDialog()
+                }
+            }
+        }
+
+        viewModel.favoriteState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is DecorateViewModel.FavoriteUiState.Loading -> {
+                    // 로딩 중 UI 표시가 필요하다면 여기에 구현 (예: 작은 스피너 표시)
+                }
+                is DecorateViewModel.FavoriteUiState.Success -> {
+                    val message = if (state.isFavorite) "즐겨찾기에 추가했습니다." else "즐겨찾기에서 해제했습니다."
+                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                }
+                is DecorateViewModel.FavoriteUiState.Error -> {
+                    Toast.makeText(requireContext(), "오류: ${state.message}", Toast.LENGTH_SHORT).show()
+                    // 참고: API 에러 발생 시, 어댑터의 UI 상태를 원래대로 되돌리는 로직을 추가하면
+                    // 더 안정적인 사용자 경험을 제공할 수 있습니다.
+                }
+                is DecorateViewModel.FavoriteUiState.Idle -> {
+                    // 아무것도 안 함
+                }
+            }
+        }
+
+        viewModel.recentImagesState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is DecorateViewModel.RecentImagesUiState.Loading -> {
+                    // 로딩 UI 표시 없음 (사용자 요청)
+                }
+                is DecorateViewModel.RecentImagesUiState.Success -> {
+                    val recentApiItems = state.response.items
+
+                    // 1. API 응답을 UI 모델 (DecorateItem) 리스트로 변환
+                    val newItems = recentApiItems.map {
+                        DecorateItem(
+                            id = it.imageId.toString(),
+                            imageUri = Uri.parse(it.previewUrl) // 서버 URL을 Uri로 변환
+                        )
+                    }
+
+                    // 2. 즐겨찾기 된 이미지 ID들을 Set으로 준비
+                    val pinnedIds = recentApiItems
+                        .filter { it.isFavorite }
+                        .map { it.imageId.toString() }
+                        .toSet()
+
+                    // 3. Fragment의 메인 리스트를 교체
+                    recentItems.clear()
+                    recentItems.addAll(newItems)
+
+                    // 4. 최대 슬롯(15개)에 맞춰 빈 아이템 추가
+                    val emptySlots = maxSlots - newItems.size
+                    if (emptySlots > 0) {
+                        repeat(emptySlots) { idx -> recentItems.add(DecorateItem(id = "slot_$idx")) }
+                    }
+
+                    // 5. 어댑터에 최종 리스트와 즐겨찾기 정보 전달
+                    gridAdapter.submitList(recentItems.toList(), pinnedIds)
+
+                    // 6. 상단 카운트 UI 업데이트
+                    updateCountUI()
+                }
+                is DecorateViewModel.RecentImagesUiState.Error -> {
+                    Toast.makeText(requireContext(), "최근 이미지 로딩 실패: ${state.message}", Toast.LENGTH_SHORT).show()
+                    // TODO: 이미지 로딩 실패 시 UI/UX 개선 (예: 재시도 버튼 표시)
+                }
+                else -> { /* Idle */ }
+            }
+        }
+    }
+
+    private fun uriToFile(uri: Uri): File? {
+        return try {
+            val inputStream = requireContext().contentResolver.openInputStream(uri) ?: return null
+            // Create a temporary file in the cache directory
+            val file = File(requireContext().cacheDir, "upload_${System.currentTimeMillis()}.jpg")
+            file.outputStream().use { fileOut ->
+                inputStream.copyTo(fileOut)
+            }
+            inputStream.close()
+            file
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    private fun showLoadingDialog() {
+        if (loadingDialog == null) {
+            val progressBar = ProgressBar(requireContext()).apply {
+                val padding = 100
+                setPadding(padding, padding, padding, padding)
+            }
+            loadingDialog = MaterialAlertDialogBuilder(requireContext())
+                .setTitle("업로드 중...")
+                .setView(progressBar)
+                .setCancelable(false)
+                .create()
+        }
+        loadingDialog?.show()
+    }
+
+    private fun hideLoadingDialog() {
+        loadingDialog?.dismiss()
     }
 }

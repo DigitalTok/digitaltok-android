@@ -9,23 +9,32 @@ import com.yourcompany.digitaltok.R
 
 class DecorateAdapter(
     private var items: List<DecorateItem>,
-    private val onItemClick: (DecorateItem) -> Unit
+    private val onItemClick: (DecorateItem) -> Unit,
+    private val onFavoriteClick: (String, Boolean) -> Unit // (imageId, isFavorite)
 ) : RecyclerView.Adapter<DecorateAdapter.DecorateViewHolder>() {
 
-    /** 현재 선택된 아이템 id */
+    //현재 선택된 아이템 id
     private var selectedId: String? = null
 
     // 여러 개 즐겨찾기(별 체크) 허용
     private val pinnedIds = linkedSetOf<String>() // 순서 유지(Set)
 
-    /** 리스트 교체 (탭 변경 시 사용) */
-    fun submitList(newItems: List<DecorateItem>) {
+    /**
+     * 리스트 교체 (탭 변경 및 초기 데이터 로드 시 사용)
+     * @param newItems 새로운 아이템 목록
+     * @param newPinnedIds 즐겨찾기 상태인 아이템 ID 목록
+     */
+    fun submitList(newItems: List<DecorateItem>, newPinnedIds: Set<String>? = null) {
         items = newItems
         selectedId = null
 
-        val idSet = newItems.map { it.id }.toHashSet()
-        pinnedIds.retainAll(idSet)
+        newPinnedIds?.let {
+            pinnedIds.clear()
+            pinnedIds.addAll(it)
+        }
 
+        // 즐겨찾기된 아이템들을 앞으로 정렬
+        sortItems()
         notifyDataSetChanged()
     }
 
@@ -36,17 +45,26 @@ class DecorateAdapter(
 
     // 별 토글 + 즐겨찾기 항목들을 위로 정렬
     private fun togglePinAndReorder(item: DecorateItem) {
-        if (pinnedIds.contains(item.id)) pinnedIds.remove(item.id) else pinnedIds.add(item.id)
+        val isCurrentlyFavorite = pinnedIds.contains(item.id)
+        val newFavoriteState = !isCurrentlyFavorite
 
-        // 즐겨찾기(true) 먼저, 그 다음 원래 순서 유지
-        val reordered = items
-            .withIndex()
-            .sortedWith(compareByDescending<IndexedValue<DecorateItem>> { pinnedIds.contains(it.value.id) }
-                .thenBy { it.index })
-            .map { it.value }
+        onFavoriteClick(item.id, newFavoriteState) // ViewModel에 알림
 
-        items = reordered
+        if (newFavoriteState) {
+            pinnedIds.add(item.id)
+        } else {
+            pinnedIds.remove(item.id)
+        }
+
+        sortItems()
         notifyDataSetChanged()
+    }
+
+
+     //즐겨찾기(pinned)된 아이템을 목록의 맨 위로, 나머지는 원래 순서대로 정렬
+    private fun sortItems() {
+        items = items
+            .sortedWith(compareByDescending<DecorateItem> { pinnedIds.contains(it.id) })
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DecorateViewHolder {
