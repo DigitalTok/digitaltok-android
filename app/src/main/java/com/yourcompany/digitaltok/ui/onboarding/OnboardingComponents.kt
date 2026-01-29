@@ -3,6 +3,7 @@ package com.yourcompany.digitaltok.ui.onboarding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,8 +19,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun OnboardingIndicator(total: Int, current: Int) {
-    androidx.compose.foundation.layout.Row(
-        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(5.dp),
+    Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
         repeat(total) { index ->
@@ -32,6 +32,9 @@ fun OnboardingIndicator(total: Int, current: Int) {
                         RoundedCornerShape(50)
                     )
             )
+            if (index != total - 1) {
+                Box(modifier = Modifier.width(5.dp))
+            }
         }
     }
 }
@@ -42,15 +45,15 @@ fun OnboardingButton(
     containerColor: Color,
     textColor: Color,
     enabled: Boolean = true,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Box(
-        modifier = Modifier
-            .width(160.dp)
-            .height(49.dp)
+        modifier = modifier
+            .height(52.dp) // ✅ 피그마 느낌 버튼 높이
             .background(
                 if (enabled) containerColor else Color(0xFFE9E9E9),
-                RoundedCornerShape(6.dp)
+                RoundedCornerShape(8.dp)
             )
             .clickable(enabled = enabled) { onClick() },
         contentAlignment = Alignment.Center

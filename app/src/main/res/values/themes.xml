@@ -1,13 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <style name="Theme.DigitalTok" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- 필요하면 여기에 색/상태바 옵션 추가 -->
-    </style>
-
-    <style name="Theme.DigitalTok.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">#FFFFFF</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
-        <item name="postSplashScreenTheme">@style/Theme.DigitalTok</item>
+        <!-- 필요하면 나중에 색/상태바 옵션 추가 -->
     </style>
 </resources>

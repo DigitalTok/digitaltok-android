@@ -7,17 +7,23 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import com.yourcompany.digitaltok.databinding.FragmentDeviceConnectBinding
+import com.yourcompany.digitaltok.ui.MainUiViewModel
 
 class DeviceConnectFragment : Fragment() {
 
     private var _binding: FragmentDeviceConnectBinding? = null
     private val binding get() = _binding!!
 
+    // ✅ HomeScreen(Compose)와 상태 공유
+    private val mainUiViewModel: MainUiViewModel by activityViewModels()
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?): View {
+        savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentDeviceConnectBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -27,7 +33,6 @@ class DeviceConnectFragment : Fragment() {
 
         binding.connectTopAppBar.titleTextView.text = "장치 (Device)"
         binding.connectTopAppBar.backButton.setOnClickListener {
-            // 이 프래그먼트는 백스택의 가장 처음이므로, 네비게이션 컴포넌트가 뒤로가기를 처리하도록 함
             activity?.onBackPressedDispatcher?.onBackPressed()
         }
 
@@ -45,7 +50,11 @@ class DeviceConnectFragment : Fragment() {
                 // NFC가 꺼져있으면 직접 만든 NfcDisabledFragment를 다이얼로그로 띄움
                 NfcDisabledFragment().show(parentFragmentManager, "NfcDisabledDialog")
             } else {
-                // NFC가 켜져있으면 DeviceSearchingFragment로 화면 전환
+                // ✅ (요구사항) "연결 시작" 누르면 -> 홈에서 '연결 안됨' 화면 보이게
+                mainUiViewModel.updateDeviceConnected(false)
+                mainUiViewModel.requestNavigate("home")
+
+                // ✅ 그리고 기존대로 검색 화면도 띄우고 싶으면 아래 유지
                 parentFragmentManager.beginTransaction()
                     .replace((requireView().parent as ViewGroup).id, DeviceSearchingFragment())
                     .addToBackStack(null)
