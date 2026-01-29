@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.DigitalTok" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- 필요하면 나중에 색/상태바 옵션 추가 -->
+
+    <!-- 기본 앱 테마 -->
+    <style name="Theme.DigitalTok" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- 필요하면 여기 색/타이포/상태바 설정 추가 -->
     </style>
+
+    <!-- Manifest에서 사용하는 Splash 테마 -->
+    <style name="Theme.DigitalTok.Splash" parent="Theme.DigitalTok">
+        <item name="android:windowBackground">@android:color/white</item>
+    </style>
+
 </resources>
