@@ -9,7 +9,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,7 +38,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.yourcompany.digitaltok.R
-import com.yourcompany.digitaltok.ui.MainUiViewModel
+import com.yourcompany.digitaltok.ui.MainViewModel
 import com.yourcompany.digitaltok.ui.components.BottomNavBar
 import com.yourcompany.digitaltok.ui.decorate.DecorateFragment
 import com.yourcompany.digitaltok.ui.device.DeviceConnectFragment
@@ -69,18 +73,6 @@ private fun ComposableFragmentContainer(modifier: Modifier = Modifier, fragment:
 fun HomeScreen() {
     val navController = rememberNavController()
 
-    // ✅ Fragment <-> Compose 공유 ViewModel
-    val mainUiViewModel: MainUiViewModel = viewModel()
-    val navigateTo by mainUiViewModel.navigateTo.collectAsState()
-
-    LaunchedEffect(navigateTo) {
-        val route = navigateTo
-        if (route != null) {
-            navController.navigate(route) { launchSingleTop = true }
-            mainUiViewModel.consumeNavigate()
-        }
-    }
-
     Scaffold(
         bottomBar = { BottomNavBar(navController) }
     ) { innerPadding ->
@@ -94,7 +86,7 @@ fun HomeScreen() {
                 bottom = innerPadding.calculateBottomPadding()
             )
         ) {
-            composable("home") { HomeTab(mainUiViewModel) }
+            composable("home") { HomeTab() }
 
             composable("device") {
                 val context = LocalContext.current
@@ -148,8 +140,14 @@ fun HomeScreen() {
 }
 
 @Composable
-private fun HomeTab(mainUiViewModel: MainUiViewModel) {
-    if (!mainUiViewModel.isDeviceConnected) {
+private fun HomeTab() {
+    // ✅ develop 기준: MainViewModel에서 상태를 가져와 홈 화면 분기
+    val context = LocalContext.current
+    val activity = context as FragmentActivity
+    val mainViewModel: MainViewModel = viewModel(viewModelStoreOwner = activity)
+    val isDeviceConnected by mainViewModel.isDeviceConnected.observeAsState(initial = false)
+
+    if (!isDeviceConnected) {
         HomeNoConnection()
     } else {
         HomeConnected()

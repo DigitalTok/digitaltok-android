@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.NFC" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
 
     <uses-feature
         android:name="android.hardware.nfc"
@@ -32,16 +36,12 @@
             android:name=".ui.auth.PasswordResetActivity"
             android:exported="false" />
 
-        <activity android:name=".ui.faq.SupportActivity" />
-        <activity android:name=".ui.faq.FaqActivity" />
-        <activity android:name=".ui.faq.HelpActivity" />
-
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:launchMode="singleTop"
-            android:theme="@style/Theme.DigitalTok">
+            android:theme="@style/Theme.DigitalTok.Splash">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -54,12 +54,17 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
 
-            <intent-filter>
-                <action android:name="android.nfc.action.TAG_DISCOVERED" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-
         </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 
