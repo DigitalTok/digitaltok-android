@@ -31,6 +31,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.yourcompany.digitaltok.R
+import com.yourcompany.digitaltok.ui.upload.ImagePreviewFragment
 import java.io.File
 
 class DecorateFragment : Fragment() {
@@ -284,6 +285,8 @@ class DecorateFragment : Fragment() {
                 showAddImageDialog()
             } else {
                 selected.imageUri?.let { uri ->
+                    // TODO: 이미지 크롭 화면을 여기에 추가해야 합니다.
+                    //       크롭된 결과(Uri)를 받아서 아래 로직에 전달해야 합니다.
                     val imageFile = uriToFile(uri)
                     if (imageFile != null) {
                         viewModel.uploadImage(imageFile)
@@ -576,9 +579,18 @@ class DecorateFragment : Fragment() {
                 }
                 is DecorateViewModel.UploadUiState.Success -> {
                     hideLoadingDialog()
-                    Toast.makeText(requireContext(), "이미지 업로드 성공!", Toast.LENGTH_SHORT).show()
-                    // 새 이미지가 업로드되었으니, 최근 목록을 새로고침합니다.
-                    viewModel.fetchRecentImages()
+                    // 업로드 성공 시, 미리보기 화면으로 이동
+                    val result = state.result
+                    val imageId = result.image.imageId
+                    val einkDataUrl = result.image.einkDataUrl
+                    if (einkDataUrl != null) {
+                        parentFragmentManager.beginTransaction()
+                            .add((requireView().parent as ViewGroup).id, ImagePreviewFragment.newInstance(imageId, einkDataUrl))
+                            .addToBackStack(null)
+                            .commit()
+                    } else {
+                        Toast.makeText(requireContext(), "미리보기 정보를 불러올 수 없습니다.", Toast.LENGTH_SHORT).show()
+                    }
                 }
                 is DecorateViewModel.UploadUiState.Error -> {
                     hideLoadingDialog()

@@ -3,6 +3,7 @@ package com.yourcompany.digitaltok.data.network
 import com.yourcompany.digitaltok.data.model.ApiResponse
 import com.yourcompany.digitaltok.data.model.DeviceData
 import com.yourcompany.digitaltok.data.model.DeviceRegistrationRequest
+import com.yourcompany.digitaltok.data.model.ImagePreview
 import com.yourcompany.digitaltok.data.model.ImageUploadResult
 import com.yourcompany.digitaltok.data.model.RecentImagesResponse
 import okhttp3.MultipartBody
@@ -37,4 +38,7 @@ interface ApiService {
 
     @GET("images/recent")
     suspend fun getRecentImages(): Response<ApiResponse<RecentImagesResponse>>
+
+    @GET("api/images/{imageId}/preview")
+    suspend fun getImagePreview(@Path("imageId") imageId: Int): Response<ApiResponse<ImagePreview>>
 }

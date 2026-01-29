@@ -1,5 +1,6 @@
 package com.yourcompany.digitaltok.data.repository
 
+import com.yourcompany.digitaltok.data.model.ImagePreview
 import com.yourcompany.digitaltok.data.model.ImageUploadResult
 import com.yourcompany.digitaltok.data.model.RecentImagesResponse
 import com.yourcompany.digitaltok.data.network.RetrofitClient
@@ -58,6 +59,26 @@ class ImageRepository {
                 }
             } else {
                 Result.failure(Exception("Failed to fetch recent images: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getImagePreview(imageId: Int): Result<ImagePreview> {
+        return try {
+            val response = apiService.getImagePreview(imageId)
+            if (response.isSuccessful) {
+                val apiResponse = response.body()
+                if (apiResponse != null && apiResponse.isSuccess) {
+                    apiResponse.result?.let {
+                        Result.success(it)
+                    } ?: Result.failure(Exception("API success but result data is missing for preview."))
+                } else {
+                    Result.failure(Exception(apiResponse?.message ?: "Unknown API error getting preview."))
+                }
+            } else {
+                Result.failure(Exception("Failed to fetch image preview: ${response.message()}"))
             }
         } catch (e: Exception) {
             Result.failure(e)
