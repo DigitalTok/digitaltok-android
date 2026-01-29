@@ -141,6 +141,7 @@
                 android:textColor="#155DFC"/>
         </LinearLayout>
 
+        <!-- 로그인 버튼 (✅ 기본은 비활성 회색) -->
         <!-- 로그인 버튼 -->
         <Button
             android:id="@+id/btnLogin"
@@ -149,9 +150,10 @@
             android:layout_marginTop="24dp"
             android:text="로그인"
             android:textColor="#FFFFFF"
-            android:background="@drawable/bg_btn_primary"
             android:enabled="false"
+            android:background="@drawable/bg_btn_gray"
             android:backgroundTint="@null"/>
+
 
         <!-- 회원가입 -->
         <LinearLayout

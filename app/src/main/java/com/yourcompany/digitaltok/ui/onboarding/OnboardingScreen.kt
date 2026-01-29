@@ -5,13 +5,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,44 +33,76 @@ fun OnboardingScreen(
     modifier: Modifier = Modifier,
     onFinish: () -> Unit = {}
 ) {
-    // ✅ 온보딩 4장(landing 제외)
     val pages = listOf(
+        // 1) 단일 이미지
         OnboardingPageData(
             title = "디링에 오신 것을\n환영합니다",
             subtitle = "스마트한 소통을 시작해보세요",
-            imageRes = R.drawable.ic_onboard_message
+            singleImageRes = R.drawable.ic_onboard_chat,
+            singleImageSize = 180.dp
         ),
+
+        // 2) 겹치기
         OnboardingPageData(
             title = "전자 잉크\n디스플레이 ‘디링’",
             subtitle = "배터리 필요 없는 디스플레이로\n개성있는 메시지를 표현하세요",
-            imageRes = R.drawable.ic_onboard_display
+            layers = listOf(
+                OnboardingImageLayer(R.drawable.ic_onboard_ring, size = 250.dp),
+                OnboardingImageLayer(R.drawable.ic_onboard_battery, size = 145.dp, offsetY = 18.dp),
+                OnboardingImageLayer(R.drawable.ic_onboard_slash, size = 220.dp),
+
+                // 번개 뱃지(오른쪽 아래)
+                OnboardingImageLayer(R.drawable.ic_onboard_badge_bg, size = 48.dp, offsetX = 92.dp, offsetY = 92.dp),
+                OnboardingImageLayer(R.drawable.ic_onboard_lightning, size = 18.dp, offsetX = 92.dp, offsetY = 92.dp)
+            )
         ),
+
+        // 3) 지하철 카드
         OnboardingPageData(
             title = "대중교통에서 편리하게",
-            subtitle = "하차 정보나 메시지를\n손쉽게 전달할 수 있어요",
+            subtitle = "하차 정보나 배려 메시지를\n손쉽게 전달할 수 있어요",
             showSubwayCards = true
         ),
+
+        // 4) 사진 카드 3장 겹치기
         OnboardingPageData(
             title = "사진을 추가해보세요",
             subtitle = "앨범 속 사진으로\n디링을 꾸며보세요",
-            imageRes = R.drawable.ic_onboard_image
+            layers = listOf(
+                OnboardingImageLayer(
+                    resId = R.drawable.img_onboard_photo_left,
+                    size = 160.dp,
+                    offsetX = (-58).dp,
+                    offsetY = 18.dp
+                ),
+                OnboardingImageLayer(
+                    resId = R.drawable.img_onboard_photo_right,
+                    size = 160.dp,
+                    offsetX = 58.dp,
+                    offsetY = 18.dp
+                ),
+                OnboardingImageLayer(
+                    resId = R.drawable.img_onboard_photo_front,
+                    size = 195.dp,
+                    offsetX = 0.dp,
+                    offsetY = 48.dp
+                )
+            )
         )
     )
 
-    // ✅ 역 카드 6개
     val stationCards = listOf(
-        R.drawable.img_station_239, // 홍대입구
-        R.drawable.img_station_203, // 을지로3가
-        R.drawable.img_station_222, // 강남
-        R.drawable.img_station_216, // 잠실
-        R.drawable.img_station_221, // 역삼
-        R.drawable.img_station_219  // 삼성
+        R.drawable.img_station_239,
+        R.drawable.img_station_203,
+        R.drawable.img_station_222,
+        R.drawable.img_station_216,
+        R.drawable.img_station_221,
+        R.drawable.img_station_219
     )
 
     val pagerState = rememberPagerState { pages.size }
     val scope = rememberCoroutineScope()
 
-    // ✅ 3번(역) 페이지 캐러셀 상태를 한 번만 유지
     val stationListState = rememberLazyListState()
     val currentStationIndex by remember { derivedStateOf { stationListState.centerItemIndex() } }
     val lastStationIndex = stationCards.lastIndex
@@ -87,10 +117,8 @@ fun OnboardingScreen(
             modifier = Modifier.fillMaxSize()
         ) { pageIndex ->
             val page = pages[pageIndex]
-            val isStationPage = pageIndex == 2
+            val isStationPage = page.showSubwayCards
 
-            // ✅ 피그마 느낌: 화면이 길쭉해 보이지 않게
-            // 남는 공간을 위에서 먹고(Spacer weight), 콘텐츠 덩어리가 아래로 내려오도록 구성
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -98,115 +126,135 @@ fun OnboardingScreen(
                     .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // ✅ 위 공간을 흡수해서 텍스트/이미지/버튼이 아래로 내려오게
-                Spacer(Modifier.weight(1f))
+                // ✅ 피그마처럼 전체를 조금 내려오게
+                Spacer(Modifier.height(120.dp))
 
-                // ✅ 텍스트 블록
-                Column(
-                    modifier = Modifier.width(211.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Text(
+                    text = page.title,
+                    style = TextStyle(
+                        fontSize = 24.sp,
+                        lineHeight = 31.2.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF121212),
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(14.dp))
+
+                Text(
+                    text = page.subtitle,
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        lineHeight = 19.6.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF505050),
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+
+                // ✅ 텍스트-이미지 간격(피그마 느낌)
+                Spacer(Modifier.height(44.dp))
+
+                // ✅ 중앙 아트 영역
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(250.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    androidx.compose.material3.Text(
-                        text = page.title,
-                        style = TextStyle(
-                            fontSize = 24.sp,
-                            lineHeight = 31.2.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF121212),
-                            textAlign = TextAlign.Center
-                        ),
-                        textAlign = TextAlign.Center
-                    )
+                    when {
+                        page.showSubwayCards -> {
+                            SubwayCarousel(
+                                cards = stationCards,
+                                listState = stationListState,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
 
-                    androidx.compose.material3.Text(
-                        text = page.subtitle,
-                        style = TextStyle(
-                            fontSize = 14.sp,
-                            lineHeight = 19.6.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFF505050),
-                            textAlign = TextAlign.Center
-                        ),
-                        textAlign = TextAlign.Center
-                    )
-                }
+                        page.layers.isNotEmpty() -> {
+                            OnboardingLayeredArtwork(layers = page.layers)
+                        }
 
-                Spacer(Modifier.height(48.dp)) // 텍스트-이미지 간격
-
-                // ✅ 중앙 콘텐츠
-                if (page.showSubwayCards) {
-                    SubwayCarousel(
-                        cards = stationCards,
-                        listState = stationListState,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                } else {
-                    page.imageRes?.let {
-                        Image(
-                            painter = painterResource(id = it),
-                            contentDescription = null,
-                            modifier = Modifier.size(143.dp)
-                        )
+                        page.singleImageRes != null -> {
+                            Image(
+                                painter = painterResource(id = page.singleImageRes),
+                                contentDescription = null,
+                                modifier = Modifier.size(page.singleImageSize)
+                            )
+                        }
                     }
                 }
 
-                Spacer(Modifier.height(36.dp)) // 이미지-인디케이터 간격
+                // ✅ indicator/버튼 위 공간을 줄여서 더 피그마처럼
+                Spacer(Modifier.weight(0.65f))
 
-                // ✅ 인디케이터(버튼 가까이)
-                OnboardingIndicator(total = pages.size, current = pageIndex)
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    OnboardingIndicator(total = pages.size, current = pageIndex)
+                }
 
                 Spacer(Modifier.height(16.dp))
 
-                // ✅ 버튼(가운데 정렬, 바닥에 너무 붙지 않게)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // ---- 이전으로 ----
                     OnboardingButton(
                         text = "이전으로",
                         containerColor = Color(0xFFE0E0E0),
                         textColor = Color(0xFF9E9E9E),
-                        enabled = pageIndex != 0 || (isStationPage && currentStationIndex > 0)
+                        enabled = pageIndex != 0 || (isStationPage && currentStationIndex > 0),
+                        modifier = Modifier.weight(1f) // ✅ 반반
                     ) {
                         scope.launch {
                             if (isStationPage && currentStationIndex > 0) {
-                                // ✅ 역 페이지: 역을 먼저 뒤로
                                 stationListState.animateScrollToItem(currentStationIndex - 1)
                             } else {
-                                // ✅ 그 외: 온보딩 페이지를 뒤로
                                 if (pageIndex > 0) pagerState.animateScrollToPage(pageIndex - 1)
                             }
                         }
                     }
 
-                    // ---- 다음으로 ----
                     OnboardingButton(
                         text = "다음으로",
                         containerColor = Color(0xFF36ABFF),
                         textColor = Color.White,
-                        enabled = true
+                        enabled = true,
+                        modifier = Modifier.weight(1f) // ✅ 반반
                     ) {
                         scope.launch {
                             if (isStationPage && currentStationIndex < lastStationIndex) {
-                                // ✅ 역 페이지: 역을 먼저 앞으로
                                 stationListState.animateScrollToItem(currentStationIndex + 1)
                             } else {
-                                // ✅ 역 마지막 or 역페이지 아님: 온보딩 다음으로
-                                if (pageIndex == pages.lastIndex) {
-                                    onFinish()
-                                } else {
-                                    pagerState.animateScrollToPage(pageIndex + 1)
-                                }
+                                if (pageIndex == pages.lastIndex) onFinish()
+                                else pagerState.animateScrollToPage(pageIndex + 1)
                             }
                         }
                     }
                 }
 
-                Spacer(Modifier.height(28.dp)) // 하단 여백(버튼이 너무 바닥에 붙지 않게)
+                Spacer(Modifier.height(28.dp))
             }
+        }
+    }
+}
+
+@Composable
+private fun OnboardingLayeredArtwork(layers: List<OnboardingImageLayer>) {
+    Box(contentAlignment = Alignment.Center) {
+        layers.forEach { layer ->
+            Image(
+                painter = painterResource(id = layer.resId),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(layer.size)
+                    .offset(x = layer.offsetX, y = layer.offsetY)
+            )
         }
     }
 }
@@ -223,16 +271,11 @@ private fun SubwayCarousel(
     LazyRow(
         state = listState,
         flingBehavior = fling,
-        contentPadding = PaddingValues(horizontal = 64.dp), // 좌우 살짝 보이게
+        contentPadding = PaddingValues(horizontal = 64.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = modifier
     ) {
-        items(
-            items = cards,
-            key = { it }
-        ) { resId ->
-            // 중앙: 컬러/크게/진하게
-            // 좌우: 흑백/작게/흐리게
+        items(items = cards, key = { it }) { resId ->
             val (scale, alpha, saturation) = itemTransformByCenter(listState, resId)
 
             val matrix = remember(saturation) {
@@ -256,17 +299,6 @@ private fun SubwayCarousel(
     }
 }
 
-/**
- * 중앙에 가까울수록:
- *  - scale: 1.00
- *  - alpha: 1.00
- *  - saturation: 1.00 (컬러)
- *
- * 멀어질수록:
- *  - scale: 0.92
- *  - alpha: 0.55
- *  - saturation: 0.00 (흑백)
- */
 private fun itemTransformByCenter(
     listState: LazyListState,
     key: Int
@@ -293,7 +325,6 @@ private fun itemTransformByCenter(
 
 private fun lerp(a: Float, b: Float, t: Float): Float = a + (b - a) * t
 
-/** LazyRow에서 중앙에 가장 가까운 아이템 인덱스 추정 */
 private fun LazyListState.centerItemIndex(): Int {
     val layout = layoutInfo
     val visible = layout.visibleItemsInfo
