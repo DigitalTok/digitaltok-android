@@ -5,7 +5,7 @@
     android:id="@+id/rootProfileEdit"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/gray_bg">
+    android:background="#F4F4F4">
 
     <!-- Top App Bar -->
     <include
@@ -48,28 +48,42 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
 
+                <!-- 프로필 이미지 -->
+                <ImageView
+                    android:id="@+id/ivProfile"
+                    android:layout_width="77dp"
+                    android:layout_height="77dp"
+                    android:src="@drawable/none_profile"
+                    android:contentDescription="@null"
+                    android:scaleType="centerCrop"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
 
                 <!-- 이름 라벨 -->
                 <TextView
                     android:id="@+id/tvNameLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="26dp"
+                    android:layout_marginTop="19dp"
                     android:text="이름"
                     android:textColor="@color/text_gray_2"
                     android:textSize="12sp"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintStart_toEndOf="@id/ivProfile"
+                    app:layout_constraintTop_toTopOf="@id/ivProfile" />
 
                 <!-- 이름 값 - 스타일 수정 필요-->
                 <TextView
                     android:id="@+id/tvNameValue"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="26dp"
+                    android:layout_marginBottom="19dp"
                     android:text="정재원"
                     android:textColor="@color/text_black"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/ivProfile"
                     app:layout_constraintTop_toBottomOf="@id/tvNameLabel"
                     app:layout_constraintEnd_toEndOf="parent" />
 
@@ -78,7 +92,7 @@
                     android:id="@+id/tvInfoBox"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="33dp"
+                    android:layout_marginTop="14dp"
                     android:background="@drawable/bg_profile_info_box"
                     android:paddingStart="58dp"
                     android:paddingEnd="58dp"
@@ -92,7 +106,7 @@
                     android:text="이름은 자동생성되며, 이메일은 로그인 및 알림 수신에 사용됩니다."
                     android:textColor="@color/Main_100"
                     android:textSize="12sp"
-                    app:layout_constraintTop_toBottomOf="@id/tvNameValue"
+                    app:layout_constraintTop_toBottomOf="@id/ivProfile"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent" />
 
