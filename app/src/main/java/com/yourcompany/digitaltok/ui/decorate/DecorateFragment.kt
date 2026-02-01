@@ -19,6 +19,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -126,7 +127,7 @@ class DecorateFragment : Fragment() {
     private val pickImageLauncher =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             if (uri == null) return@registerForActivityResult
-            addRecentImage(uri)
+            startCrop(uri)
         }
 
     // 카메라(촬영 후 Uri에 저장)
@@ -134,7 +135,7 @@ class DecorateFragment : Fragment() {
         registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             val uri = pendingCameraUri
             if (!success || uri == null) return@registerForActivityResult
-            addRecentImage(uri)
+            startCrop(uri)
         }
 
     // 카메라 권한 요청
@@ -143,6 +144,17 @@ class DecorateFragment : Fragment() {
             if (granted) openCameraInternal()
             else Toast.makeText(requireContext(), "카메라 권한이 필요해요", Toast.LENGTH_SHORT).show()
         }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // CropImageFragment로부터 크롭된 이미지 결과를 받기 위한 리스너 설정
+        parentFragmentManager.setFragmentResultListener(CropImageFragment.REQUEST_KEY, this) { _, bundle ->
+            val croppedUriString = bundle.getString(CropImageFragment.RESULT_CROPPED_URI)
+            if (croppedUriString != null) {
+                addRecentImage(croppedUriString.toUri())
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -285,8 +297,6 @@ class DecorateFragment : Fragment() {
                 showAddImageDialog()
             } else {
                 selected.imageUri?.let { uri ->
-                    // TODO: 이미지 크롭 화면을 여기에 추가해야 합니다.
-                    //       크롭된 결과(Uri)를 받아서 아래 로직에 전달해야 합니다.
                     val imageFile = uriToFile(uri)
                     if (imageFile != null) {
                         viewModel.uploadImage(imageFile)
@@ -476,7 +486,7 @@ class DecorateFragment : Fragment() {
         tvCount.text = "최근 사용한 사진 ($filled/$maxSlots)"
     }
 
-    // -------------------- IMAGE PICKER --------------------
+    // -------------------- IMAGE PICKER & CROP --------------------
 
     private fun showAddImageDialog() {
         val dialogView = layoutInflater.inflate(R.layout.bottom_sheet_image_picker, null, false)
@@ -543,6 +553,14 @@ class DecorateFragment : Fragment() {
         val uri = createImageUriForCamera()
         pendingCameraUri = uri
         takePictureLauncher.launch(uri)
+    }
+
+    private fun startCrop(uri: Uri) {
+        val containerId = (requireView().parent as ViewGroup).id
+        parentFragmentManager.beginTransaction()
+            .add(containerId, CropImageFragment.newInstance(uri))
+            .addToBackStack(null)
+            .commit()
     }
 
     private fun addRecentImage(uri: Uri) {
