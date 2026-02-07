@@ -28,7 +28,7 @@ class AccountViewModel(
         }
     }
 
-    // ✅ 비밀번호 없는 회원탈퇴
+    // 비밀번호 없는 회원탈퇴
     fun withdraw() {
         viewModelScope.launch {
             repo.withdraw()

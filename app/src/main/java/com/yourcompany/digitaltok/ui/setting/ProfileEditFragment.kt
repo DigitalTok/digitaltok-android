@@ -16,12 +16,17 @@ import com.yourcompany.digitaltok.data.repository.AccountRepository
 import com.yourcompany.digitaltok.data.repository.AuthLocalStore
 import com.yourcompany.digitaltok.data.repository.PrefsAuthLocalStore
 import kotlinx.coroutines.launch
+import com.yourcompany.digitaltok.data.network.UserApiService
+import com.yourcompany.digitaltok.data.repository.UserRepository
 
 class ProfileEditFragment : Fragment() {
 
     private var _binding: FragmentProfileEditBinding? = null
     private val binding get() = _binding!!
     private lateinit var accountRepository: AccountRepository
+
+    // 닉네임 조회(/api/users/me)용 Repository
+    private lateinit var userRepository: UserRepository
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,6 +50,9 @@ class ProfileEditFragment : Fragment() {
         val localStore: AuthLocalStore = PrefsAuthLocalStore(requireContext().applicationContext)
         accountRepository = AccountRepository(accountApi, localStore)
 
+        // /api/users/me 닉네임 조회용 Repository 초기화
+        userRepository = UserRepository(requireContext().applicationContext)
+
         binding.tvLogout.setOnClickListener { showLogoutDialog() }
         binding.tvWithdraw.setOnClickListener { showWithdrawDialog() }
 
@@ -57,6 +65,21 @@ class ProfileEditFragment : Fragment() {
             showChangeEmailDialog()
         }
 
+        // 화면 진입 시 닉네임 연동
+        loadMyNickname()
+    }
+
+    // 내 프로필 조회(/api/users/me) -> 닉네임만 UI 바인딩
+    private fun loadMyNickname() {
+        lifecycleScope.launch {
+            userRepository.getMyProfile()
+                .onSuccess { me ->
+                    binding.tvNameValue.text = me.nickname
+                }
+                .onFailure { e ->
+                    android.util.Log.e("ProfileEdit", "getMyProfile failed", e)
+                }
+        }
     }
 
     private fun showLogoutDialog() {
@@ -160,10 +183,17 @@ class ProfileEditFragment : Fragment() {
                         binding.tvEmailValue.text = newEmail
                         Toast.makeText(requireContext(), "이메일이 변경되었습니다.", Toast.LENGTH_SHORT).show()
 
-                        // 화면 표시 갱신 (너의 이메일 TextView id로 변경)
+                        // 화면 표시 갱신
                         binding.tvEmailValue.text = newEmail
 
-                        android.widget.Toast.makeText(requireContext(), "이메일이 변경되었습니다.", android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(
+                            requireContext(),
+                            "이메일이 변경되었습니다.",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+
+                        // 닉네임은 서버값으로 다시 동기화
+                        loadMyNickname()
                     }
                     .onFailure { e ->
                         val msg = when (e) {
