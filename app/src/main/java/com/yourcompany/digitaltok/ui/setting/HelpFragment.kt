@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.yourcompany.digitaltok.databinding.FragmentHelpBinding
 import com.yourcompany.digitaltok.ui.profile.ProfileEditFragment
+import com.yourcompany.digitaltok.ui.setting.SupportFragment
 
 class HelpFragment : Fragment() {
 

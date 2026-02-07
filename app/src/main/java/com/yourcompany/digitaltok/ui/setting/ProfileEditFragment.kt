@@ -1,16 +1,27 @@
 package com.yourcompany.digitaltok.ui.profile
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.yourcompany.digitaltok.databinding.FragmentProfileEditBinding
+import com.yourcompany.digitaltok.data.network.AccountApiService
+import com.yourcompany.digitaltok.data.network.RetrofitClient
+import com.yourcompany.digitaltok.data.repository.AccountRepository
+import com.yourcompany.digitaltok.data.repository.AuthLocalStore
+import com.yourcompany.digitaltok.data.repository.PrefsAuthLocalStore
+import kotlinx.coroutines.launch
 
 class ProfileEditFragment : Fragment() {
 
     private var _binding: FragmentProfileEditBinding? = null
     private val binding get() = _binding!!
+    private lateinit var accountRepository: AccountRepository
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -24,35 +35,41 @@ class ProfileEditFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 상단바 타이틀
         binding.connectTopAppBar.titleTextView.text = "프로필 편집"
-
-        // 상단바 뒤로가기
         binding.connectTopAppBar.backButton.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
 
-        // 로그아웃 클릭 → 다이얼로그
-        binding.tvLogout.setOnClickListener {
-            showLogoutDialog()
-        }
+        // Repository 초기화
+        val accountApi = RetrofitClient.create(AccountApiService::class.java)
+        val localStore: AuthLocalStore = PrefsAuthLocalStore(requireContext().applicationContext)
+        accountRepository = AccountRepository(accountApi, localStore)
 
-        // 회원 탈퇴 클릭 → 방금 만든 다이얼로그
-        binding.tvWithdraw.setOnClickListener {
-            showWithdrawDialog()
-        }
+        binding.tvLogout.setOnClickListener { showLogoutDialog() }
+        binding.tvWithdraw.setOnClickListener { showWithdrawDialog() }
+
+
+        // TOKEN_CHECK
+        val prefs = requireContext().getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+        val refreshToken = prefs.getString("refreshToken", null)
+        android.util.Log.d("TOKEN_CHECK", "refreshToken = $refreshToken")
+
     }
 
     private fun showLogoutDialog() {
         val dialogView = layoutInflater.inflate(com.yourcompany.digitaltok.R.layout.dialog_logout, null)
-
         val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setView(dialogView)
             .create()
 
         dialogView.findViewById<View>(com.yourcompany.digitaltok.R.id.btnLogout).setOnClickListener {
             dialog.dismiss()
-            // TODO: 실제 로그아웃 처리
+
+            lifecycleScope.launch {
+                accountRepository.logout()
+                    .onSuccess { moveToStart() }
+                    .onFailure { showError(it.message ?: "로그아웃 실패") }
+            }
         }
 
         dialogView.findViewById<View>(com.yourcompany.digitaltok.R.id.btnCancel).setOnClickListener {
@@ -62,20 +79,22 @@ class ProfileEditFragment : Fragment() {
         dialog.show()
     }
 
-    // 추가: 회원탈퇴 다이얼로그
     private fun showWithdrawDialog() {
         val dialogView = layoutInflater.inflate(com.yourcompany.digitaltok.R.layout.dialog_withdraw, null)
-
         val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setView(dialogView)
             .create()
 
-        // 둥근 모서리/디자인 유지용 (배경 투명)
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
         dialogView.findViewById<View>(com.yourcompany.digitaltok.R.id.btnWithdraw).setOnClickListener {
             dialog.dismiss()
-            // TODO: 실제 회원탈퇴 처리
+
+            lifecycleScope.launch {
+                accountRepository.withdraw()
+                    .onSuccess { moveToStart() }
+                    .onFailure { showError(it.message ?: "회원탈퇴 실패") }
+            }
         }
 
         dialogView.findViewById<View>(com.yourcompany.digitaltok.R.id.btnCancel).setOnClickListener {
@@ -83,6 +102,18 @@ class ProfileEditFragment : Fragment() {
         }
 
         dialog.show()
+    }
+
+    // 로그아웃/탈퇴 후 이동 화면
+    private fun moveToStart() {
+        val intent = Intent(requireContext(), com.yourcompany.digitaltok.MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        startActivity(intent)
+    }
+
+    private fun showError(msg: String) {
+        Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroyView() {
