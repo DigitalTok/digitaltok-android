@@ -2,6 +2,7 @@ package com.yourcompany.digitaltok.data.repository
 
 import com.yourcompany.digitaltok.data.model.LogoutRequest
 import com.yourcompany.digitaltok.data.network.AccountApiService
+import com.yourcompany.digitaltok.data.model.EmailChangeRequest
 
 class AccountRepository(
     private val api: AccountApiService,
@@ -23,4 +24,10 @@ class AccountRepository(
 
         authLocalStore.clearAuth()
     }
+
+    suspend fun changeEmail(password: String, newEmail: String): Result<Unit> = runCatching {
+        val res = api.changeEmail(EmailChangeRequest(password, newEmail))
+        if (!res.isSuccess) throw RuntimeException(res.message)
+    }
+
 }

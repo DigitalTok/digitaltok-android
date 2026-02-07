@@ -1,7 +1,9 @@
 package com.yourcompany.digitaltok.data.network
 
 import com.yourcompany.digitaltok.data.model.ApiResponse
+import com.yourcompany.digitaltok.data.model.EmailChangeRequest
 import com.yourcompany.digitaltok.data.model.LogoutRequest
+import retrofit2.http.PATCH
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 
@@ -14,4 +16,7 @@ interface AccountApiService {
     // 회원탈퇴: 비밀번호 없이
     @DELETE("users/me")
     suspend fun withdraw(): ApiResponse<String>
+
+    @PATCH("users/email")
+    suspend fun changeEmail(@Body request: EmailChangeRequest): ApiResponse<String>
 }

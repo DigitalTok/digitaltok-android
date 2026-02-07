@@ -48,11 +48,14 @@ class ProfileEditFragment : Fragment() {
         binding.tvLogout.setOnClickListener { showLogoutDialog() }
         binding.tvWithdraw.setOnClickListener { showWithdrawDialog() }
 
-
         // TOKEN_CHECK
         val prefs = requireContext().getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
         val refreshToken = prefs.getString("refreshToken", null)
         android.util.Log.d("TOKEN_CHECK", "refreshToken = $refreshToken")
+
+        binding.ivEditEmail.setOnClickListener {
+            showChangeEmailDialog()
+        }
 
     }
 
@@ -114,6 +117,72 @@ class ProfileEditFragment : Fragment() {
 
     private fun showError(msg: String) {
         Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showChangeEmailDialog() {
+        val dialogView = layoutInflater.inflate(com.yourcompany.digitaltok.R.layout.dialog_change_email, null)
+
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        val etPassword = dialogView.findViewById<android.widget.EditText>(com.yourcompany.digitaltok.R.id.etPassword)
+        val etNewEmail = dialogView.findViewById<android.widget.EditText>(com.yourcompany.digitaltok.R.id.etNewEmail)
+
+        dialogView.findViewById<View>(com.yourcompany.digitaltok.R.id.btnCancel).setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialogView.findViewById<View>(com.yourcompany.digitaltok.R.id.btnChange).setOnClickListener {
+            val password = etPassword.text?.toString().orEmpty()
+            val newEmail = etNewEmail.text?.toString().orEmpty()
+
+            if (password.isBlank()) {
+                showError("기존 비밀번호를 입력해주세요.")
+                return@setOnClickListener
+            }
+            if (newEmail.isBlank()) {
+                showError("새 이메일을 입력해주세요.")
+                return@setOnClickListener
+            }
+            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(newEmail).matches()) {
+                showError("이메일 형식이 올바르지 않습니다.")
+                return@setOnClickListener
+            }
+
+            // API 호출
+            lifecycleScope.launch {
+                accountRepository.changeEmail(password, newEmail)
+                    .onSuccess {
+                        dialog.dismiss()
+                        binding.tvEmailValue.text = newEmail
+                        Toast.makeText(requireContext(), "이메일이 변경되었습니다.", Toast.LENGTH_SHORT).show()
+
+                        // 화면 표시 갱신 (너의 이메일 TextView id로 변경)
+                        binding.tvEmailValue.text = newEmail
+
+                        android.widget.Toast.makeText(requireContext(), "이메일이 변경되었습니다.", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                    .onFailure { e ->
+                        val msg = when (e) {
+                            is retrofit2.HttpException -> {
+                                when (e.code()) {
+                                    401, 403 -> "기존 비밀번호가 올바르지 않습니다."
+                                    400 -> "요청 값이 올바르지 않습니다."
+                                    409 -> "이미 사용 중인 이메일입니다."
+                                    else -> "이메일 변경에 실패했습니다. (${e.code()})"
+                                }
+                            }
+                            else -> e.message ?: "이메일 변경에 실패했습니다."
+                        }
+                        showError(msg)
+                    }
+            }
+        }
+
+        dialog.show()
     }
 
     override fun onDestroyView() {
