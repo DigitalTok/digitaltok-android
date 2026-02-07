@@ -82,19 +82,35 @@
             android:text="기존 비밀번호"
             android:textColor="#505050"
             android:textSize="12sp"
-            android:layout_marginBottom="6dp"/>
+            android:layout_marginBottom="6dp" />
 
-        <EditText
-            android:id="@+id/etPassword"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@android:drawable/edit_text"
-            android:hint="기존 비밀번호 입력"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:textColor="#111111"
-            android:textColorHint="#9A9A9A"
-            android:inputType="textPassword"/>
+            android:layout_height="wrap_content"
+            android:theme="@style/ThemeOverlay.DigitalTok.CursorBlack"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="#111111"
+            app:boxStrokeWidth="1dp"
+            app:boxStrokeWidthFocused="1dp"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPassword"
+                android:layout_width="match_parent"
+                android:layout_height="43dp"
+                android:hint="기존 비밀번호 입력"
+                android:gravity="center_vertical"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:textColor="@color/text_gray_2"
+                android:textColorHint="#9A9A9A"
+                android:textSize="14sp"
+                android:background="@drawable/bg_email_input_box"
+                android:inputType="textPassword" />
+        </com.google.android.material.textfield.TextInputLayout>
+
 
         <!-- 새 이메일 -->
         <TextView
@@ -104,22 +120,40 @@
             android:textColor="#505050"
             android:textSize="12sp"
             android:layout_marginTop="14dp"
-            android:layout_marginBottom="6dp"/>
+            android:layout_marginBottom="6dp" />
 
-        <EditText
-            android:id="@+id/etNewEmail"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@android:drawable/edit_text"
-            android:hint="새 이메일 입력"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:textColor="#111111"
-            android:textColorHint="#9A9A9A"
-            android:inputType="textEmailAddress"/>
+            android:layout_height="wrap_content"
+            android:theme="@style/ThemeOverlay.DigitalTok.CursorBlack"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="#111111"
+            app:boxStrokeWidth="1dp"
+            app:boxStrokeWidthFocused="1dp"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etNewEmail"
+                android:layout_width="match_parent"
+                android:layout_height="43dp"
+                android:hint="새 이메일 입력"
+                android:gravity="center_vertical"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:textColor="@color/text_gray_2"
+                android:textColorHint="#9A9A9A"
+                android:textSize="14sp"
+                android:background="@drawable/bg_email_input_box"
+                android:inputType="textEmailAddress"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+
     </LinearLayout>
 
-    <!-- 버튼 영역 (withdraw와 동일 스타일) -->
+
+    <!-- 버튼 영역 -->
     <LinearLayout
         android:id="@+id/btnRow"
         android:layout_width="0dp"
