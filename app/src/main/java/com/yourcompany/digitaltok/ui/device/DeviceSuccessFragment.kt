@@ -32,7 +32,7 @@ class DeviceSuccessFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // 1. 기기 연결에 성공했으므로, ViewModel에 상태 업데이트를 요청
-        mainViewModel.onDeviceConnected()
+        mainViewModel.setDeviceConnected(true)
 
         // TopAppBar의 뒤로가기 버튼 클릭 리스너 설정
         binding.successTopAppBar.backButton.setOnClickListener {
