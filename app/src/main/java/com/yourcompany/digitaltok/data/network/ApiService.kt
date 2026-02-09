@@ -14,14 +14,14 @@ import retrofit2.http.*
  * 서버 API와 통신하기 위한 Retrofit 인터페이스
  */
 interface ApiService {
-    @POST("v1/devices")
+    @POST("devices")
     suspend fun registerDevice(@Body request: DeviceRegistrationRequest): Response<ApiResponse<DeviceData>>
 
-    @GET("v1/devices/{deviceId}")
-    suspend fun getDeviceById(@Path("deviceId") deviceId: Int): Response<ApiResponse<DeviceData>>
+    @GET("devices/{nfcUid}")
+    suspend fun getDeviceByNfcUid(@Path("nfcUid") nfcUid: String): Response<ApiResponse<DeviceData>>
 
-    @DELETE("v1/devices/{deviceId}")
-    suspend fun deleteDevice(@Path("deviceId") deviceId: Int): Response<ApiResponse<DeviceData>>
+    @DELETE("devices/{nfcUid}")
+    suspend fun deleteDevice(@Path("nfcUid") nfcUid: String): Response<ApiResponse<DeviceData>>
 
     @Multipart
     @POST("images")
@@ -39,6 +39,6 @@ interface ApiService {
     @GET("images/recent")
     suspend fun getRecentImages(): Response<ApiResponse<RecentImagesResponse>>
 
-    @GET("api/images/{imageId}/preview")
+    @GET("images/{imageId}/preview")
     suspend fun getImagePreview(@Path("imageId") imageId: Int): Response<ApiResponse<ImagePreview>>
 }
