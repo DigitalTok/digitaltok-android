@@ -11,6 +11,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -19,12 +20,14 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -38,6 +41,11 @@ class DecorateFragment : Fragment() {
 
     private val viewModel: DecorateViewModel by viewModels()
     private var loadingDialog: AlertDialog? = null
+
+    // TOP BAR
+    private lateinit var connectTopAppBar: View
+    private lateinit var topBarTitle: TextView
+    private lateinit var topBarBack: View
 
     // ----- Top / Tabs -----
     private lateinit var toggleTabs: MaterialButtonToggleGroup
@@ -64,6 +72,8 @@ class DecorateFragment : Fragment() {
     // ----- Transport seats list -----
     private lateinit var rvTransportSeats: RecyclerView
     private lateinit var transportAdapter: TemplateAdapter
+    private lateinit var tvTabHint: TextView
+
     private val shownTransport = mutableListOf<TemplateItem>()
 
     private enum class Tab { RECENT, TEMPLATE }
@@ -126,7 +136,7 @@ class DecorateFragment : Fragment() {
     private val pickImageLauncher =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             if (uri == null) return@registerForActivityResult
-            addRecentImage(uri)
+            startCrop(uri)
         }
 
     // 카메라(촬영 후 Uri에 저장)
@@ -134,7 +144,7 @@ class DecorateFragment : Fragment() {
         registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             val uri = pendingCameraUri
             if (!success || uri == null) return@registerForActivityResult
-            addRecentImage(uri)
+            startCrop(uri)
         }
 
     // 카메라 권한 요청
@@ -143,6 +153,20 @@ class DecorateFragment : Fragment() {
             if (granted) openCameraInternal()
             else Toast.makeText(requireContext(), "카메라 권한이 필요해요", Toast.LENGTH_SHORT).show()
         }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // CropImageFragment로부터 크롭된 이미지 결과를 받기 위한 리스너 설정
+        parentFragmentManager.setFragmentResultListener(CropImageFragment.REQUEST_KEY, this) { _, bundle ->
+            val croppedUriString = bundle.getString(CropImageFragment.RESULT_CROPPED_URI)
+            if (croppedUriString != null) {
+                addRecentImage(croppedUriString.toUri())
+            }
+        }
+    }
+
+
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -155,8 +179,18 @@ class DecorateFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // 상단바 include
+        connectTopAppBar = view.findViewById(R.id.connectTopAppBar)
+        topBarTitle = connectTopAppBar.findViewById(R.id.titleTextView)
+        topBarBack = connectTopAppBar.findViewById(R.id.backButton)
+
+        topBarTitle.text = "꾸미기"
+        topBarBack.visibility = View.VISIBLE
+        topBarBack.setOnClickListener { showTemplateMenu() }
+
         observeViewModel()
         setupOnBackPressed()
+        updateBackButtonVisibility()
 
         // ----- bind -----
         toggleTabs = view.findViewById(R.id.toggleTabs)
@@ -168,6 +202,7 @@ class DecorateFragment : Fragment() {
         tilSearch = view.findViewById(R.id.tilSearch)
         etSearch = view.findViewById(R.id.etSearch)
         tvStationHint = view.findViewById(R.id.tvStationHint)
+        tvTabHint = view.findViewById(R.id.tvTabHint)
         rvStations = view.findViewById(R.id.rvStations)
 
         rvTransportSeats = view.findViewById(R.id.rvTransportSeats)
@@ -285,8 +320,6 @@ class DecorateFragment : Fragment() {
                 showAddImageDialog()
             } else {
                 selected.imageUri?.let { uri ->
-                    // TODO: 이미지 크롭 화면을 여기에 추가해야 합니다.
-                    //       크롭된 결과(Uri)를 받아서 아래 로직에 전달해야 합니다.
                     val imageFile = uriToFile(uri)
                     if (imageFile != null) {
                         viewModel.uploadImage(imageFile)
@@ -299,6 +332,13 @@ class DecorateFragment : Fragment() {
 
         updateCountUI()
         updateSendButtonUI()
+    }
+
+    private fun updateBackButtonVisibility() {
+        if (!::topBarBack.isInitialized) return  // 안전장치
+
+        val show = (currentTab == Tab.TEMPLATE && currentScreen != TemplateScreen.MENU)
+        topBarBack.visibility = if (show) View.VISIBLE else View.GONE
     }
 
     // -------------------- BACK PRESS --------------------
@@ -320,7 +360,7 @@ class DecorateFragment : Fragment() {
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
     }
 
-    // -------------------- TAB CONTROL --------------------
+    // ----- TAB CONTROL -----
 
     private fun setTab(tab: Tab) {
         currentTab = tab
@@ -330,10 +370,9 @@ class DecorateFragment : Fragment() {
         sendContainer.visibility = if (isRecent) View.VISIBLE else View.GONE
 
         if (isRecent) {
-            // 최근사진 화면
             tvCount.visibility = View.VISIBLE
+            tvTabHint.visibility = View.GONE
 
-            // 템플릿 관련 다 숨김
             rvTemplateList.visibility = View.GONE
             rvTransportSeats.visibility = View.GONE
             tilSearch.visibility = View.GONE
@@ -347,57 +386,56 @@ class DecorateFragment : Fragment() {
             val filled = recentItems.count { it.imageUri != null }
             tvCount.text = "최근 사용한 사진 ($filled/$maxSlots)"
         } else {
-            // 템플릿 탭: 메뉴부터
             tvCount.visibility = View.GONE
+            tvTabHint.visibility = View.GONE
+            tvTabHint.text = "역명과 노선 색상이 포함된 템플릿"
             showTemplateMenu()
         }
 
+        updateBackButtonVisibility()
         updateSendButtonUI()
     }
+
 
     private fun showTemplateMenu() {
         currentScreen = TemplateScreen.MENU
 
+        tvTabHint.visibility = View.GONE
         rvTemplateList.visibility = View.VISIBLE
-
         rvTransportSeats.visibility = View.GONE
         tilSearch.visibility = View.GONE
         tvStationHint.visibility = View.GONE
         rvStations.visibility = View.GONE
-
         etSearch.setText("")
+
+        updateBackButtonVisibility()
     }
 
-    // -------------------- TEMPLATE FLOW --------------------
 
-    /** 템플릿 메뉴 → 교통약자 → 좌석 리스트 */
     private fun showSeatList() {
         currentScreen = TemplateScreen.SEAT_LIST
 
+        tvTabHint.visibility = View.VISIBLE
         rvTemplateList.visibility = View.GONE
         rvTransportSeats.visibility = View.VISIBLE
-
         tilSearch.visibility = View.GONE
         tvStationHint.visibility = View.GONE
         rvStations.visibility = View.GONE
 
-        // placeholder 변경
-        etSearch.hint = "예) 임산부석"
         etSearch.setText("")
-
-        // (나중에 API) fetch seats
         shownTransport.clear()
         shownTransport.addAll(allTransportSeats)
         transportAdapter.notifyDataSetChanged()
+
+        updateBackButtonVisibility()
     }
 
-    /** 템플릿 메뉴 → 지하철역 → 역 리스트(A) */
+
     private fun showStationListFromMenu() {
         currentScreen = TemplateScreen.STATION_LIST_FROM_MENU
 
         rvTemplateList.visibility = View.GONE
         rvTransportSeats.visibility = View.GONE
-
         tilSearch.visibility = View.VISIBLE
         tvStationHint.visibility = View.VISIBLE
         rvStations.visibility = View.VISIBLE
@@ -407,15 +445,15 @@ class DecorateFragment : Fragment() {
         etSearch.setText("")
 
         loadStationsForMenu()
+
+        updateBackButtonVisibility()
     }
 
-    /** 교통약자 → 좌석 클릭(임산부석) → 역 리스트(B) */
     private fun showStationListFromSeat(seatTitle: String) {
         currentScreen = TemplateScreen.STATION_LIST_FROM_SEAT
 
         rvTemplateList.visibility = View.GONE
         rvTransportSeats.visibility = View.GONE
-
         tilSearch.visibility = View.VISIBLE
         tvStationHint.visibility = View.VISIBLE
         rvStations.visibility = View.VISIBLE
@@ -425,7 +463,11 @@ class DecorateFragment : Fragment() {
         etSearch.setText("")
 
         loadStationsForSeat(selectedSeatId)
+
+        updateBackButtonVisibility()
     }
+
+
 
     // -------------------- DATA LOADING (NOW: SAMPLE / LATER: API) --------------------
 
@@ -476,15 +518,16 @@ class DecorateFragment : Fragment() {
         tvCount.text = "최근 사용한 사진 ($filled/$maxSlots)"
     }
 
-    // -------------------- IMAGE PICKER --------------------
+    // -------------------- IMAGE PICKER & CROP --------------------
 
     private fun showAddImageDialog() {
         val dialogView = layoutInflater.inflate(R.layout.bottom_sheet_image_picker, null, false)
 
-        val dialog = MaterialAlertDialogBuilder(requireContext())
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setView(dialogView)
             .create()
 
+        // 클릭 이벤트
         dialogView.findViewById<TextView>(R.id.tvCamera).setOnClickListener {
             dialog.dismiss()
             openCamera()
@@ -499,14 +542,22 @@ class DecorateFragment : Fragment() {
             dialog.dismiss()
         }
 
+        dialog.setCanceledOnTouchOutside(true)
         dialog.show()
-        dialog.window?.apply {
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        }
 
-        dialog.window?.let { window ->
-            window.setGravity(Gravity.BOTTOM)
+        // 윈도우 설정은 show() 이후에 해야 적용됨
+        dialog.window?.let { w ->
+            // 1) 배경 투명 (dialogView의 카드/라운드가 보이게)
+            w.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
+            // 2) 딤 강제 ON
+            w.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            w.setDimAmount(0.55f)
+
+            // 3) 아래 붙이기
+            w.setGravity(Gravity.BOTTOM)
+
+            // 4) 네비게이션 바 + margin 만큼 위로 올리기
             val navBarHeightPx = run {
                 val resId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
                 if (resId > 0) resources.getDimensionPixelSize(resId) else 0
@@ -518,16 +569,20 @@ class DecorateFragment : Fragment() {
                 resources.displayMetrics
             ).toInt()
 
-            val params = window.attributes
-            params.y = navBarHeightPx + marginPx
-            window.attributes = params
+            w.attributes = w.attributes.apply {
+                y = navBarHeightPx + marginPx
+            }
 
-            window.setLayout(
+            // 5) 폭/높이
+            w.setLayout(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
     }
+
+
+
 
     private fun openGallery() {
         pickImageLauncher.launch(
@@ -543,6 +598,14 @@ class DecorateFragment : Fragment() {
         val uri = createImageUriForCamera()
         pendingCameraUri = uri
         takePictureLauncher.launch(uri)
+    }
+
+    private fun startCrop(uri: Uri) {
+        val containerId = (requireView().parent as ViewGroup).id
+        parentFragmentManager.beginTransaction()
+            .add(containerId, CropImageFragment.newInstance(uri))
+            .addToBackStack(null)
+            .commit()
     }
 
     private fun addRecentImage(uri: Uri) {

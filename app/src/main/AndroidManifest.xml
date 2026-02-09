@@ -24,6 +24,8 @@
         android:theme="@style/Theme.DigitalTok"
         android:usesCleartextTraffic="true">
 
+        <activity android:name="com.canhub.cropper.CropImageActivity" />
+
         <activity
             android:name=".ui.auth.EmailLoginActivity"
             android:exported="false" />
@@ -40,8 +42,8 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:launchMode="singleTop"
-            android:theme="@style/Theme.DigitalTok.Splash">
+            android:launchMode="singleTop">
+<!--            android:theme="@style/Theme.DigitalTok.Splash">-->
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
