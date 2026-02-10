@@ -1,12 +1,8 @@
 package com.yourcompany.digitaltok.data.network
 
-import com.yourcompany.digitaltok.data.model.ApiResponse
-import com.yourcompany.digitaltok.data.model.DeviceData
-import com.yourcompany.digitaltok.data.model.DeviceRegistrationRequest
-import com.yourcompany.digitaltok.data.model.ImagePreview
-import com.yourcompany.digitaltok.data.model.ImageUploadResult
-import com.yourcompany.digitaltok.data.model.RecentImagesResponse
+import com.yourcompany.digitaltok.data.model.*
 import okhttp3.MultipartBody
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -41,4 +37,11 @@ interface ApiService {
 
     @GET("images/{imageId}/preview")
     suspend fun getImagePreview(@Path("imageId") imageId: Int): Response<ApiResponse<ImagePreview>>
+
+    @GET("images/{imageId}/binary")
+    suspend fun getImageBinaryInfo(@Path("imageId") imageId: Int): Response<ApiResponse<ImageBinaryInfo>>
+
+    @Streaming
+    @GET
+    suspend fun downloadImageBinary(@Url url: String): Response<ResponseBody>
 }

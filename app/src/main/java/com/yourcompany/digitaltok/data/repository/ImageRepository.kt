@@ -1,13 +1,15 @@
 package com.yourcompany.digitaltok.data.repository
 
-import com.yourcompany.digitaltok.data.model.ImagePreview
-import com.yourcompany.digitaltok.data.model.ImageUploadResult
-import com.yourcompany.digitaltok.data.model.RecentImagesResponse
+import com.yourcompany.digitaltok.data.model.*
 import com.yourcompany.digitaltok.data.network.RetrofitClient
 import okhttp3.MultipartBody
+import okhttp3.ResponseBody
 
 class ImageRepository {
+    // [수정] 두 종류의 apiService를 모두 가져옴
     private val apiService = RetrofitClient.apiService
+    private val publicApiService = RetrofitClient.publicApiService // 인증이 필요 없는 요청용
+
     suspend fun uploadImage(
         imageName: String,
         imageFile: MultipartBody.Part
@@ -79,6 +81,40 @@ class ImageRepository {
                 }
             } else {
                 Result.failure(Exception("Failed to fetch image preview: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getImageBinaryInfo(imageId: Int): Result<ImageBinaryInfo> {
+        return try {
+            val response = apiService.getImageBinaryInfo(imageId)
+            if (response.isSuccessful) {
+                val apiResponse = response.body()
+                if (apiResponse != null && apiResponse.isSuccess) {
+                    apiResponse.result?.let {
+                        Result.success(it)
+                    } ?: Result.failure(Exception("API success but result data is missing for binary info."))
+                } else {
+                    Result.failure(Exception(apiResponse?.message ?: "Unknown API error getting binary info."))
+                }
+            } else {
+                Result.failure(Exception("Failed to fetch image binary info: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun downloadImageBinary(url: String): Result<ResponseBody> {
+        return try {
+            // [수정] 인증이 필요 없는 publicApiService를 사용하여 이미지 다운로드
+            val response = publicApiService.downloadImageBinary(url)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception("Download failed: ${response.message()}"))
             }
         } catch (e: Exception) {
             Result.failure(e)
