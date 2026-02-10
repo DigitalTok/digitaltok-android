@@ -28,7 +28,10 @@ private data class BottomItem(
 )
 
 @Composable
-fun BottomNavBar(navController: NavController) {
+fun BottomNavBar(
+    navController: NavController,
+    onItemClick: (String) -> Boolean = { true } // 클릭 이벤트를 처리할 람다 추가
+) {
     val items = listOf(
         BottomItem("home", "홈", Icons.Outlined.Home),
         BottomItem("device", "기기 연결", Icons.Outlined.PhoneAndroid),
@@ -47,10 +50,13 @@ fun BottomNavBar(navController: NavController) {
                 selected = selected,
                 onClick = {
                     if (!selected) {
-                        navController.navigate(item.route) {
-                            launchSingleTop = true
-                            restoreState = true
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        // 람다를 실행하고, 그 결과가 true일 때만 화면을 전환합니다.
+                        if (onItemClick(item.route)) {
+                            navController.navigate(item.route) {
+                                launchSingleTop = true
+                                restoreState = true
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            }
                         }
                     }
                 },

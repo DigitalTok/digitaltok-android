@@ -1,43 +1,50 @@
 package com.yourcompany.digitaltok.data.network
 
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
-/**
- * Retrofit 인스턴스를 관리하는 싱글톤 객체
- * 가이드에 따라 HttpLoggingInterceptor를 추가하여 통신 과정을 로그로 확인할 수 있도록 설정
- */
 object RetrofitClient {
 
-    // 서버의 기본 URL
-    private const val BASE_URL = "http://3.37.213.174:8080/api/"
+    private const val BASE_URL = "http://3.37.213.174:8080/api/v1/"
 
-    // 로그 출력을 위한 인터셉터
-    private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY // 요청과 응답의 모든 내용을 로그로 출력
+    // (임시) 스웨거에서 발급받은 토큰
+    private const val TEMP_TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ0ZXN0NTY3OEB0ZXN0LmNvbSIsInVzZXJJZCI6OSwicm9sZSI6IlJPTEVfVVNFUiIsImlhdCI6MTc3MDcxMDk3OCwiZXhwIjoxNzcwNzEyNzc4fQ.nxlnBF7s5RZ8VltjlOFugi3pu1qysEni8OuRs-q29rOFFRer_wDyFFXIYc2dWGRw"
+
+    // 모든 요청에 자동으로 토큰을 추가하는 인터셉터
+    private val authInterceptor = Interceptor { chain ->
+        val originalRequest = chain.request()
+        val token = "Bearer $TEMP_TOKEN" // "Bearer " 접두사 추가
+        val newRequest = originalRequest.newBuilder()
+            .header("Authorization", token)
+            .build()
+        chain.proceed(newRequest)
     }
 
-    // OkHttp 클라이언트 설정 (인터셉터, 타임아웃 등)
+    private val loggingInterceptor = HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.BODY
+    }
+
+    // OkHttp 클라이언트에 AuthInterceptor 추가
     private val okhttpClient = OkHttpClient.Builder()
+        .addInterceptor(authInterceptor) // 인증 인터셉터 추가
         .addInterceptor(loggingInterceptor)
         .connectTimeout(60, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
         .writeTimeout(60, TimeUnit.SECONDS)
         .build()
 
-    // Retrofit 인스턴스 생성
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(okhttpClient) // 위에서 설정한 OkHttp 클라이언트를 사용
+            .client(okhttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
 
-    // ApiService 구현체 제공
     val apiService: ApiService by lazy {
         retrofit.create(ApiService::class.java)
     }

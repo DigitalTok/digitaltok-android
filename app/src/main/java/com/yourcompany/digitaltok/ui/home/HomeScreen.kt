@@ -1,6 +1,7 @@
 package com.yourcompany.digitaltok.ui.home
 
 import android.view.View
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -10,10 +11,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +41,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.yourcompany.digitaltok.R
+import com.yourcompany.digitaltok.ui.MainUiViewModel
 import com.yourcompany.digitaltok.ui.MainViewModel
 import com.yourcompany.digitaltok.ui.components.BottomNavBar
 import com.yourcompany.digitaltok.ui.decorate.DecorateFragment
@@ -70,11 +74,42 @@ private fun ComposableFragmentContainer(modifier: Modifier = Modifier, fragment:
 }
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(mainViewModel: MainViewModel) {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val activity = context as FragmentActivity
+
+    // 탭 이동 이벤트는 MainUiViewModel
+    val mainUiViewModel: MainUiViewModel = viewModel(viewModelStoreOwner = activity)
+
+    // 하단바 가시성 / 연결 상태는 MainViewModel (단일 소스)
+    val isBottomNavVisible by mainViewModel.isBottomNavVisible.observeAsState(initial = true)
+    val isDeviceConnected by mainViewModel.isDeviceConnected.observeAsState(initial = false)
+
+    // Fragment에서 요청한 탭 이동 처리
+    val navigateTo by mainUiViewModel.navigateTo.collectAsState()
+    LaunchedEffect(navigateTo) {
+        navigateTo?.let { route ->
+            navController.navigate(route) {
+                popUpTo(navController.graph.startDestinationId)
+                launchSingleTop = true
+            }
+            mainUiViewModel.consumeNavigate()
+        }
+    }
 
     Scaffold(
-        bottomBar = { BottomNavBar(navController) }
+        bottomBar = {
+            if (isBottomNavVisible) {
+                BottomNavBar(navController = navController, onItemClick = { route ->
+                    // ✅ “이미 연결됨”이면 device 탭 이동 차단 (단일 소스 사용)
+                    if (route == "device" && isDeviceConnected) {
+                        Toast.makeText(context, "이미 기기가 연결되어 있습니다.", Toast.LENGTH_SHORT).show()
+                        false
+                    } else true
+                })
+            }
+        }
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -83,13 +118,12 @@ fun HomeScreen() {
                 start = 0.dp,
                 end = 0.dp,
                 top = innerPadding.calculateTopPadding(),
-                bottom = innerPadding.calculateBottomPadding()
+                bottom = if (isBottomNavVisible) innerPadding.calculateBottomPadding() else 0.dp
             )
         ) {
-            composable("home") { HomeTab() }
+            composable("home") { HomeTab(mainViewModel = mainViewModel) }
 
             composable("device") {
-                val context = LocalContext.current
                 val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
 
                 val backStackEntryCount by produceState(
@@ -115,7 +149,6 @@ fun HomeScreen() {
             }
 
             composable("settings") {
-                val context = LocalContext.current
                 val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
 
                 val backStackEntryCount by produceState(
@@ -140,11 +173,7 @@ fun HomeScreen() {
 }
 
 @Composable
-private fun HomeTab() {
-    // ✅ develop 기준: MainViewModel에서 상태를 가져와 홈 화면 분기
-    val context = LocalContext.current
-    val activity = context as FragmentActivity
-    val mainViewModel: MainViewModel = viewModel(viewModelStoreOwner = activity)
+private fun HomeTab(mainViewModel: MainViewModel) {
     val isDeviceConnected by mainViewModel.isDeviceConnected.observeAsState(initial = false)
 
     if (!isDeviceConnected) {

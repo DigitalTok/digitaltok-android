@@ -24,6 +24,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.yourcompany.digitaltok.ui.MainViewModel
 import com.yourcompany.digitaltok.ui.auth.AuthStartScreen
 import com.yourcompany.digitaltok.ui.auth.EmailLoginActivity
 import com.yourcompany.digitaltok.ui.auth.SignupActivity
@@ -36,6 +37,7 @@ import kotlinx.coroutines.delay
 class MainActivity : AppCompatActivity() {
 
     private val nfcViewModel: NfcViewModel by viewModels()
+    private val mainViewModel: MainViewModel by viewModels()
 
     // ✅ 로그인 성공 여부를 Activity 쪽 상태로 들고 있다가 Compose로 전달
     private var goHomeState by mutableStateOf(false)
@@ -52,12 +54,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-    // (선택) 회원가입 완료 후 돌아오면 토스트/홈이동 등을 하고 싶으면 여기서 처리 가능
     private val signupLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                // 예: 회원가입 완료 후 처리
-                // Toast.makeText(this, "회원가입 완료", Toast.LENGTH_SHORT).show()
+                // 회원가입 완료 후 처리 필요하면 여기서
             }
         }
 
@@ -72,9 +72,9 @@ class MainActivity : AppCompatActivity() {
         setContent {
             DigitalTokTheme {
                 AppEntry(
+                    mainViewModel = mainViewModel,
                     goHome = goHomeState,
                     onOpenEmailLogin = {
-                        // ✅ 로그인 화면(EmailLoginActivity) 열기
                         emailLoginLauncher.launch(Intent(this, EmailLoginActivity::class.java))
                     },
                     onOpenSignUp = {
@@ -103,6 +103,7 @@ class MainActivity : AppCompatActivity() {
 
 @Composable
 private fun AppEntry(
+    mainViewModel: MainViewModel,
     goHome: Boolean,
     onOpenEmailLogin: () -> Unit,
     onOpenSignUp: () -> Unit
@@ -118,6 +119,7 @@ private fun AppEntry(
         SplashImage()
     } else {
         AppNavHost(
+            mainViewModel = mainViewModel,
             goHome = goHome,
             onOpenEmailLogin = onOpenEmailLogin,
             onOpenSignUp = onOpenSignUp
@@ -142,6 +144,7 @@ private fun SplashImage() {
 
 @Composable
 fun AppNavHost(
+    mainViewModel: MainViewModel,
     goHome: Boolean,
     navController: NavHostController = rememberNavController(),
     onOpenEmailLogin: () -> Unit = {},
@@ -151,7 +154,6 @@ fun AppNavHost(
     LaunchedEffect(goHome) {
         if (goHome) {
             navController.navigate("home") {
-                // 로그인 성공 후 홈만 남기고 스택 정리(원하는 방식으로 조절 가능)
                 popUpTo("onboarding") { inclusive = true }
             }
         }
@@ -171,14 +173,13 @@ fun AppNavHost(
 
         composable("signup") {
             AuthStartScreen(
-                // ✅ 기존엔 여기서 home으로 바로 갔는데, 이제는 "로그인 화면 열기"로 바꿈
                 onLoginClick = { onOpenEmailLogin() },
                 onSignupClick = { onOpenSignUp() }
             )
         }
 
         composable("home") {
-            HomeScreen()
+            HomeScreen(mainViewModel = mainViewModel)
         }
     }
 }
