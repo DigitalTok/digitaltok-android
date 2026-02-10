@@ -42,6 +42,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.yourcompany.digitaltok.R
 import com.yourcompany.digitaltok.ui.MainUiViewModel
+import com.yourcompany.digitaltok.ui.MainViewModel
 import com.yourcompany.digitaltok.ui.components.BottomNavBar
 import com.yourcompany.digitaltok.ui.decorate.DecorateFragment
 import com.yourcompany.digitaltok.ui.device.DeviceConnectFragment
@@ -77,21 +78,23 @@ fun HomeScreen(mainViewModel: MainViewModel) {
     val navController = rememberNavController()
     val context = LocalContext.current
     val activity = context as FragmentActivity
+
+    // 탭 이동 이벤트는 MainUiViewModel
     val mainUiViewModel: MainUiViewModel = viewModel(viewModelStoreOwner = activity)
 
-    // develop: 하단 네비게이션 가시성
+    // 하단바 가시성 / 연결 상태는 MainViewModel (단일 소스)
     val isBottomNavVisible by mainViewModel.isBottomNavVisible.observeAsState(initial = true)
+    val isDeviceConnected by mainViewModel.isDeviceConnected.observeAsState(initial = false)
 
-    // refact: Fragment에서 요청한 탭 이동 처리
+    // Fragment에서 요청한 탭 이동 처리
     val navigateTo by mainUiViewModel.navigateTo.collectAsState()
     LaunchedEffect(navigateTo) {
         navigateTo?.let { route ->
             navController.navigate(route) {
-                // 백스택을 정리하여 중복 화면 방지
                 popUpTo(navController.graph.startDestinationId)
                 launchSingleTop = true
             }
-            mainUiViewModel.consumeNavigate() // 상태 소비
+            mainUiViewModel.consumeNavigate()
         }
     }
 
@@ -99,13 +102,11 @@ fun HomeScreen(mainViewModel: MainViewModel) {
         bottomBar = {
             if (isBottomNavVisible) {
                 BottomNavBar(navController = navController, onItemClick = { route ->
-                    // refact: 기기 중복 연결 방지
-                    if (route == "device" && mainUiViewModel.isDeviceConnected) {
+                    // ✅ “이미 연결됨”이면 device 탭 이동 차단 (단일 소스 사용)
+                    if (route == "device" && isDeviceConnected) {
                         Toast.makeText(context, "이미 기기가 연결되어 있습니다.", Toast.LENGTH_SHORT).show()
                         false
-                    } else {
-                        true
-                    }
+                    } else true
                 })
             }
         }

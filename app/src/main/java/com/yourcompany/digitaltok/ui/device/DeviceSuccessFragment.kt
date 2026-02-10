@@ -8,14 +8,18 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.yourcompany.digitaltok.databinding.FragmentDeviceSuccessBinding
 import com.yourcompany.digitaltok.ui.MainUiViewModel
+import com.yourcompany.digitaltok.ui.MainViewModel
 
 class DeviceSuccessFragment : Fragment() {
 
     private var _binding: FragmentDeviceSuccessBinding? = null
     private val binding get() = _binding!!
 
-    // Compose UI와 상태를 공유하기 위해 MainUiViewModel 사용
+    // 탭 이동 이벤트
     private val mainUiViewModel: MainUiViewModel by activityViewModels()
+
+    // 연결 상태 단일 소스
+    private val mainViewModel: MainViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -29,20 +33,17 @@ class DeviceSuccessFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 1. 기기 연결에 성공했으므로, ViewModel의 상태를 '연결됨'으로 업데이트
-        mainUiViewModel.updateDeviceConnected(true)
+        // 성공 진입 = 연결됨 확정 (단일 소스)
+        mainViewModel.setDeviceConnected(true)
 
-        // TopAppBar의 뒤로가기 버튼은 홈으로 이동
         binding.successTopAppBar.backButton.setOnClickListener {
             mainUiViewModel.requestNavigate("home")
         }
 
-        // "꾸미기" 버튼 클릭 시 꾸미기 탭으로 이동
         binding.decoButton.setOnClickListener {
             mainUiViewModel.requestNavigate("decorate")
         }
 
-        // "홈으로 돌아가기" 버튼 클릭 시 홈 탭으로 이동
         binding.homeButton.setOnClickListener {
             mainUiViewModel.requestNavigate("home")
         }
