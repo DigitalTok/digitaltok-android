@@ -75,7 +75,7 @@ class DeviceSearchingFragment : Fragment() {
     }
 
     private fun setupViews() {
-        binding.searchingTopAppbar.titleTextView.text = "장치 (Device)"
+        binding.searchingTopAppbar.titleTextView.text = "기기 연결"
         binding.searchingTopAppbar.backButton.setOnClickListener {
             activity?.onBackPressedDispatcher?.onBackPressed()
         }

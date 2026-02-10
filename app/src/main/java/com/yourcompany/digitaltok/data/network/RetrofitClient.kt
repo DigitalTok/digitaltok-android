@@ -11,7 +11,7 @@ object RetrofitClient {
 
     private const val BASE_URL = "http://3.37.213.174:8080/api/v1/"
 
-    private const val TEMP_TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ0ZXN0NTY3OEB0ZXN0LmNvbSIsInVzZXJJZCI6OSwicm9sZSI6IlJPTEVfVVNFUiIsImlhdCI6MTc3MDczNjI5NywiZXhwIjoxNzcwNzM4MDk3fQ.JwOdGQwKk-VzYh4cEM5jX-jsqZC9B2iYB-byBntlDKfMtLUr3u7o7YW1-FuwtHJR"
+    private const val TEMP_TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ0ZXN0NTY3OEB0ZXN0LmNvbSIsInVzZXJJZCI6OSwicm9sZSI6IlJPTEVfVVNFUiIsImlhdCI6MTc3MDc0MjM3NSwiZXhwIjoxNzcwNzQ0MTc1fQ.FEwkqLA4U6Ut_MZojYRT_CqF_S5f_DHaifhFXfnCxnU0zseEQPwmJ63GAGNG7U2i"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
