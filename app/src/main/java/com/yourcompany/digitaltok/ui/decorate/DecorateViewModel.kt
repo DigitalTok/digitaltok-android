@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yourcompany.digitaltok.data.model.ImagePreview
 import com.yourcompany.digitaltok.data.model.ImageUploadResult
 import com.yourcompany.digitaltok.data.model.RecentImagesResponse
 import com.yourcompany.digitaltok.data.repository.ImageRepository
@@ -12,6 +13,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
+import java.lang.NumberFormatException
 
 class DecorateViewModel : ViewModel() {
 
@@ -38,6 +40,17 @@ class DecorateViewModel : ViewModel() {
 
     private val _favoriteState = MutableLiveData<FavoriteUiState>(FavoriteUiState.Idle)
     val favoriteState: LiveData<FavoriteUiState> = _favoriteState
+
+    // 이미지 미리보기 UI 상태
+    sealed class PreviewUiState {
+        object Idle : PreviewUiState()
+        object Loading : PreviewUiState()
+        data class Success(val preview: ImagePreview) : PreviewUiState()
+        data class Error(val message: String) : PreviewUiState()
+    }
+
+    private val _previewState = MutableLiveData<PreviewUiState>(PreviewUiState.Idle)
+    val previewState: LiveData<PreviewUiState> = _previewState
 
     // 최근 이미지 목록 UI 상태
     sealed class RecentImagesUiState {
@@ -91,6 +104,23 @@ class DecorateViewModel : ViewModel() {
                 _favoriteState.value = FavoriteUiState.Success(imageId, isFavorite)
             }.onFailure {
                 _favoriteState.value = FavoriteUiState.Error(it.message ?: "즐겨찾기 상태 변경에 실패했습니다.")
+            }
+        }
+    }
+
+    fun getImagePreview(imageId: String) {
+        viewModelScope.launch {
+            _previewState.value = PreviewUiState.Loading
+            try {
+                val imageIdAsInt = imageId.toInt()
+                val result = imageRepository.getImagePreview(imageIdAsInt)
+                result.onSuccess {
+                    _previewState.value = PreviewUiState.Success(it)
+                }.onFailure {
+                    _previewState.value = PreviewUiState.Error(it.message ?: "미리보기 정보를 불러오는데 실패했습니다.")
+                }
+            } catch (e: NumberFormatException) {
+                _previewState.value = PreviewUiState.Error("잘못된 이미지 ID 형식입니다: $imageId")
             }
         }
     }

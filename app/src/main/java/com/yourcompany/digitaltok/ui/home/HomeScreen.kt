@@ -1,6 +1,7 @@
 package com.yourcompany.digitaltok.ui.home
 
 import android.view.View
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -10,10 +11,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,7 +40,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.yourcompany.digitaltok.R
-import com.yourcompany.digitaltok.ui.MainViewModel
+import com.yourcompany.digitaltok.ui.MainUiViewModel
 import com.yourcompany.digitaltok.ui.components.BottomNavBar
 import com.yourcompany.digitaltok.ui.decorate.DecorateFragment
 import com.yourcompany.digitaltok.ui.device.DeviceConnectFragment
@@ -72,9 +74,34 @@ private fun ComposableFragmentContainer(modifier: Modifier = Modifier, fragment:
 @Composable
 fun HomeScreen() {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val activity = context as FragmentActivity
+    val mainUiViewModel: MainUiViewModel = viewModel(viewModelStoreOwner = activity)
+
+    // Fragment에서 요청한 탭 이동 처리
+    val navigateTo by mainUiViewModel.navigateTo.collectAsState()
+    LaunchedEffect(navigateTo) {
+        navigateTo?.let {
+            navController.navigate(it) {
+                // 백스택을 정리하여 중복 화면 방지
+                popUpTo(navController.graph.startDestinationId)
+                launchSingleTop = true
+            }
+            mainUiViewModel.consumeNavigate() // 상태 소비
+        }
+    }
 
     Scaffold(
-        bottomBar = { BottomNavBar(navController) }
+        bottomBar = {
+            BottomNavBar(navController = navController, onItemClick = { route ->
+                if (route == "device" && mainUiViewModel.isDeviceConnected) {
+                    Toast.makeText(context, "이미 기기가 연결되어 있습니다.", Toast.LENGTH_SHORT).show()
+                    false // Cancel navigation
+                } else {
+                    true // Allow navigation
+                }
+            })
+        }
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -89,7 +116,6 @@ fun HomeScreen() {
             composable("home") { HomeTab() }
 
             composable("device") {
-                val context = LocalContext.current
                 val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
 
                 val backStackEntryCount by produceState(
@@ -115,7 +141,6 @@ fun HomeScreen() {
             }
 
             composable("settings") {
-                val context = LocalContext.current
                 val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
 
                 val backStackEntryCount by produceState(
@@ -141,13 +166,11 @@ fun HomeScreen() {
 
 @Composable
 private fun HomeTab() {
-    // ✅ develop 기준: MainViewModel에서 상태를 가져와 홈 화면 분기
     val context = LocalContext.current
     val activity = context as FragmentActivity
-    val mainViewModel: MainViewModel = viewModel(viewModelStoreOwner = activity)
-    val isDeviceConnected by mainViewModel.isDeviceConnected.observeAsState(initial = false)
+    val mainUiViewModel: MainUiViewModel = viewModel(viewModelStoreOwner = activity)
 
-    if (!isDeviceConnected) {
+    if (!mainUiViewModel.isDeviceConnected) {
         HomeNoConnection()
     } else {
         HomeConnected()

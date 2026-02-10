@@ -52,7 +52,6 @@ class DeviceConnectFragment : Fragment() {
             } else {
                 // ✅ (요구사항) "연결 시작" 누르면 -> 홈에서 '연결 안됨' 화면 보이게
                 mainUiViewModel.updateDeviceConnected(false)
-                mainUiViewModel.requestNavigate("home")
 
                 // ✅ 그리고 기존대로 검색 화면도 띄우고 싶으면 아래 유지
                 parentFragmentManager.beginTransaction()
