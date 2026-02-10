@@ -79,3 +79,36 @@ data class ImagePreview(
     @SerializedName("updatedAt")
     val updatedAt: String
 )
+
+
+// E-ink 바이너리 정보 조회 API 응답
+data class ImageBinaryInfo(
+    @SerializedName("imageId")
+    val imageId: Int,
+    @SerializedName("einkDataUrl")
+    val einkDataUrl: String,
+    @SerializedName("lastUsedAt")
+    val lastUsedAt: String,
+    @SerializedName("meta")
+    val meta: ImageMeta
+)
+
+// E-ink 바이너리 메타데이터
+data class ImageMeta(
+    @SerializedName("width")
+    val width: Int,
+    @SerializedName("height")
+    val height: Int,
+    @SerializedName("bpp")
+    val bpp: Int,
+    @SerializedName("palette")
+    val palette: String,
+    @SerializedName("packing")
+    val packing: String,
+    @SerializedName("scan")
+    val scan: String,
+    @SerializedName("payloadBytes")
+    val payloadBytes: Int,
+    @SerializedName("hasHeader")
+    val hasHeader: Boolean
+)

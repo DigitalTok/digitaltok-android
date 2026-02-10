@@ -318,16 +318,29 @@ class DecorateFragment : Fragment() {
             val selected = gridAdapter.getSelectedItem()
             if (selected == null) {
                 showAddImageDialog()
-            } else {
-                selected.imageUri?.let { uri ->
-                    val imageFile = uriToFile(uri)
-                    if (imageFile != null) {
-                        viewModel.uploadImage(imageFile)
-                    } else {
-                        Toast.makeText(requireContext(), "이미지 파일을 준비할 수 없습니다.", Toast.LENGTH_SHORT).show()
-                    }
-                } ?: Toast.makeText(requireContext(), "선택된 이미지가 없습니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
+
+            // 1. 서버에 있는 이미지 (ID가 숫자)
+            val imageId = selected.id.toIntOrNull()
+            if (imageId != null && selected.imageUri != null) {
+                goToPreviewScreen(imageId, selected.imageUri.toString())
+                return@setOnClickListener
+            }
+
+            // 2. 로컬에만 있는 새 이미지 (ID가 "user_"로 시작)
+            if (selected.id.startsWith("user_") && selected.imageUri != null) {
+                val imageFile = uriToFile(selected.imageUri)
+                if (imageFile != null) {
+                    viewModel.uploadImage(imageFile) // 업로드 후 observeViewModel에서 처리
+                } else {
+                    Toast.makeText(requireContext(), "이미지 파일을 준비할 수 없습니다.", Toast.LENGTH_SHORT).show()
+                }
+                return@setOnClickListener
+            }
+
+            // 3. 예외 케이스
+            Toast.makeText(requireContext(), "이미지를 처리할 수 없습니다.", Toast.LENGTH_SHORT).show()
         }
 
         updateCountUI()
@@ -644,16 +657,8 @@ class DecorateFragment : Fragment() {
                     hideLoadingDialog()
                     // 업로드 성공 시, 미리보기 화면으로 이동
                     val result = state.result
-                    val imageId = result.image.imageId
-                    val einkDataUrl = result.image.einkDataUrl
-                    if (einkDataUrl != null) {
-                        parentFragmentManager.beginTransaction()
-                            .add((requireView().parent as ViewGroup).id, ImagePreviewFragment.newInstance(imageId, einkDataUrl))
-                            .addToBackStack(null)
-                            .commit()
-                    } else {
-                        Toast.makeText(requireContext(), "미리보기 정보를 불러올 수 없습니다.", Toast.LENGTH_SHORT).show()
-                    }
+                    goToPreviewScreen(result.image.imageId, result.image.previewUrl)
+
                 }
                 is DecorateViewModel.UploadUiState.Error -> {
                     hideLoadingDialog()
@@ -730,6 +735,17 @@ class DecorateFragment : Fragment() {
                 else -> { /* Idle */ }
             }
         }
+    }
+
+    private fun goToPreviewScreen(imageId: Int, previewUrl: String?) {
+        if (previewUrl == null) {
+            Toast.makeText(requireContext(), "미리보기 정보를 불러올 수 없습니다.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        parentFragmentManager.beginTransaction()
+            .add((requireView().parent as ViewGroup).id, ImagePreviewFragment.newInstance(imageId, previewUrl))
+            .addToBackStack(null)
+            .commit()
     }
 
     private fun uriToFile(uri: Uri): File? {
