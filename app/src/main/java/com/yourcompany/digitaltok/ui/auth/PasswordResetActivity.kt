@@ -8,8 +8,14 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.yourcompany.digitaltok.R
+import com.yourcompany.digitaltok.data.repository.AuthRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PasswordResetActivity : AppCompatActivity() {
 
@@ -20,6 +26,9 @@ class PasswordResetActivity : AppCompatActivity() {
     private lateinit var tvResetStatus: TextView
 
     private var isEmailValid = false
+
+    // ✅ Repository
+    private val authRepository = AuthRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,7 +43,9 @@ class PasswordResetActivity : AppCompatActivity() {
         btnBack.setOnClickListener { finish() }
         btnCancel.setOnClickListener { finish() }
 
+        // 시작은 비활성
         setSendEnabled(false)
+        tvResetStatus.visibility = View.GONE
 
         etResetEmail.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -48,8 +59,78 @@ class PasswordResetActivity : AppCompatActivity() {
         })
 
         btnSendLink.setOnClickListener {
-            // TODO: 서버에 재설정 링크 요청 API 붙일 자리
-            tvResetStatus.visibility = View.VISIBLE
+            val email = etResetEmail.text.toString().trim()
+
+            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                Toast.makeText(this, "이메일 형식을 확인해주세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            requestPasswordReset(email)
+        }
+    }
+
+    private fun requestPasswordReset(email: String) {
+        // 로딩 느낌: 버튼 비활성
+        btnSendLink.isEnabled = false
+
+        lifecycleScope.launch {
+            try {
+                val res = withContext(Dispatchers.IO) {
+                    // ✅ AuthRepository 함수명에 맞춰 호출
+                    authRepository.resetPassword(email)
+                    // 만약 네 레포지토리 함수명이 passwordReset(email) 이면 아래로 바꿔:
+                    // authRepository.passwordReset(email)
+                }
+
+                if (!res.isSuccessful) {
+                    // HTTP 에러 (404/400/500 등)
+                    tvResetStatus.visibility = View.VISIBLE
+                    tvResetStatus.text = "요청 실패 (HTTP ${res.code()})"
+                    Toast.makeText(
+                        this@PasswordResetActivity,
+                        "요청 실패 (HTTP ${res.code()})",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    setSendEnabled(isEmailValid)
+                    return@launch
+                }
+
+                val body = res.body()
+                if (body == null) {
+                    tvResetStatus.visibility = View.VISIBLE
+                    tvResetStatus.text = "응답이 비어있어요."
+                    Toast.makeText(this@PasswordResetActivity, "응답이 비어있어요.", Toast.LENGTH_SHORT).show()
+                    setSendEnabled(isEmailValid)
+                    return@launch
+                }
+
+                if (body.isSuccess == true) {
+                    // 서버 result가 String이면 메시지로 활용 가능
+                    val msg = body.result ?: body.message ?: "재설정 요청이 완료됐어요."
+                    tvResetStatus.visibility = View.VISIBLE
+                    tvResetStatus.text = msg
+                    Toast.makeText(this@PasswordResetActivity, msg, Toast.LENGTH_SHORT).show()
+                } else {
+                    val msg = body.message ?: "요청 실패"
+                    tvResetStatus.visibility = View.VISIBLE
+                    tvResetStatus.text = msg
+                    Toast.makeText(this@PasswordResetActivity, msg, Toast.LENGTH_SHORT).show()
+                }
+
+                // 성공이든 실패든 버튼 상태는 입력값 기준으로 복구
+                setSendEnabled(isEmailValid)
+
+            } catch (e: Exception) {
+                tvResetStatus.visibility = View.VISIBLE
+                tvResetStatus.text = "네트워크 오류: ${e.message}"
+                Toast.makeText(
+                    this@PasswordResetActivity,
+                    "네트워크 오류: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+                setSendEnabled(isEmailValid)
+            }
         }
     }
 

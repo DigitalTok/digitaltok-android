@@ -1,8 +1,36 @@
 package com.yourcompany.digitaltok.data.model
 
+// ===== Requests =====
+data class SignupRequest(
+    val email: String,
+    val password: String,
+    val phoneNumber: String
+)
+
 data class LoginRequest(
     val email: String,
     val password: String
+)
+
+data class DuplicateCheckRequest(
+    val email: String
+)
+
+data class PasswordResetRequest(
+    val email: String
+)
+
+data class LogoutRequest(
+    val refreshToken: String
+)
+
+// ===== Results (response.result) =====
+data class SignupResult(
+    val userId: Int,
+    val email: String,
+    val nickname: String,
+    val accessToken: String,
+    val refreshToken: String
 )
 
 data class LoginResult(
@@ -11,20 +39,3 @@ data class LoginResult(
     val refreshToken: String,
     val accessTokenExpiresIn: Long
 )
-
-data class SignupRequest(
-    val email: String,
-    val password: String,
-    val phoneNumber: String
-)
-
-data class SignupResult(
-    val userId: Long,
-    val email: String,
-    val nickname: String,
-    val accessToken: String,
-    val refreshToken: String
-)
-
-data class EmailRequest(val email: String)
-data class LogoutRequest(val refreshToken: String)
