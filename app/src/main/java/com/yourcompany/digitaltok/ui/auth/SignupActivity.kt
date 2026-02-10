@@ -14,8 +14,14 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.yourcompany.digitaltok.R
+import com.yourcompany.digitaltok.data.repository.AuthRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SignupActivity : AppCompatActivity() {
 
@@ -40,6 +46,8 @@ class SignupActivity : AppCompatActivity() {
     private lateinit var cbTerms2: CheckBox
     private lateinit var cbTerms3: CheckBox
     private lateinit var btnSignup: Button
+
+    private val authRepository = AuthRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,6 +119,8 @@ class SignupActivity : AppCompatActivity() {
     private fun setupListeners() {
         etEmail.addTextChangedListener(SimpleTextWatcher { raw ->
             val email = raw.trim()
+
+            // 이메일 바뀌면 중복확인 다시 해야 함
             isEmailChecked = false
             btnCheckEmail.text = "중복확인"
 
@@ -119,21 +129,33 @@ class SignupActivity : AppCompatActivity() {
             btnCheckEmail.isEnabled = isEmailValid
             btnCheckEmail.alpha = if (isEmailValid) 1.0f else 0.5f
 
+            tvEmailStatus.visibility = View.GONE
             updateSignupButton()
         })
 
         btnCheckEmail.setOnClickListener {
-            isEmailChecked = true
-            updateSignupButton()
+            val email = etEmail.text.toString().trim()
+            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                showEmailStatus("이메일 형식을 확인해주세요.", false)
+                return@setOnClickListener
+            }
+            // ✅ 1번 API: 이메일 중복확인
+            checkEmailDuplicate(email)
         }
 
         etPassword.addTextChangedListener(SimpleTextWatcher { pw ->
             isPasswordValid = pw.length >= 6
+            tvPwStatus.visibility = View.VISIBLE
+            tvPwStatus.setTextColor(if (isPasswordValid) GREEN else RED)
+            tvPwStatus.text = if (isPasswordValid) "사용 가능한 비밀번호예요." else "비밀번호는 6자 이상이어야 해요."
             updateSignupButton()
         })
 
         etPasswordConfirm.addTextChangedListener(SimpleTextWatcher {
             isPasswordMatch = etPassword.text.toString() == etPasswordConfirm.text.toString()
+            tvPwConfirmStatus.visibility = View.VISIBLE
+            tvPwConfirmStatus.setTextColor(if (isPasswordMatch) GREEN else RED)
+            tvPwConfirmStatus.text = if (isPasswordMatch) "비밀번호가 일치해요." else "비밀번호가 일치하지 않아요."
             updateSignupButton()
         })
 
@@ -142,9 +164,15 @@ class SignupActivity : AppCompatActivity() {
         cbTerms3.setOnCheckedChangeListener { _, _ -> updateSignupButton() }
 
         btnSignup.setOnClickListener {
-            // TODO: 회원가입 성공 -> 로그인 화면으로
-            startActivity(Intent(this, EmailLoginActivity::class.java))
-            finish()
+            val email = etEmail.text.toString().trim()
+            val pw = etPassword.text.toString()
+
+            // ✅ 2번 API: 회원가입
+            // Swagger에 phoneNumber가 required로 보이는 경우가 많아서 임시값 넣어둠.
+            // 너 UI에 전화번호 입력이 있으면 그 값으로 바꾸면 끝!
+            val phoneNumber = "000-0000-0000"
+
+            signup(email, pw, phoneNumber)
         }
     }
 
@@ -152,6 +180,103 @@ class SignupActivity : AppCompatActivity() {
         val requiredAgreed = cbTerms1.isChecked && cbTerms2.isChecked
         val enabled = isEmailChecked && isPasswordValid && isPasswordMatch && requiredAgreed
         btnSignup.isEnabled = enabled
+    }
+
+    // -------------------------
+    // API 1) 이메일 중복확인
+    // -------------------------
+    private fun checkEmailDuplicate(email: String) {
+        btnCheckEmail.isEnabled = false
+        btnCheckEmail.alpha = 0.5f
+
+        lifecycleScope.launch {
+            try {
+                val res = withContext(Dispatchers.IO) {
+                    authRepository.duplicateCheck(email)
+                }
+
+                if (res.isSuccessful && res.body()?.isSuccess == true) {
+                    // ✅ 사용 가능 (200)
+                    isEmailChecked = true
+                    btnCheckEmail.text = "확인완료"
+                    showEmailStatus("사용 가능한 이메일이에요.", true)
+                } else {
+                    // 보통 중복이면 409, 아니면 400/404 등
+                    isEmailChecked = false
+                    btnCheckEmail.text = "중복확인"
+                    val msg = when (res.code()) {
+                        409 -> "이미 사용 중인 이메일이에요."
+                        else -> "중복확인 실패 (HTTP ${res.code()})"
+                    }
+                    showEmailStatus(msg, false)
+                }
+            } catch (e: Exception) {
+                isEmailChecked = false
+                btnCheckEmail.text = "중복확인"
+                showEmailStatus("네트워크 오류: ${e.message}", false)
+            } finally {
+                // 다시 눌러볼 수 있게
+                btnCheckEmail.isEnabled = isEmailValid
+                btnCheckEmail.alpha = if (isEmailValid) 1.0f else 0.5f
+                updateSignupButton()
+            }
+        }
+    }
+
+    private fun showEmailStatus(text: String, ok: Boolean) {
+        tvEmailStatus.visibility = View.VISIBLE
+        tvEmailStatus.setTextColor(if (ok) GREEN else RED)
+        tvEmailStatus.text = text
+    }
+
+    // -------------------------
+    // API 2) 회원가입
+    // -------------------------
+    private fun signup(email: String, password: String, phoneNumber: String) {
+        btnSignup.isEnabled = false
+
+        lifecycleScope.launch {
+            try {
+                val res = withContext(Dispatchers.IO) {
+                    authRepository.signup(email, password, phoneNumber)
+                }
+
+                if (!res.isSuccessful) {
+                    Toast.makeText(
+                        this@SignupActivity,
+                        "회원가입 실패 (HTTP ${res.code()})",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    updateSignupButton()
+                    return@launch
+                }
+
+                val body = res.body()
+                if (body?.isSuccess == true) {
+                    Toast.makeText(this@SignupActivity, "회원가입 성공!", Toast.LENGTH_SHORT).show()
+                    // 회원가입 성공 -> 로그인 화면으로
+                    startActivity(Intent(this@SignupActivity, EmailLoginActivity::class.java))
+                    finish()
+                } else {
+                    Toast.makeText(
+                        this@SignupActivity,
+                        body?.message ?: "회원가입 실패",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    updateSignupButton()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(
+                    this@SignupActivity,
+                    "네트워크 오류: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+                updateSignupButton()
+            } finally {
+                // enabled는 updateSignupButton이 결정
+                // 여기서 true로 강제하지 않음
+            }
+        }
     }
 
     private class SimpleTextWatcher(
