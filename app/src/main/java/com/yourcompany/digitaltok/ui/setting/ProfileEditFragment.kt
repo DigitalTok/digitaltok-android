@@ -1,16 +1,32 @@
 package com.yourcompany.digitaltok.ui.profile
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.yourcompany.digitaltok.databinding.FragmentProfileEditBinding
+import com.yourcompany.digitaltok.data.network.AccountApiService
+import com.yourcompany.digitaltok.data.network.RetrofitClient
+import com.yourcompany.digitaltok.data.repository.AccountRepository
+import com.yourcompany.digitaltok.data.repository.AuthLocalStore
+import com.yourcompany.digitaltok.data.repository.PrefsAuthLocalStore
+import kotlinx.coroutines.launch
+import com.yourcompany.digitaltok.data.network.UserApiService
+import com.yourcompany.digitaltok.data.repository.UserRepository
 
 class ProfileEditFragment : Fragment() {
 
     private var _binding: FragmentProfileEditBinding? = null
     private val binding get() = _binding!!
+    private lateinit var accountRepository: AccountRepository
+
+    // 닉네임 조회(/api/users/me)용 Repository
+    private lateinit var userRepository: UserRepository
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -24,35 +40,62 @@ class ProfileEditFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 상단바 타이틀
         binding.connectTopAppBar.titleTextView.text = "프로필 편집"
-
-        // 상단바 뒤로가기
         binding.connectTopAppBar.backButton.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
 
-        // 로그아웃 클릭 → 다이얼로그
-        binding.tvLogout.setOnClickListener {
-            showLogoutDialog()
+        // Repository 초기화
+        val accountApi = RetrofitClient.create(AccountApiService::class.java)
+        val localStore: AuthLocalStore = PrefsAuthLocalStore(requireContext().applicationContext)
+        accountRepository = AccountRepository(accountApi, localStore)
+
+        // /api/users/me 닉네임 조회용 Repository 초기화
+        userRepository = UserRepository(requireContext().applicationContext)
+
+        binding.tvLogout.setOnClickListener { showLogoutDialog() }
+        binding.tvWithdraw.setOnClickListener { showWithdrawDialog() }
+
+        // TOKEN_CHECK
+        val prefs = requireContext().getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+        val refreshToken = prefs.getString("refreshToken", null)
+        android.util.Log.d("TOKEN_CHECK", "refreshToken = $refreshToken")
+
+        binding.ivEditEmail.setOnClickListener {
+            showChangeEmailDialog()
         }
 
-        // 회원 탈퇴 클릭 → 방금 만든 다이얼로그
-        binding.tvWithdraw.setOnClickListener {
-            showWithdrawDialog()
+        // 화면 진입 시 닉네임 연동
+        loadMyNickname()
+    }
+
+    // 내 프로필 조회(/api/users/me) -> 닉네임만 UI 바인딩
+    private fun loadMyNickname() {
+        lifecycleScope.launch {
+            userRepository.getMyProfile()
+                .onSuccess { me ->
+                    binding.tvNameValue.text = me.nickname
+                }
+                .onFailure { e ->
+                    android.util.Log.e("ProfileEdit", "getMyProfile failed", e)
+                }
         }
     }
 
     private fun showLogoutDialog() {
         val dialogView = layoutInflater.inflate(com.yourcompany.digitaltok.R.layout.dialog_logout, null)
-
         val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setView(dialogView)
             .create()
 
         dialogView.findViewById<View>(com.yourcompany.digitaltok.R.id.btnLogout).setOnClickListener {
             dialog.dismiss()
-            // TODO: 실제 로그아웃 처리
+
+            lifecycleScope.launch {
+                accountRepository.logout()
+                    .onSuccess { moveToStart() }
+                    .onFailure { showError(it.message ?: "로그아웃 실패") }
+            }
         }
 
         dialogView.findViewById<View>(com.yourcompany.digitaltok.R.id.btnCancel).setOnClickListener {
@@ -62,24 +105,111 @@ class ProfileEditFragment : Fragment() {
         dialog.show()
     }
 
-    // 추가: 회원탈퇴 다이얼로그
     private fun showWithdrawDialog() {
         val dialogView = layoutInflater.inflate(com.yourcompany.digitaltok.R.layout.dialog_withdraw, null)
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        dialogView.findViewById<View>(com.yourcompany.digitaltok.R.id.btnWithdraw).setOnClickListener {
+            dialog.dismiss()
+
+            lifecycleScope.launch {
+                accountRepository.withdraw()
+                    .onSuccess { moveToStart() }
+                    .onFailure { showError(it.message ?: "회원탈퇴 실패") }
+            }
+        }
+
+        dialogView.findViewById<View>(com.yourcompany.digitaltok.R.id.btnCancel).setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    // 로그아웃/탈퇴 후 이동 화면
+    private fun moveToStart() {
+        val intent = Intent(requireContext(), com.yourcompany.digitaltok.MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        startActivity(intent)
+    }
+
+    private fun showError(msg: String) {
+        Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showChangeEmailDialog() {
+        val dialogView = layoutInflater.inflate(com.yourcompany.digitaltok.R.layout.dialog_change_email, null)
 
         val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setView(dialogView)
             .create()
 
-        // 둥근 모서리/디자인 유지용 (배경 투명)
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
-        dialogView.findViewById<View>(com.yourcompany.digitaltok.R.id.btnWithdraw).setOnClickListener {
-            dialog.dismiss()
-            // TODO: 실제 회원탈퇴 처리
-        }
+        val etPassword = dialogView.findViewById<android.widget.EditText>(com.yourcompany.digitaltok.R.id.etPassword)
+        val etNewEmail = dialogView.findViewById<android.widget.EditText>(com.yourcompany.digitaltok.R.id.etNewEmail)
 
         dialogView.findViewById<View>(com.yourcompany.digitaltok.R.id.btnCancel).setOnClickListener {
             dialog.dismiss()
+        }
+
+        dialogView.findViewById<View>(com.yourcompany.digitaltok.R.id.btnChange).setOnClickListener {
+            val password = etPassword.text?.toString().orEmpty()
+            val newEmail = etNewEmail.text?.toString().orEmpty()
+
+            if (password.isBlank()) {
+                showError("기존 비밀번호를 입력해주세요.")
+                return@setOnClickListener
+            }
+            if (newEmail.isBlank()) {
+                showError("새 이메일을 입력해주세요.")
+                return@setOnClickListener
+            }
+            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(newEmail).matches()) {
+                showError("이메일 형식이 올바르지 않습니다.")
+                return@setOnClickListener
+            }
+
+            // API 호출
+            lifecycleScope.launch {
+                accountRepository.changeEmail(password, newEmail)
+                    .onSuccess {
+                        dialog.dismiss()
+                        binding.tvEmailValue.text = newEmail
+                        Toast.makeText(requireContext(), "이메일이 변경되었습니다.", Toast.LENGTH_SHORT).show()
+
+                        // 화면 표시 갱신
+                        binding.tvEmailValue.text = newEmail
+
+                        android.widget.Toast.makeText(
+                            requireContext(),
+                            "이메일이 변경되었습니다.",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+
+                        // 닉네임은 서버값으로 다시 동기화
+                        loadMyNickname()
+                    }
+                    .onFailure { e ->
+                        val msg = when (e) {
+                            is retrofit2.HttpException -> {
+                                when (e.code()) {
+                                    401, 403 -> "기존 비밀번호가 올바르지 않습니다."
+                                    400 -> "요청 값이 올바르지 않습니다."
+                                    409 -> "이미 사용 중인 이메일입니다."
+                                    else -> "이메일 변경에 실패했습니다. (${e.code()})"
+                                }
+                            }
+                            else -> e.message ?: "이메일 변경에 실패했습니다."
+                        }
+                        showError(msg)
+                    }
+            }
         }
 
         dialog.show()

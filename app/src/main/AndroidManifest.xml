@@ -24,6 +24,8 @@
         android:theme="@style/Theme.DigitalTok"
         android:usesCleartextTraffic="true">
 
+        <activity android:name="com.canhub.cropper.CropImageActivity" />
+
         <activity
             android:name=".ui.auth.EmailLoginActivity"
             android:exported="false" />

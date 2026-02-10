@@ -6,20 +6,13 @@
     android:layout_height="match_parent"
     android:background="@android:color/white">
 
-    <!-- 상단 타이틀 -->
-    <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:paddingTop="11dp"
-        android:paddingBottom="11dp"
-        android:text="꾸미기"
-        android:textColor="@color/black"
-        android:textSize="18sp"
-        android:gravity="center"
+    <!-- Top App Bar -->
+    <include
+        android:id="@+id/connectTopAppBar"
+        layout="@layout/common_top_app_bar"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- 탭 -->
     <com.google.android.material.button.MaterialButtonToggleGroup
@@ -31,9 +24,10 @@
         android:layout_marginTop="10dp"
         app:singleSelection="true"
         app:selectionRequired="true"
-        app:layout_constraintTop_toBottomOf="@id/tvTitle"
+        app:layout_constraintTop_toBottomOf="@id/connectTopAppBar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
+
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnRecent"
@@ -69,6 +63,19 @@
 
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
+    <!-- 탭 아래 안내 문구 (템플릿 탭에서만 노출) -->
+    <TextView
+        android:id="@+id/tvTabHint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="22dp"
+        android:text="역명과 노선 색상이 포함된 템플릿"
+        android:textColor="@color/text_gray_3"
+        android:textSize="12sp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/toggleTabs"
+        app:layout_constraintStart_toStartOf="parent"/>
 
     <!-- 카운트 -->
     <TextView
@@ -92,6 +99,7 @@
         android:layout_marginEnd="17dp"
         android:layout_marginTop="12dp"
         android:visibility="gone"
+        android:theme="@style/ThemeOverlay.DigitalTok.CursorBlack"
         app:boxBackgroundMode="filled"
         app:boxStrokeWidth="0dp"
         app:boxCornerRadiusTopStart="6dp"
@@ -112,7 +120,8 @@
             android:imeOptions="actionSearch"
             android:inputType="text"
             android:paddingTop="12dp"
-            android:paddingBottom="12dp"/>
+            android:paddingBottom="12dp"
+            android:textCursorDrawable="@drawable/cursor_black"/>
     </com.google.android.material.textfield.TextInputLayout>
 
     <!-- 지하철역 리스트 설명 (지하철역 리스트에서만 보임) -->
@@ -120,12 +129,12 @@
         android:id="@+id/tvStationHint"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="18dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="22dp"
         android:visibility="gone"
         android:text="역명과 노선 색상이 포함된 템플릿"
-        android:textColor="@color/text_gray_2"
-        android:textSize="14sp"
+        android:textColor="@color/text_gray_3"
+        android:textSize="12sp"
         app:layout_constraintTop_toBottomOf="@id/tilSearch"
         app:layout_constraintStart_toStartOf="parent"/>
 
@@ -179,8 +188,8 @@
         android:id="@+id/rvTemplateList"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="17dp"
-        android:layout_marginEnd="17dp"
+        android:layout_marginStart="18dp"
+        android:layout_marginEnd="18dp"
         android:layout_marginTop="20dp"
         android:clipToPadding="false"
         android:visibility="gone"
@@ -194,9 +203,9 @@
         android:id="@+id/rvStations"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="17dp"
-        android:layout_marginEnd="17dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginStart="18dp"
+        android:layout_marginEnd="18dp"
+        android:layout_marginTop="6dp"
         android:clipToPadding="false"
         android:paddingBottom="110dp"
         android:overScrollMode="never"
@@ -206,19 +215,20 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
+
     <!-- 교통약자 좌석 리스트 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvTransportSeats"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="17dp"
-        android:layout_marginEnd="17dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginStart="18dp"
+        android:layout_marginEnd="18dp"
+        android:layout_marginTop="6dp"
         android:clipToPadding="false"
         android:paddingBottom="110dp"
         android:overScrollMode="never"
         android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/tvStationHint"
+        app:layout_constraintTop_toBottomOf="@id/tvTabHint"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>

@@ -1,4 +1,4 @@
-package com.yourcompany.digitaltok.ui.faq
+package com.yourcompany.digitaltok.ui.setting
 
 import android.os.Bundle
 import android.view.LayoutInflater
