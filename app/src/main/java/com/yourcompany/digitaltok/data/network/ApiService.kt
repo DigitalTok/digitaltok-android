@@ -61,6 +61,16 @@ interface ApiService {
         @Path("deviceId") deviceId: Int
     ): Response<ApiResponse<DeviceData>>
 
+    @GET("/api/v1/devices/nfc/{nfcUid}")
+    suspend fun getDeviceByNfcUid(
+        @Path("nfcUid") nfcUid: String
+    ): Response<ApiResponse<DeviceData>>
+
+    @DELETE("/api/v1/devices/nfc/{nfcUid}")
+    suspend fun deleteDeviceByNfcUid(
+        @Path("nfcUid") nfcUid: String
+    ): Response<ApiResponse<DeviceData>>
+
     // ==========================
     // Images
     // ==========================

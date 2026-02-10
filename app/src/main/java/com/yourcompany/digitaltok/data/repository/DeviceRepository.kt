@@ -62,7 +62,7 @@ class DeviceRepository {
     }
 
     suspend fun deleteDevice(nfcUid: String): Result<DeviceData> = try {
-        val response = apiService.deleteDevice(nfcUid)
+        val response = apiService.deleteDeviceByNfcUid(nfcUid)
 
         if (response.isSuccessful) {
             val body = response.body()
