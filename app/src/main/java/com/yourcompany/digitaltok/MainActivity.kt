@@ -26,6 +26,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.yourcompany.digitaltok.ui.MainViewModel
 import com.yourcompany.digitaltok.ui.auth.AuthStartScreen
 import com.yourcompany.digitaltok.ui.auth.EmailLoginActivity
 import com.yourcompany.digitaltok.ui.auth.SignupActivity
@@ -38,6 +39,7 @@ import kotlinx.coroutines.delay
 class MainActivity : AppCompatActivity() {
 
     private val nfcViewModel: NfcViewModel by viewModels()
+    private val mainViewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +50,7 @@ class MainActivity : AppCompatActivity() {
         setContent {
             DigitalTokTheme {
                 AppEntry(
+                    mainViewModel = mainViewModel,
                     goHome = goHome,
                     onOpenEmailLogin = {
                         startActivity(Intent(this, EmailLoginActivity::class.java))
@@ -78,6 +81,7 @@ class MainActivity : AppCompatActivity() {
 
 @Composable
 private fun AppEntry(
+    mainViewModel: MainViewModel,
     goHome: Boolean,
     onOpenEmailLogin: () -> Unit,
     onOpenSignUp: () -> Unit
@@ -93,6 +97,7 @@ private fun AppEntry(
         SplashImage()
     } else {
         AppNavHost(
+            mainViewModel = mainViewModel,
             startDestination = if (goHome) "home" else "onboarding",
             onOpenEmailLogin = onOpenEmailLogin,
             onOpenSignUp = onOpenSignUp
@@ -117,6 +122,7 @@ private fun SplashImage() {
 
 @Composable
 fun AppNavHost(
+    mainViewModel: MainViewModel,
     navController: NavHostController = rememberNavController(),
     startDestination: String = "onboarding",
     onOpenEmailLogin: () -> Unit = {},
@@ -142,7 +148,7 @@ fun AppNavHost(
         }
 
         composable("home") {
-            HomeScreen()
+            HomeScreen(mainViewModel = mainViewModel)
         }
     }
 }

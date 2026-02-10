@@ -18,7 +18,7 @@
     <color name="Error">#FF6666</color>
     <color name="Success">#00C950</color>
     <color name="Default">#E0E0E0</color>
-    <color name="gray_bg">#F4F4F4</color>
+    <color name="gray_bg">#E0E0E0</color>
     <color name="dt_primary">#155DFC</color>
     <color name="dt_gray_disabled">#D1D5DC</color>
     <color name="gray1">#A0A0A0</color>

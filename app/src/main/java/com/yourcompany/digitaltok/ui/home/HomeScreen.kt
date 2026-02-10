@@ -33,7 +33,6 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -70,11 +69,16 @@ private fun ComposableFragmentContainer(modifier: Modifier = Modifier, fragment:
 }
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(mainViewModel: MainViewModel) {
     val navController = rememberNavController()
+    val isBottomNavVisible by mainViewModel.isBottomNavVisible.observeAsState(initial = true)
 
     Scaffold(
-        bottomBar = { BottomNavBar(navController) }
+        bottomBar = {
+            if (isBottomNavVisible) {
+                BottomNavBar(navController)
+            }
+        }
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -83,10 +87,10 @@ fun HomeScreen() {
                 start = 0.dp,
                 end = 0.dp,
                 top = innerPadding.calculateTopPadding(),
-                bottom = innerPadding.calculateBottomPadding()
+                bottom = if (isBottomNavVisible) innerPadding.calculateBottomPadding() else 0.dp
             )
         ) {
-            composable("home") { HomeTab() }
+            composable("home") { HomeTab(mainViewModel = mainViewModel) }
 
             composable("device") {
                 val context = LocalContext.current
@@ -140,11 +144,7 @@ fun HomeScreen() {
 }
 
 @Composable
-private fun HomeTab() {
-    // ✅ develop 기준: MainViewModel에서 상태를 가져와 홈 화면 분기
-    val context = LocalContext.current
-    val activity = context as FragmentActivity
-    val mainViewModel: MainViewModel = viewModel(viewModelStoreOwner = activity)
+private fun HomeTab(mainViewModel: MainViewModel) {
     val isDeviceConnected by mainViewModel.isDeviceConnected.observeAsState(initial = false)
 
     if (!isDeviceConnected) {

@@ -13,11 +13,13 @@ import android.widget.Toast
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.yourcompany.digitaltok.databinding.FragmentCropImageBinding
+import com.yourcompany.digitaltok.ui.MainViewModel
 import java.io.File
 import java.io.FileOutputStream
 
@@ -26,8 +28,20 @@ class CropImageFragment : Fragment() {
     private var _binding: FragmentCropImageBinding? = null
     private val binding get() = _binding!!
 
+    private val mainViewModel: MainViewModel by activityViewModels()
+
     private val imageUri: Uri by lazy {
         requireArguments().getString(ARG_IMAGE_URI)!!.toUri()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        mainViewModel.setBottomNavVisibility(false)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mainViewModel.setBottomNavVisibility(true)
     }
 
     override fun onCreateView(
@@ -41,7 +55,6 @@ class CropImageFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupAppBar()
 
         binding.overlay.setGestureDelegate(binding.photoView)
 
@@ -108,13 +121,6 @@ class CropImageFragment : Fragment() {
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
         }
         return Uri.fromFile(file)
-    }
-
-    private fun setupAppBar() {
-        binding.appBar.titleTextView.text = "사진 편집"
-        binding.appBar.backButton.setOnClickListener {
-            parentFragmentManager.popBackStack()
-        }
     }
 
     override fun onDestroyView() {
