@@ -3,17 +3,16 @@ package com.yourcompany.digitaltok.data.network
 import com.yourcompany.digitaltok.data.model.ApiResponse
 import com.yourcompany.digitaltok.data.model.EmailChangeRequest
 import com.yourcompany.digitaltok.data.model.LogoutRequest
-import retrofit2.http.PATCH
 import retrofit2.http.Body
 import retrofit2.http.DELETE
+import retrofit2.http.HTTP
+import retrofit2.http.PATCH
 
 interface AccountApiService {
 
-    // 로그아웃: refreshToken 필요
-    @DELETE("auth/logout") // BASE_URL이 .../api/ 라서 앞에 /api 붙이면 중복됨
+    @HTTP(method = "DELETE", path = "auth/logout", hasBody = true)
     suspend fun logout(@Body request: LogoutRequest): ApiResponse<String>
 
-    // 회원탈퇴: 비밀번호 없이
     @DELETE("users/me")
     suspend fun withdraw(): ApiResponse<String>
 

@@ -1,23 +1,21 @@
 package com.yourcompany.digitaltok
 
+import android.app.Activity
 import android.content.Intent
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -41,22 +39,46 @@ class MainActivity : AppCompatActivity() {
     private val nfcViewModel: NfcViewModel by viewModels()
     private val mainViewModel: MainViewModel by viewModels()
 
+    // ✅ 로그인 성공 여부를 Activity 쪽 상태로 들고 있다가 Compose로 전달
+    private var goHomeState by mutableStateOf(false)
+
+    // ✅ EmailLoginActivity 결과를 받아서 "로그인 성공" 확인 + 홈 이동 트리거
+    private val emailLoginLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val loginSuccess = result.data?.getBooleanExtra("login_success", false) ?: false
+                if (loginSuccess) {
+                    Toast.makeText(this, "로그인 성공", Toast.LENGTH_SHORT).show()
+                    goHomeState = true
+                }
+            }
+        }
+
+    private val signupLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                // 회원가입 완료 후 처리 필요하면 여기서
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val goHome = intent.getBooleanExtra("go_home", false)
+        // 기존 intent extra도 유지 (예전에 go_home으로 홈 띄우던 로직)
+        val goHomeFromIntent = intent.getBooleanExtra("go_home", false)
+        goHomeState = goHomeFromIntent
 
         setContent {
             DigitalTokTheme {
                 AppEntry(
                     mainViewModel = mainViewModel,
-                    goHome = goHome,
+                    goHome = goHomeState,
                     onOpenEmailLogin = {
-                        startActivity(Intent(this, EmailLoginActivity::class.java))
+                        emailLoginLauncher.launch(Intent(this, EmailLoginActivity::class.java))
                     },
                     onOpenSignUp = {
-                        startActivity(Intent(this, SignupActivity::class.java))
+                        signupLauncher.launch(Intent(this, SignupActivity::class.java))
                     }
                 )
             }
@@ -89,7 +111,7 @@ private fun AppEntry(
     var showSplash by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        delay(1200) // ⏱ 보여줄 시간
+        delay(1200)
         showSplash = false
     }
 
@@ -98,7 +120,7 @@ private fun AppEntry(
     } else {
         AppNavHost(
             mainViewModel = mainViewModel,
-            startDestination = if (goHome) "home" else "onboarding",
+            goHome = goHome,
             onOpenEmailLogin = onOpenEmailLogin,
             onOpenSignUp = onOpenSignUp
         )
@@ -123,12 +145,21 @@ private fun SplashImage() {
 @Composable
 fun AppNavHost(
     mainViewModel: MainViewModel,
+    goHome: Boolean,
     navController: NavHostController = rememberNavController(),
-    startDestination: String = "onboarding",
     onOpenEmailLogin: () -> Unit = {},
     onOpenSignUp: () -> Unit = {}
 ) {
-    NavHost(navController, startDestination = startDestination) {
+    // ✅ goHome가 true가 되는 순간(=로그인 성공) home으로 이동
+    LaunchedEffect(goHome) {
+        if (goHome) {
+            navController.navigate("home") {
+                popUpTo("onboarding") { inclusive = true }
+            }
+        }
+    }
+
+    NavHost(navController, startDestination = "onboarding") {
 
         composable("onboarding") {
             OnboardingScreen(
@@ -142,7 +173,7 @@ fun AppNavHost(
 
         composable("signup") {
             AuthStartScreen(
-                onLoginClick = { navController.navigate("home") },
+                onLoginClick = { onOpenEmailLogin() },
                 onSignupClick = { onOpenSignUp() }
             )
         }
