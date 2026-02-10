@@ -9,7 +9,7 @@ import retrofit2.http.*
 /**
  * 서버 API와 통신하기 위한 Retrofit 인터페이스
  *
- * ✅ Auth는 "/api/v1/..." 절대경로로 고정 (baseUrl에 /api 포함 여부 때문에 404 나는 것 방지)
+ * Auth는 "/api/v1/..." 절대경로로 고정 (baseUrl에 /api 포함 여부 때문에 404 나는 것 방지)
  */
 interface ApiService {
 

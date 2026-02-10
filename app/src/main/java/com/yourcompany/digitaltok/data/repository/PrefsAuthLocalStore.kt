@@ -6,8 +6,17 @@ class PrefsAuthLocalStore(context: Context) : AuthLocalStore {
 
     private val prefs = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
 
-    override suspend fun getRefreshToken(): String? {
-        return prefs.getString("refreshToken", null)
+    override suspend fun getAccessToken(): String? =
+        prefs.getString("accessToken", null)
+
+    override suspend fun getRefreshToken(): String? =
+        prefs.getString("refreshToken", null)
+
+    override suspend fun saveAuth(accessToken: String, refreshToken: String) {
+        prefs.edit()
+            .putString("accessToken", accessToken)
+            .putString("refreshToken", refreshToken)
+            .apply()
     }
 
     override suspend fun clearAuth() {
@@ -19,3 +28,4 @@ class PrefsAuthLocalStore(context: Context) : AuthLocalStore {
             .apply()
     }
 }
+
