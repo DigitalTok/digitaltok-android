@@ -9,10 +9,10 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
 
-    private const val BASE_URL = "http://3.37.213.174:8080/api/"
+    private const val BASE_URL = "http://3.37.213.174:8080/api/v1/"
 
     // (임시) 스웨거에서 발급받은 토큰
-    private const val TEMP_TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ0ZXN0MTg2MEB0ZXN0LmNvbSIsInVzZXJJZCI6Nywicm9sZSI6IlJPTEVfVVNFUiIsImlhdCI6MTc3MDYzMTQ3MiwiZXhwIjoxNzcwNjMzMjcyfQ.rrvBd4xdBQtT9q4WW-RaV7Z3b9mZJNCJLVIOZ-Y5_KFqY07jsepCZaCRsA_U2mQP"
+    private const val TEMP_TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ0ZXN0NTY3OEB0ZXN0LmNvbSIsInVzZXJJZCI6OSwicm9sZSI6IlJPTEVfVVNFUiIsImlhdCI6MTc3MDcwNzc5OCwiZXhwIjoxNzcwNzA5NTk4fQ.XRdjrsufE629U2SVnkNTV4_WACbtg7TDOfiGXMAMvcbk5Jv8b2-inuPR-VqXBm2z"
 
     // 모든 요청에 자동으로 토큰을 추가하는 인터셉터
     private val authInterceptor = Interceptor { chain ->
