@@ -6,9 +6,8 @@ import com.google.gson.annotations.SerializedName
  * 서버에 장치 등록을 요청할 때 보내는 데이터 모델 (Swagger 기준)
  */
 data class DeviceRegistrationRequest(
-    // Swagger Request Body에 따라 "deviceId" 필드만 존재
-    @SerializedName("deviceId")
-    val deviceId: String
+    @SerializedName("nfcUid")
+    val nfcUid: String
 )
 
 /**

@@ -38,22 +38,22 @@ class DeviceViewModel : ViewModel() {
         }
     }
     /**
-     * 장치 ID를 사용하여 서버에 상세 정보 조회를 요청합니다.
+     * nfcUid를 사용하여 서버에 상세 정보 조회를 요청합니다.
      * 결과는 deviceDetailsResult LiveData에 저장됩니다.
      */
-    fun getDeviceById(deviceId: Int) {
+    fun getDeviceByNfcUid(nfcUid: String) {
         viewModelScope.launch {
-            val result = repository.getDeviceById(deviceId)
+            val result = repository.getDeviceByNfcUid(nfcUid)
             _deviceDetailsResult.postValue(result)
         }
     }
     /**
-     * 장치 ID를 사용하여 서버에서 장치를 삭제합니다.
+     * nfcUid를 사용하여 서버에서 장치를 삭제합니다.
      * 결과는 deletionResult LiveData에 저장됩니다.
      */
-    fun deleteDevice(deviceId: Int) {
+    fun deleteDevice(nfcUid: String) {
         viewModelScope.launch {
-            val result = repository.deleteDevice(deviceId)
+            val result = repository.deleteDevice(nfcUid)
             _deletionResult.postValue(result)
         }
     }
