@@ -35,7 +35,7 @@ class DeviceConnectFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.connectTopAppBar.titleTextView.text = "장치 (Device)"
+        binding.connectTopAppBar.titleTextView.text = "기기연결"
         binding.connectTopAppBar.backButton.setOnClickListener {
             activity?.onBackPressedDispatcher?.onBackPressed()
         }
