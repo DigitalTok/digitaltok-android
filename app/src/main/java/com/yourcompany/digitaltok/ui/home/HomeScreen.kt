@@ -13,9 +13,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,17 +73,20 @@ private fun ComposableFragmentContainer(modifier: Modifier = Modifier, fragment:
 }
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(mainViewModel: MainViewModel) {
     val navController = rememberNavController()
     val context = LocalContext.current
     val activity = context as FragmentActivity
     val mainUiViewModel: MainUiViewModel = viewModel(viewModelStoreOwner = activity)
 
-    // Fragment에서 요청한 탭 이동 처리
+    // develop: 하단 네비게이션 가시성
+    val isBottomNavVisible by mainViewModel.isBottomNavVisible.observeAsState(initial = true)
+
+    // refact: Fragment에서 요청한 탭 이동 처리
     val navigateTo by mainUiViewModel.navigateTo.collectAsState()
     LaunchedEffect(navigateTo) {
-        navigateTo?.let {
-            navController.navigate(it) {
+        navigateTo?.let { route ->
+            navController.navigate(route) {
                 // 백스택을 정리하여 중복 화면 방지
                 popUpTo(navController.graph.startDestinationId)
                 launchSingleTop = true
@@ -93,14 +97,17 @@ fun HomeScreen() {
 
     Scaffold(
         bottomBar = {
-            BottomNavBar(navController = navController, onItemClick = { route ->
-                if (route == "device" && mainUiViewModel.isDeviceConnected) {
-                    Toast.makeText(context, "이미 기기가 연결되어 있습니다.", Toast.LENGTH_SHORT).show()
-                    false // Cancel navigation
-                } else {
-                    true // Allow navigation
-                }
-            })
+            if (isBottomNavVisible) {
+                BottomNavBar(navController = navController, onItemClick = { route ->
+                    // refact: 기기 중복 연결 방지
+                    if (route == "device" && mainUiViewModel.isDeviceConnected) {
+                        Toast.makeText(context, "이미 기기가 연결되어 있습니다.", Toast.LENGTH_SHORT).show()
+                        false
+                    } else {
+                        true
+                    }
+                })
+            }
         }
     ) { innerPadding ->
         NavHost(
@@ -110,10 +117,10 @@ fun HomeScreen() {
                 start = 0.dp,
                 end = 0.dp,
                 top = innerPadding.calculateTopPadding(),
-                bottom = innerPadding.calculateBottomPadding()
+                bottom = if (isBottomNavVisible) innerPadding.calculateBottomPadding() else 0.dp
             )
         ) {
-            composable("home") { HomeTab() }
+            composable("home") { HomeTab(mainViewModel = mainViewModel) }
 
             composable("device") {
                 val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
@@ -165,12 +172,10 @@ fun HomeScreen() {
 }
 
 @Composable
-private fun HomeTab() {
-    val context = LocalContext.current
-    val activity = context as FragmentActivity
-    val mainUiViewModel: MainUiViewModel = viewModel(viewModelStoreOwner = activity)
+private fun HomeTab(mainViewModel: MainViewModel) {
+    val isDeviceConnected by mainViewModel.isDeviceConnected.observeAsState(initial = false)
 
-    if (!mainUiViewModel.isDeviceConnected) {
+    if (!isDeviceConnected) {
         HomeNoConnection()
     } else {
         HomeConnected()

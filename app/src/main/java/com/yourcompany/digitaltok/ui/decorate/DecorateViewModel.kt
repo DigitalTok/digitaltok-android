@@ -86,10 +86,12 @@ class DecorateViewModel : ViewModel() {
             val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
             val body = MultipartBody.Part.createFormData("file", imageFile.name, requestFile)
 
-            val result = imageRepository.uploadImage(imageFile.name, body)
+            val imageName = imageFile.nameWithoutExtension
+            val result = imageRepository.uploadImage(imageName, body)
 
             result.onSuccess {
                 _uploadState.value = UploadUiState.Success(it)
+                fetchRecentImages()
             }.onFailure {
                 _uploadState.value = UploadUiState.Error(it.message ?: "업로드 중 오류가 발생했습니다.")
             }
@@ -102,6 +104,7 @@ class DecorateViewModel : ViewModel() {
             val result = imageRepository.updateFavoriteStatus(imageId, isFavorite)
             result.onSuccess {
                 _favoriteState.value = FavoriteUiState.Success(imageId, isFavorite)
+                fetchRecentImages()
             }.onFailure {
                 _favoriteState.value = FavoriteUiState.Error(it.message ?: "즐겨찾기 상태 변경에 실패했습니다.")
             }
