@@ -30,6 +30,7 @@ import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.yourcompany.digitaltok.R
+import com.yourcompany.digitaltok.ui.upload.TemplatePreviewFragment
 import com.yourcompany.digitaltok.ui.upload.ImagePreviewFragment
 import java.io.File
 
@@ -595,11 +596,17 @@ class DecorateFragment : Fragment() {
                 }
                 is DecorateViewModel.PriorityTemplateDetailUiState.Success -> {
                     val detail = state.templateDetail
-                    // TODO: 템플릿 전용 미리보기 및 전송 로직 구현 위치입니다.
-                    // 현재는 'ImagePreviewFragment'로 이동하는 대신 Toast 메시지만 표시합니다.
-                    // 'detail.templateImageUrl'과 'detail.templateDataUrl'을 사용하여
-                    // 새로운 미리보기 화면을 구성하고 바이너리 데이터를 기기에 전송하는 로직을 여기에 추가하세요.
-                    Toast.makeText(requireContext(), "템플릿 선택됨: ${detail.priorityType}", Toast.LENGTH_SHORT).show()
+                    parentFragmentManager.beginTransaction()
+                        .add(
+                            (requireView().parent as ViewGroup).id,
+                            TemplatePreviewFragment.newInstance(
+                                name = detail.priorityType,
+                                imageUrl = detail.templateImageUrl,
+                                dataUrl = detail.templateDataUrl
+                            )
+                        )
+                        .addToBackStack(null)
+                        .commit()
                 }
                 is DecorateViewModel.PriorityTemplateDetailUiState.Error -> {
                     Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
