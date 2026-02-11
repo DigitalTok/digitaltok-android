@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import com.yourcompany.digitaltok.databinding.FragmentSupportBinding
 
 class SupportFragment : Fragment() {
@@ -27,9 +28,8 @@ class SupportFragment : Fragment() {
         // 상단바 타이틀
         binding.connectTopAppBar.titleTextView.text = "고객 지원"
 
-        // 뒤로가기 (Fragment니까 popBackStack이 자연스러움)
         binding.connectTopAppBar.backButton.setOnClickListener {
-            parentFragmentManager.popBackStack()
+            parentFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
         }
 
     }

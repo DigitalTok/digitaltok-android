@@ -47,19 +47,19 @@ class HelpFragment : Fragment() {
         // 상단바
         binding.connectTopAppBar.titleTextView.text = "설정"
         binding.connectTopAppBar.backButton.setOnClickListener {
-            activity?.onBackPressedDispatcher?.onBackPressed()
+            requireActivity().onBackPressedDispatcher.onBackPressed()
         }
 
-        // ✅ (1) 화면 진입 시: 먼저 prefs 값으로 즉시 표시(공백 방지)
+        // 화면 진입 시: 먼저 prefs 값으로 즉시 표시(공백 방지)
         bindUserInfoFromPrefs()
 
-        // ✅ (2) 동시에 서버에서 최신값 받아서 갱신
+        // 동시에 서버에서 최신값 받아서 갱신
         loadUserInfoAndCache()
 
         // 프로필 편집 → ProfileEditFragment
         binding.btnEditProfile.setOnClickListener {
             if (containerId != View.NO_ID) {
-                // ✅ 프로필 편집 화면으로 “현재 값”을 Bundle로 넘김 (편집 화면 즉시 표시용)
+                // 프로필 편집 화면으로 “현재 값”을 Bundle로 넘김 (편집 화면 즉시 표시용)
                 val args = Bundle().apply {
                     putString(KEY_NICKNAME, binding.tvUserName.text?.toString().orEmpty())
                     putString(KEY_EMAIL, binding.tvUserEmail.text?.toString().orEmpty())
@@ -94,7 +94,7 @@ class HelpFragment : Fragment() {
     }
 
     /**
-     * ✅ 서버 호출 전이라도 SharedPreferences에 저장된 값으로 먼저 UI 채움 (공백 방지)
+     * 서버 호출 전이라도 SharedPreferences에 저장된 값으로 먼저 UI 채움 (공백 방지)
      */
     private fun bindUserInfoFromPrefs() {
         val prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -108,7 +108,7 @@ class HelpFragment : Fragment() {
     }
 
     /**
-     * ✅ /users/me 호출해서 UI 갱신 + prefs에 캐싱
+     * /users/me 호출해서 UI 갱신 + prefs에 캐싱
      */
     private fun loadUserInfoAndCache() {
         lifecycleScope.launch {
@@ -120,7 +120,7 @@ class HelpFragment : Fragment() {
                     binding.tvUserName.text = me.nickname
                     binding.tvUserEmail.text = me.email
 
-                    // ✅ prefs 캐싱 (프로필 편집 화면에서 재사용 가능)
+                    // prefs 캐싱 (프로필 편집 화면에서 재사용 가능)
                     val prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                     prefs.edit()
                         .putLong(KEY_USER_ID, me.userId)

@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.digitaltok.ui.theme.FaqItem
 import com.yourcompany.digitaltok.databinding.FragmentFaqBinding
@@ -28,13 +29,14 @@ class FaqFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // ✅ 상단바
+        // 상단바
         binding.connectTopAppBar.titleTextView.text = "자주 묻는 질문"
         binding.connectTopAppBar.backButton.setOnClickListener {
-            parentFragmentManager.popBackStack()
+            parentFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
         }
 
-        // ✅ FAQ 데이터
+
+        // FAQ 데이터
         val faqList = listOf(
             FaqItem(
                 "디링은 어떻게 사용하나요?",
@@ -54,11 +56,11 @@ class FaqFragment : Fragment() {
             )
         )
 
-        // ✅ RecyclerView
+        // RecyclerView
         binding.rvFaq.layoutManager = LinearLayoutManager(requireContext())
         binding.rvFaq.adapter = FaqAdapter(faqList)
 
-        // ✅ CTA 클릭 처리: SupportFragment로 교체 (네비 유지)
+        // CTA 클릭 처리: SupportFragment로 교체 (네비 유지)
         binding.ctaSupport.btnContactSupport.setOnClickListener {
             val containerId = id  // 지금 FaqFragment가 붙어있는 FragmentContainerView id
 
