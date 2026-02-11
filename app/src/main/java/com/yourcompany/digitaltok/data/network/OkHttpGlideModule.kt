@@ -13,7 +13,7 @@ import java.io.InputStream
 class OkHttpGlideModule : AppGlideModule() {
 
     override fun registerComponents(context: Context, glide: Glide, registry: Registry) {
-        // RetrofitClient에서 사용하는 인증된 OkHttpClient를 그대로 사용합니다.
+        // RetrofitClient에서 사용하는 인증된 OkHttpClient를 그대로 사용
         val client = RetrofitClient.providePublicOkHttpClient()
 
 
