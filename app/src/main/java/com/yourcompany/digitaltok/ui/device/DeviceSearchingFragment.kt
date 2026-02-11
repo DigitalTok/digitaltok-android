@@ -65,10 +65,6 @@ class DeviceSearchingFragment : Fragment() {
 
     private fun setupNfc() {
         nfcAdapter = NfcAdapter.getDefaultAdapter(requireContext())
-        if (nfcAdapter == null) {
-            Toast.makeText(requireContext(), "이 기기는 NFC를 지원하지 않습니다.", Toast.LENGTH_SHORT).show()
-            return
-        }
 
         val intent = Intent(requireContext(), requireActivity().javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
         pendingIntent = PendingIntent.getActivity(requireContext(), 0, intent, PendingIntent.FLAG_MUTABLE)
