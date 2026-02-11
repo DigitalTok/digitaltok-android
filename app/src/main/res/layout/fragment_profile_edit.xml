@@ -53,11 +53,23 @@
                     android:id="@+id/ivProfile"
                     android:layout_width="77dp"
                     android:layout_height="77dp"
-                    android:src="@drawable/none_profile"
+                    android:src="@drawable/rectangle"
                     android:contentDescription="@null"
                     android:scaleType="centerCrop"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintStart_toStartOf="parent" />
+                <ImageView
+                    android:id="@+id/ivPeople"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:src="@drawable/vector"
+                    android:contentDescription="@null"
+                    android:scaleType="centerCrop"
+                    app:layout_constraintTop_toTopOf="@id/ivProfile"
+                    app:layout_constraintStart_toStartOf="@id/ivProfile"
+                    app:layout_constraintEnd_toEndOf="@id/ivProfile"
+                    app:layout_constraintBottom_toBottomOf="@id/ivProfile"/>
+
 
                 <!-- 이름 라벨 -->
                 <TextView
