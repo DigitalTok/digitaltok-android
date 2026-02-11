@@ -50,22 +50,12 @@ class DecorateAdapter(
                 .load(item.previewUrl)
                 .placeholder(R.drawable.ic_launcher_background) // 로딩 중 이미지
                 .into(holder.ivThumb)
+        } else if (item.imageUri != null) {
+            holder.ivThumb.visibility = View.VISIBLE
+            holder.ivThumb.setImageURI(item.imageUri)
         } else {
-             // 로컬 Uri나 Res가 있는 경우 (예: 갤러리에서 방금 추가한 사진)
-            when {
-                item.imageUri != null -> {
-                    holder.ivThumb.visibility = View.VISIBLE
-                    holder.ivThumb.setImageURI(item.imageUri)
-                }
-                item.imageRes != null -> {
-                    holder.ivThumb.visibility = View.VISIBLE
-                    holder.ivThumb.setImageResource(item.imageRes)
-                }
-                else -> {
-                    holder.ivThumb.setImageDrawable(null)
-                    holder.ivThumb.visibility = View.GONE
-                }
-            }
+            holder.ivThumb.setImageDrawable(null)
+            holder.ivThumb.visibility = View.GONE
         }
 
         // --- 즐겨찾기(별) 상태 표시 ---

@@ -95,4 +95,9 @@ interface ApiService {
     // ==========================
     @GET("/api/v1/templates/priority")
     suspend fun getPriorityTemplates(): Response<ApiResponse<PriorityTemplateResponse>>
+
+    @GET("/api/v1/templates/priority/{templateId}")
+    suspend fun getPriorityTemplateDetail(
+        @Path("templateId") templateId: Int
+    ): Response<ApiResponse<PriorityTemplateDetail>>
 }

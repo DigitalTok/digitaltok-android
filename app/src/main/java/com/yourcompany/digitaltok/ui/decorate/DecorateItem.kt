@@ -2,15 +2,18 @@ package com.yourcompany.digitaltok.ui.decorate
 
 import android.net.Uri
 
-/**
- * '꾸미기' 탭의 그리드에 표시될 아이템을 나타내는 데이터 클래스입니다.
- * 이 클래스는 UI 표현에 필요한 모든 정보를 담고 있습니다.
- */
 data class DecorateItem(
-    val id: String, // 서버 이미지의 경우 imageId, 로컬 슬롯의 경우 고유 ID
-    val previewUrl: String? = null, // 서버에서 받은 썸네일 URL
-    val isFavorite: Boolean = false, // 즐겨찾기 상태
-    val imageUri: Uri? = null, // 갤러리/카메라에서 가져온 로컬 이미지 Uri
-    val imageRes: Int? = null, // (필요 시) 드로어블 리소스 ID
-    val isSlot: Boolean = true // 최근 사진 목록의 빈 슬롯 여부
-)
+    val id: String, // 서버 이미지 ID 또는 로컬 임시 ID
+    val title: String = "",
+    val previewUrl: String? = null, // Glide로 로드할 URL (서버)
+    val imageUri: Uri? = null, // Glide로 로드할 Uri (로컬)
+    var isSlot: Boolean = false,
+    var isFavorite: Boolean = false,
+    var isSelected: Boolean = false, // 선택 상태
+    val onAddClick: (() -> Unit)? = null // 추가 버튼 클릭 리스너
+) {
+    companion object {
+        fun createAddSlot(onClick: () -> Unit) = DecorateItem(id = "add_slot", isSlot = true, onAddClick = onClick)
+        fun createEmptySlot() = DecorateItem(id = "empty_slot", isSlot = true)
+    }
+}
