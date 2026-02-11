@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.yourcompany.digitaltok.R
 
 class DecorateAdapter(
@@ -13,58 +14,22 @@ class DecorateAdapter(
     private val onFavoriteClick: (String, Boolean) -> Unit // (imageId, isFavorite)
 ) : RecyclerView.Adapter<DecorateAdapter.DecorateViewHolder>() {
 
-    //현재 선택된 아이템 id
     private var selectedId: String? = null
 
-    // 여러 개 즐겨찾기(별 체크) 허용
-    private val pinnedIds = linkedSetOf<String>() // 순서 유지(Set)
-
     /**
-     * 리스트 교체 (탭 변경 및 초기 데이터 로드 시 사용)
-     * @param newItems 새로운 아이템 목록
-     * @param newPinnedIds 즐겨찾기 상태인 아이템 ID 목록
+     * ViewModel로부터 새로운 목록을 받아 UI를 갱신합니다.
+     * 이제 모든 데이터 관리는 ViewModel이 담당합니다.
      */
-    fun submitList(newItems: List<DecorateItem>, newPinnedIds: Set<String>? = null) {
+    fun submitList(newItems: List<DecorateItem>) {
         items = newItems
+        // 선택 상태는 유지하거나 초기화할 수 있습니다. 여기서는 초기화합니다.
         selectedId = null
-
-        newPinnedIds?.let {
-            pinnedIds.clear()
-            pinnedIds.addAll(it)
-        }
-
-        // 즐겨찾기된 아이템들을 앞으로 정렬
-        sortItems()
         notifyDataSetChanged()
     }
 
     /** 선택된 아이템 반환 */
     fun getSelectedItem(): DecorateItem? {
         return items.firstOrNull { it.id == selectedId }
-    }
-
-    // 별 토글 + 즐겨찾기 항목들을 위로 정렬
-    private fun togglePinAndReorder(item: DecorateItem) {
-        val isCurrentlyFavorite = pinnedIds.contains(item.id)
-        val newFavoriteState = !isCurrentlyFavorite
-
-        onFavoriteClick(item.id, newFavoriteState) // ViewModel에 알림
-
-        if (newFavoriteState) {
-            pinnedIds.add(item.id)
-        } else {
-            pinnedIds.remove(item.id)
-        }
-
-        sortItems()
-        notifyDataSetChanged()
-    }
-
-
-     //즐겨찾기(pinned)된 아이템을 목록의 맨 위로, 나머지는 원래 순서대로 정렬
-    private fun sortItems() {
-        items = items
-            .sortedWith(compareByDescending<DecorateItem> { pinnedIds.contains(it.id) })
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DecorateViewHolder {
@@ -78,41 +43,50 @@ class DecorateAdapter(
     override fun onBindViewHolder(holder: DecorateViewHolder, position: Int) {
         val item = items[position]
 
-        // 썸네일 (Uri 우선, 없으면 drawable, 둘 다 없으면 "무지 배경"만 보이게)
-        when {
-            item.imageUri != null -> {
-                holder.ivThumb.visibility = View.VISIBLE
-                holder.ivThumb.setImageURI(item.imageUri)
-            }
-            item.imageRes != null -> {
-                holder.ivThumb.visibility = View.VISIBLE
-                holder.ivThumb.setImageResource(item.imageRes)
-            }
-            else -> {
-                holder.ivThumb.setImageDrawable(null)
-                holder.ivThumb.visibility = View.GONE
+        // --- 썸네일 이미지 로딩 (Glide 사용) ---
+        if (!item.previewUrl.isNullOrEmpty()) {
+            holder.ivThumb.visibility = View.VISIBLE
+            Glide.with(holder.itemView.context)
+                .load(item.previewUrl)
+                .placeholder(R.drawable.ic_launcher_background) // 로딩 중 이미지
+                .into(holder.ivThumb)
+        } else {
+             // 로컬 Uri나 Res가 있는 경우 (예: 갤러리에서 방금 추가한 사진)
+            when {
+                item.imageUri != null -> {
+                    holder.ivThumb.visibility = View.VISIBLE
+                    holder.ivThumb.setImageURI(item.imageUri)
+                }
+                item.imageRes != null -> {
+                    holder.ivThumb.visibility = View.VISIBLE
+                    holder.ivThumb.setImageResource(item.imageRes)
+                }
+                else -> {
+                    holder.ivThumb.setImageDrawable(null)
+                    holder.ivThumb.visibility = View.GONE
+                }
             }
         }
 
-        // 별 표시
+        // --- 즐겨찾기(별) 상태 표시 ---
         holder.ivStar.visibility = View.VISIBLE
-        holder.ivStar.isSelected = pinnedIds.contains(item.id)
+        holder.ivStar.isSelected = item.isFavorite
         holder.ivStar.bringToFront()
 
-        // 선택 테두리
+        // --- 선택 테두리 표시 ---
         holder.viewSelectedBorder.visibility =
             if (item.id == selectedId) View.VISIBLE else View.GONE
 
-        // 클릭 처리 (toggle 선택/해제)
+        // --- 클릭 리스너 ---
         holder.itemView.setOnClickListener {
             selectedId = if (selectedId == item.id) null else item.id
-            notifyDataSetChanged()
+            notifyDataSetChanged() // 선택 테두리 UI 갱신
             onItemClick(item)
         }
 
-        // 별 클릭: 여러 개 체크 + 즐겨찾기들은 위로 모으기
+        // 별 클릭 시, ViewModel에만 알림 (어댑터는 아무것도 하지 않음)
         holder.ivStar.setOnClickListener {
-            togglePinAndReorder(item)
+            onFavoriteClick(item.id, !item.isFavorite)
         }
     }
 

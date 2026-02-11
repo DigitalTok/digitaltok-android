@@ -27,7 +27,6 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -93,9 +92,7 @@ class DecorateFragment : Fragment() {
     private val maxSlots = 15
 
     // 최근사진 15칸
-    private val recentItems = mutableListOf<DecorateItem>().apply {
-        repeat(maxSlots) { idx -> add(DecorateItem(id = "slot_$idx")) }
-    }
+    private var recentItems = mutableListOf<DecorateItem>()
 
     // 템플릿 메뉴 2개
     private val templateList = listOf(
@@ -164,9 +161,6 @@ class DecorateFragment : Fragment() {
             }
         }
     }
-
-
-
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -316,18 +310,31 @@ class DecorateFragment : Fragment() {
             if (currentTab != Tab.RECENT) return@setOnClickListener
 
             val selected = gridAdapter.getSelectedItem()
-            if (selected == null) {
+            if (selected == null || selected.isSlot) {
                 showAddImageDialog()
-            } else {
-                selected.imageUri?.let { uri ->
-                    val imageFile = uriToFile(uri)
-                    if (imageFile != null) {
-                        viewModel.uploadImage(imageFile)
-                    } else {
-                        Toast.makeText(requireContext(), "이미지 파일을 준비할 수 없습니다.", Toast.LENGTH_SHORT).show()
-                    }
-                } ?: Toast.makeText(requireContext(), "선택된 이미지가 없습니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
+
+            // 1. 서버에 있는 이미지 (ID가 숫자)
+            val imageId = selected.id.toIntOrNull()
+            if (imageId != null && !selected.previewUrl.isNullOrEmpty()) {
+                goToPreviewScreen(imageId, selected.previewUrl)
+                return@setOnClickListener
+            }
+
+            // 2. 로컬에만 있는 새 이미지 (ID가 "user_"로 시작)
+            if (selected.id.startsWith("user_") && selected.imageUri != null) {
+                val imageFile = uriToFile(selected.imageUri)
+                if (imageFile != null) {
+                    viewModel.uploadImage(imageFile) // 업로드 후 observeViewModel에서 처리
+                } else {
+                    Toast.makeText(requireContext(), "이미지 파일을 준비할 수 없습니다.", Toast.LENGTH_SHORT).show()
+                }
+                return@setOnClickListener
+            }
+
+            // 3. 예외 케이스
+            Toast.makeText(requireContext(), "이미지를 처리할 수 없습니다.", Toast.LENGTH_SHORT).show()
         }
 
         updateCountUI()
@@ -383,7 +390,7 @@ class DecorateFragment : Fragment() {
             selectedSeatId = null
             selectedStationId = null
 
-            val filled = recentItems.count { it.imageUri != null }
+            val filled = recentItems.count { !it.isSlot }
             tvCount.text = "최근 사용한 사진 ($filled/$maxSlots)"
         } else {
             tvCount.visibility = View.GONE
@@ -506,7 +513,8 @@ class DecorateFragment : Fragment() {
 
     private fun updateSendButtonUI() {
         if (currentTab != Tab.RECENT) return
-        val hasSelected = gridAdapter.getSelectedItem() != null
+        val selected = gridAdapter.getSelectedItem()
+        val hasSelected = selected != null && !selected.isSlot
         btnSend.isEnabled = true
         btnSend.alpha = 1f
         btnSend.text = if (hasSelected) "이미지 전송하기" else "+ 내 이미지 추가"
@@ -514,7 +522,7 @@ class DecorateFragment : Fragment() {
 
     private fun updateCountUI() {
         if (currentTab != Tab.RECENT) return
-        val filled = recentItems.count { it.imageUri != null }
+        val filled = recentItems.count { !it.isSlot }
         tvCount.text = "최근 사용한 사진 ($filled/$maxSlots)"
     }
 
@@ -611,12 +619,18 @@ class DecorateFragment : Fragment() {
     private fun addRecentImage(uri: Uri) {
         val newItem = DecorateItem(
             id = "user_${System.currentTimeMillis()}",
-            imageUri = uri
+            imageUri = uri,
+            isSlot = false
         )
 
-        recentItems.add(0, newItem)
-        if (recentItems.size > maxSlots) {
-            recentItems.removeAt(recentItems.lastIndex)
+        val firstEmptySlotIndex = recentItems.indexOfFirst { it.isSlot }
+        if (firstEmptySlotIndex != -1) {
+            recentItems[firstEmptySlotIndex] = newItem
+        } else {
+            if (recentItems.size >= maxSlots) {
+                recentItems.removeAt(recentItems.lastIndex)
+            }
+            recentItems.add(0, newItem)
         }
 
         gridAdapter.submitList(recentItems.toList())
@@ -644,16 +658,8 @@ class DecorateFragment : Fragment() {
                     hideLoadingDialog()
                     // 업로드 성공 시, 미리보기 화면으로 이동
                     val result = state.result
-                    val imageId = result.image.imageId
-                    val einkDataUrl = result.image.einkDataUrl
-                    if (einkDataUrl != null) {
-                        parentFragmentManager.beginTransaction()
-                            .add((requireView().parent as ViewGroup).id, ImagePreviewFragment.newInstance(imageId, einkDataUrl))
-                            .addToBackStack(null)
-                            .commit()
-                    } else {
-                        Toast.makeText(requireContext(), "미리보기 정보를 불러올 수 없습니다.", Toast.LENGTH_SHORT).show()
-                    }
+                    goToPreviewScreen(result.image.imageId, result.image.previewUrl)
+
                 }
                 is DecorateViewModel.UploadUiState.Error -> {
                     hideLoadingDialog()
@@ -671,13 +677,13 @@ class DecorateFragment : Fragment() {
                     // 로딩 중 UI 표시가 필요하다면 여기에 구현 (예: 작은 스피너 표시)
                 }
                 is DecorateViewModel.FavoriteUiState.Success -> {
-                    val message = if (state.isFavorite) "즐겨찾기에 추가했습니다." else "즐겨찾기에서 해제했습니다."
-                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                    viewModel.fetchRecentImages()
                 }
                 is DecorateViewModel.FavoriteUiState.Error -> {
                     Toast.makeText(requireContext(), "오류: ${state.message}", Toast.LENGTH_SHORT).show()
                     // 참고: API 에러 발생 시, 어댑터의 UI 상태를 원래대로 되돌리는 로직을 추가하면
                     // 더 안정적인 사용자 경험을 제공할 수 있습니다.
+                    viewModel.fetchRecentImages()
                 }
                 is DecorateViewModel.FavoriteUiState.Idle -> {
                     // 아무것도 안 함
@@ -697,28 +703,27 @@ class DecorateFragment : Fragment() {
                     val newItems = recentApiItems.map {
                         DecorateItem(
                             id = it.imageId.toString(),
-                            imageUri = Uri.parse(it.previewUrl) // 서버 URL을 Uri로 변환
+                            previewUrl = it.previewUrl, // 서버 URL을 올바르게 할당
+                            isFavorite = it.isFavorite, // 즐겨찾기 상태를 올바르게 할당
+                            isSlot = false
                         )
                     }
 
-                    // 2. 즐겨찾기 된 이미지 ID들을 Set으로 준비
-                    val pinnedIds = recentApiItems
-                        .filter { it.isFavorite }
-                        .map { it.imageId.toString() }
-                        .toSet()
+                    // 2. 즐겨찾기 된 아이템들을 위로 정렬
+                    val sortedItems = newItems.sortedWith(compareByDescending { it.isFavorite })
 
                     // 3. Fragment의 메인 리스트를 교체
                     recentItems.clear()
-                    recentItems.addAll(newItems)
+                    recentItems.addAll(sortedItems)
 
                     // 4. 최대 슬롯(15개)에 맞춰 빈 아이템 추가
-                    val emptySlots = maxSlots - newItems.size
+                    val emptySlots = maxSlots - recentItems.size
                     if (emptySlots > 0) {
-                        repeat(emptySlots) { idx -> recentItems.add(DecorateItem(id = "slot_$idx")) }
+                        repeat(emptySlots) { idx -> recentItems.add(DecorateItem(id = "slot_$idx", isSlot = true)) }
                     }
 
                     // 5. 어댑터에 최종 리스트와 즐겨찾기 정보 전달
-                    gridAdapter.submitList(recentItems.toList(), pinnedIds)
+                    gridAdapter.submitList(recentItems.toList())
 
                     // 6. 상단 카운트 UI 업데이트
                     updateCountUI()
@@ -730,6 +735,17 @@ class DecorateFragment : Fragment() {
                 else -> { /* Idle */ }
             }
         }
+    }
+
+    private fun goToPreviewScreen(imageId: Int, previewUrl: String?) {
+        if (previewUrl == null) {
+            Toast.makeText(requireContext(), "미리보기 정보를 불러올 수 없습니다.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        parentFragmentManager.beginTransaction()
+            .add((requireView().parent as ViewGroup).id, ImagePreviewFragment.newInstance(imageId, previewUrl))
+            .addToBackStack(null)
+            .commit()
     }
 
     private fun uriToFile(uri: Uri): File? {
