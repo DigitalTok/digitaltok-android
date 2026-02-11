@@ -32,8 +32,6 @@
                 android:layout_width="75dp"
                 android:layout_height="135dp"
                 android:layout_marginTop="73dp"
-                android:background="@drawable/bg_connect_gradient"
-                android:padding="34dp"
                 android:src="@drawable/ic_phone"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
