@@ -38,8 +38,7 @@ class NfcDisabledFragment : DialogFragment() {
         }
 
         binding.btnCancel.setOnClickListener {
-            // 사용자가 뒤로가기 버튼을 누른 것과 동일하게 동작
-            requireActivity().onBackPressedDispatcher.onBackPressed()
+            dismiss()
         }
     }
 

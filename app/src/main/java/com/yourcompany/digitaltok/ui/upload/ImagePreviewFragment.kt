@@ -1,28 +1,28 @@
 package com.yourcompany.digitaltok.ui.upload
 
-import android.content.Intent
+import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.nfc.NfcAdapter
+import android.nfc.NfcManager
 import android.nfc.Tag
 import android.nfc.tech.IsoDep
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.Button
 import android.widget.ProgressBar
-import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.bumptech.glide.Glide
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.yourcompany.digitaltok.R
 import com.yourcompany.digitaltok.databinding.FragmentImagePreviewBinding
+import com.yourcompany.digitaltok.ui.device.NfcDisabledFragment
 import com.yourcompany.digitaltok.ui.faq.HelpFragment
 import java.io.IOException
 import kotlin.math.ceil
@@ -38,7 +38,6 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
     private var nfcTransferDialog: AlertDialog? = null
     private var resultDialog: AlertDialog? = null
 
-    private var nfcAdapter: NfcAdapter? = null
     private var binaryDataToWrite: ByteArray? = null
 
     @Volatile
@@ -47,13 +46,9 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
     @Volatile
     private var transferCompleted = false
 
-    // 다이얼로그 내 상태 텍스트(레이아웃에 없으면 null일 수 있음)
-    private var nfcStatusTextView: TextView? = null
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        nfcAdapter = NfcAdapter.getDefaultAdapter(requireContext())
-    }
+    //  성공 후 2초 뒤 popBackStack 시점에 state saved면 크래시 → onResume에서 처리
+    @Volatile
+    private var pendingPopBack = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -80,14 +75,19 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
                 .placeholder(R.drawable.ic_launcher_background)
                 .into(binding.ivPreview)
         } else {
+            // ✅ 실패 시에도 동일한 실패 팝업(XML) 사용
             showFailDialog("이미지 정보를 불러오는데 실패했습니다.")
         }
     }
 
     override fun onResume() {
         super.onResume()
-        // 20초+ 태깅이면 화면 꺼짐 방지 필수
         requireActivity().window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        if (pendingPopBack) {
+            pendingPopBack = false
+            safePopBackStackOrPend()
+        }
     }
 
     override fun onPause() {
@@ -103,29 +103,13 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
 
     private fun setupToolbar() {
         binding.appBar.titleTextView.text = "사진 미리보기"
-        binding.appBar.backButton.setOnClickListener {
-            parentFragmentManager.popBackStack()
-        }
+        binding.appBar.backButton.setOnClickListener { safePopBackStackOrPend() }
     }
 
     private fun setupClickListeners(imageId: Int?) {
         binding.btnSendToDiring.setOnClickListener {
-            if (nfcAdapter == null) {
-                showFailDialog("이 기기는 NFC를 지원하지 않습니다.")
-                return@setOnClickListener
-            }
-
-            if (!nfcAdapter!!.isEnabled) {
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("NFC 비활성화")
-                    .setMessage("NFC 기능이 꺼져있습니다. 이미지 전송을 위해 NFC를 활성화해주세요.")
-                    .setPositiveButton("설정으로 이동") { _, _ ->
-                        startActivity(Intent(Settings.ACTION_NFC_SETTINGS))
-                    }
-                    .setNegativeButton("취소", null)
-                    .show()
-                return@setOnClickListener
-            }
+            //  NFC 꺼짐이면: 머터리얼 알럿 대신 내가 만든 XML(DialogFragment) 띄움
+            if (!ensureNfcEnabledOrShowDialog()) return@setOnClickListener
 
             if (imageId != null) {
                 showLoadingDialog("바이너리 데이터 준비 중...")
@@ -150,15 +134,53 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
     }
 
     // ======================================================
+    // NFC / ReaderMode helpers
+    // ======================================================
+    private fun getNfcAdapter(): NfcAdapter? {
+        val nfcManager = context?.getSystemService(Context.NFC_SERVICE) as? NfcManager
+        return nfcManager?.defaultAdapter
+    }
+
+    /**
+     *  "NFC 미지원" 안내는 배제
+     * - adapter == null 이어도 '꺼짐'처럼 처리해서 NfcDisabledFragment 띄움
+     */
+    private fun ensureNfcEnabledOrShowDialog(): Boolean {
+        val adapter = getNfcAdapter()
+        if (adapter?.isEnabled != true) {
+            if (!parentFragmentManager.isStateSaved) {
+                NfcDisabledFragment().show(parentFragmentManager, "NfcDisabledDialog")
+            }
+            return false
+        }
+        return true
+    }
+
+    private fun enableNfcReaderMode() {
+        val activity = requireActivity()
+        val flags = NfcAdapter.FLAG_READER_NFC_A or
+                NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK or
+                NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS
+
+        getNfcAdapter()?.enableReaderMode(activity, this, flags, null)
+    }
+
+    private fun disableNfcReaderMode() {
+        try {
+            getNfcAdapter()?.disableReaderMode(requireActivity())
+        } catch (e: Exception) {
+            Log.w(TAG, "Error disabling reader mode", e)
+        }
+    }
+
+    // ======================================================
     // NFC ReaderCallback (IsoDep 전용)
     // ======================================================
     override fun onTagDiscovered(tag: Tag?) {
         if (tag == null) return
 
-        // 전송 완료 후엔 추가 콜백 무시
         if (transferCompleted) return
 
-        // 전송 중 중복 콜백 무시
         if (isTransferring) {
             Log.d(TAG, "Already transferring, ignore")
             return
@@ -180,11 +202,10 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
         }
 
         try {
-            updateNfcDialogText("태그 인식됨. 전송을 시작합니다… (떼지 마세요)")
             isoDep.timeout = 120_000
             if (!isoDep.isConnected) isoDep.connect()
 
-            // 0) SELECT (제조사 예시)
+            // 0) SELECT
             val selectResp = transceiveHex(isoDep, "00A4040007D2760000850101")
             Log.d(TAG, "SELECT <- ${bytesToHex(selectResp)}")
             if (!endsWith9000(selectResp)) {
@@ -193,13 +214,11 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
             }
 
             // 2) 전송 (F0D2)
-            updateNfcDialogText("이미지 전송 중… (떼지 마세요)")
             val screenIndex = 0
             val ok = writeBinaryByChunks(isoDep, data, screenIndex)
             if (!ok) return
 
-            // 3) Refresh 요청 + 완료될 때까지 Poll (F0D4 + F0DE)
-            updateNfcDialogText("디바이스에서 이미지 적용 중… (최대 수십 초 걸릴 수 있어요)")
+            // 3) Refresh + Poll (F0D4 + F0DE)
             val done = refreshScreenAndWait(isoDep, screenIndex)
             if (!done) {
                 showFailDialog("전송은 되었지만 갱신이 완료되지 않았습니다. 다시 시도해주세요.")
@@ -260,17 +279,11 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
             Log.d(TAG, "D2 row=$rowIndex <- $respHex")
 
             if (!endsWith9000(resp)) {
+                // 실패 시에도 동일한 실패 팝업(XML) 사용
                 showFailDialog("전송 오류(row=$rowIndex): $respHex")
                 return false
             }
-
-            // 진행 표시(대략)
-            if (rowCount >= 10 && rowIndex % (rowCount / 10).coerceAtLeast(1) == 0) {
-                val percent = ((rowIndex + 1) * 100) / rowCount
-                updateNfcDialogText("이미지 전송 중… $percent% (떼지 마세요)")
-            }
         }
-
         return true
     }
 
@@ -284,8 +297,7 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
         )
 
         val first = isoDep.transceive(refresh)
-        val firstHex = bytesToHex(first)
-        Log.d(TAG, "REFRESH <- $firstHex")
+        Log.d(TAG, "REFRESH <- ${bytesToHex(first)}")
 
         return pollRefreshResult(isoDep)
     }
@@ -304,14 +316,11 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
             val hex = bytesToHex(resp)
             Log.d(TAG, "POLL[$i] <- $hex")
 
-            when (hex) {
+            return@repeat when (hex) {
                 "009000", "9000" -> return true
                 "019000" -> {
-                    if (i % 10 == 0) {
-                        val seconds = (i / 10)
-                        updateNfcDialogText("디바이스 적용 중… ${seconds}s (떼지 마세요)")
-                    }
                     Thread.sleep(100)
+                    Unit
                 }
                 "698A", "6986", "68C6" -> return false
                 else -> return false
@@ -321,16 +330,15 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
     }
 
     // ======================================================
-    // Dialog + ReaderMode
+    // Dialogs (원래 방식 유지: MaterialAlertDialogBuilder + setView)
+    // - 전송중: dialog_nfc_transfer.xml
+    // - 성공: dialog_transfer_success.xml
+    // - 실패: dialog_transfer_fail.xml
     // ======================================================
     private fun showNfcTransferDialog() {
         if (nfcTransferDialog == null) {
-            val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_nfc_transfer, null)
-
-            // 레이아웃에 상태 텍스트뷰가 있으면 연결 (id: tv_status)
-            nfcStatusTextView = dialogView.findViewById(
-                resources.getIdentifier("tv_status", "id", requireContext().packageName)
-            )
+            val dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_nfc_transfer, null)
 
             nfcTransferDialog = MaterialAlertDialogBuilder(requireContext())
                 .setView(dialogView)
@@ -339,44 +347,17 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
                     if (!isTransferring) disableNfcReaderMode()
                 }
                 .create()
-
-            nfcTransferDialog?.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                .apply { window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT)) }
         }
 
-        updateNfcDialogText("NFC 태그에 휴대폰을 가까이 대주세요")
         nfcTransferDialog?.show()
         enableNfcReaderMode()
     }
 
-    private fun updateNfcDialogText(text: String) {
-        activity?.runOnUiThread {
-            nfcStatusTextView?.text = text
-        }
-    }
-
-    private fun enableNfcReaderMode() {
-        val activity = requireActivity()
-        val flags = NfcAdapter.FLAG_READER_NFC_A or
-                NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK or
-                NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS
-
-        nfcAdapter?.enableReaderMode(activity, this, flags, null)
-    }
-
-    private fun disableNfcReaderMode() {
-        try {
-            val activity = requireActivity()
-            nfcAdapter?.disableReaderMode(activity)
-        } catch (e: Exception) {
-            Log.w(TAG, "Error disabling reader mode", e)
-        }
-    }
-
-    // ======================================================
-    // Success / Fail Dialog (custom xml)
-    // ======================================================
     private fun showSuccessDialogAndExit() {
         activity?.runOnUiThread {
+            if (!isAdded || activity == null) return@runOnUiThread
+
             nfcTransferDialog?.dismiss()
             if (resultDialog?.isShowing == true) return@runOnUiThread
 
@@ -392,8 +373,16 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
 
             binding.root.postDelayed({
                 if (!isAdded) return@postDelayed
+
                 resultDialog?.dismiss()
                 disableNfcReaderMode()
+
+                // ✅ onSaveInstanceState 이후 popBackStack 크래시 방지
+                if (parentFragmentManager.isStateSaved) {
+                    pendingPopBack = true
+                    Log.w(TAG, "State is saved. Will pop back onResume.")
+                    return@postDelayed
+                }
                 parentFragmentManager.popBackStack()
             }, 2000)
         }
@@ -401,14 +390,18 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
 
     private fun showFailDialog(message: String?) {
         activity?.runOnUiThread {
+            if (!isAdded || activity == null) return@runOnUiThread
+
             nfcTransferDialog?.dismiss()
             if (resultDialog?.isShowing == true) return@runOnUiThread
 
             Log.e(TAG, "Transfer failed: $message")
 
             val dialogView = layoutInflater.inflate(R.layout.dialog_transfer_fail, null)
-            val btnRetry = dialogView.findViewById<MaterialButton>(R.id.btnRetry)
-            val btnSupport = dialogView.findViewById<MaterialButton>(R.id.btnSupport)
+
+            // ✅ XML이 AppCompatButton이므로 MaterialButton 캐스팅 금지
+            val btnRetry = dialogView.findViewById<Button>(R.id.btnRetry)
+            val btnSupport = dialogView.findViewById<Button>(R.id.btnSupport)
 
             resultDialog = MaterialAlertDialogBuilder(requireContext())
                 .setView(dialogView)
@@ -426,7 +419,15 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
                 resultDialog?.dismiss()
                 if (!isAdded) return@setOnClickListener
 
-                val containerId = (requireView().parent as ViewGroup).id
+                //  state saved면 트랜잭션 크래시 방지
+                if (parentFragmentManager.isStateSaved) {
+                    Log.w(TAG, "State is saved. Skip navigation to HelpFragment.")
+                    return@setOnClickListener
+                }
+
+                val rootView = view ?: return@setOnClickListener
+                val parent = rootView.parent as? ViewGroup ?: return@setOnClickListener
+                val containerId = parent.id
                 if (containerId != View.NO_ID) {
                     parentFragmentManager.beginTransaction()
                         .replace(containerId, HelpFragment())
@@ -464,13 +465,21 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
         loadingDialog = null
     }
 
+    private fun safePopBackStackOrPend() {
+        if (!isAdded) return
+        if (parentFragmentManager.isStateSaved) {
+            pendingPopBack = true
+            return
+        }
+        parentFragmentManager.popBackStack()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
         nfcTransferDialog = null
         loadingDialog = null
         resultDialog = null
-        nfcStatusTextView = null
     }
 
     // ======================================================
