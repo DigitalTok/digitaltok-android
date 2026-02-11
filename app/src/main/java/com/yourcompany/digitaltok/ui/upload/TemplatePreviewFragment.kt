@@ -292,22 +292,49 @@ class TemplatePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
     private fun showFailDialog(message: String?) {
         activity?.runOnUiThread {
             if (!isAdded || activity == null) return@runOnUiThread
+
+            nfcTransferDialog?.dismiss()
             if (resultDialog?.isShowing == true) return@runOnUiThread
+
+            Log.e(TAG, "Transfer failed: $message")
+
             val dialogView = layoutInflater.inflate(R.layout.dialog_transfer_fail, null)
-            dialogView.findViewById<Button>(R.id.btn_fail_retry).setOnClickListener { resultDialog?.dismiss() }
-            dialogView.findViewById<Button>(R.id.btn_fail_help).setOnClickListener {
-                resultDialog?.dismiss()
-                parentFragmentManager.beginTransaction()
-                    .add((requireView().parent as ViewGroup).id, HelpFragment())
-                    .addToBackStack(null)
-                    .commit()
-            }
-            dialogView.findViewById<TextView>(R.id.tv_fail_message).text = message ?: "알 수 없는 오류가 발생했습니다."
+
+            val btnRetry = dialogView.findViewById<Button>(R.id.btnRetry)
+            val btnSupport = dialogView.findViewById<Button>(R.id.btnSupport)
+
             resultDialog = MaterialAlertDialogBuilder(requireContext())
                 .setView(dialogView)
-                .setCancelable(false)
+                .setCancelable(true)
                 .create()
                 .apply { window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT)) }
+
+            btnRetry.setOnClickListener {
+                resultDialog?.dismiss()
+                transferCompleted = false
+                showNfcTransferDialog()
+            }
+
+            btnSupport.setOnClickListener {
+                resultDialog?.dismiss()
+                if (!isAdded) return@setOnClickListener
+
+                if (parentFragmentManager.isStateSaved) {
+                    Log.w(TAG, "State is saved. Skip navigation to HelpFragment.")
+                    return@setOnClickListener
+                }
+
+                val rootView = view ?: return@setOnClickListener
+                val parent = rootView.parent as? ViewGroup ?: return@setOnClickListener
+                val containerId = parent.id
+                if (containerId != View.NO_ID) {
+                    parentFragmentManager.beginTransaction()
+                        .replace(containerId, HelpFragment())
+                        .addToBackStack(null)
+                        .commit()
+                }
+            }
+
             resultDialog?.show()
         }
     }
