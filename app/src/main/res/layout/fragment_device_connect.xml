@@ -47,7 +47,7 @@
                 android:text="DiRing 연결"
                 android:textColor="@color/text_black"
                 android:textSize="22sp"
-                android:textStyle="bold"
+                android:fontFamily="@font/pretendard_semibold"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/deviceIcon" />
@@ -58,6 +58,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
                 android:text="NFC를 통해 전자 잉크 디링을 연결하세요"
+                android:fontFamily="@font/pretendard_medium"
                 android:textColor="@color/text_gray_2"
                 android:textSize="14sp"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -78,7 +79,7 @@
                 android:text="NFC 연결 시작"
                 android:textColor="@android:color/white"
                 android:textSize="16sp"
-                android:textStyle="bold"
+                android:fontFamily="@font/pretendard_medium"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/subtitleTextView" />
@@ -117,7 +118,7 @@
             android:text="NFC 활성화 확인"
             android:textColor="@android:color/black"
             android:textSize="16sp"
-            android:textStyle="bold"
+            android:fontFamily="@font/pretendard_medium"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/nfcInfoIcon"
             app:layout_constraintTop_toTopOf="parent" />
@@ -129,6 +130,7 @@
             android:layout_marginTop="4dp"
             android:text="설정 &gt; 연결에서 NFC가 켜져있는지 확인하세요"
             android:textColor="@color/gray6A"
+            android:fontFamily="@font/pretendard_regular"
             app:layout_constraintEnd_toEndOf="@id/nfcInfoTitle"
             app:layout_constraintStart_toStartOf="@id/nfcInfoTitle"
             app:layout_constraintTop_toBottomOf="@id/nfcInfoTitle" />
@@ -152,7 +154,7 @@
             android:text="올바른 위치"
             android:textColor="@android:color/black"
             android:textSize="16sp"
-            android:textStyle="bold"
+            android:fontFamily="@font/pretendard_medium"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/positionInfoIcon"
             app:layout_constraintTop_toBottomOf="@id/nfcInfoSubtitle" />
@@ -164,6 +166,7 @@
             android:layout_marginTop="4dp"
             android:text="휴대폰 뒷면을 그립톡 중앙에 가까이 대주세요"
             android:textColor="@color/gray6A"
+            android:fontFamily="@font/pretendard_regular"
             app:layout_constraintEnd_toEndOf="@id/positionInfoTitle"
             app:layout_constraintStart_toStartOf="@id/positionInfoTitle"
             app:layout_constraintTop_toBottomOf="@id/positionInfoTitle" />

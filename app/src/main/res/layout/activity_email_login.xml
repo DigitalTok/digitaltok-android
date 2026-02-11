@@ -28,7 +28,7 @@
                 android:layout_height="wrap_content"
                 android:text="← 뒤로"
                 android:textSize="14sp"
-                android:textColor="#155DFC"/>
+                android:textColor="@color/black"/>
 
             <TextView
                 android:layout_width="0dp"

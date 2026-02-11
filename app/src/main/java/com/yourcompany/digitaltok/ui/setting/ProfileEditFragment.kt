@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
 import com.yourcompany.digitaltok.MainActivity
 import com.yourcompany.digitaltok.R
@@ -52,8 +53,9 @@ class ProfileEditFragment : Fragment() {
 
         binding.connectTopAppBar.titleTextView.text = "프로필 편집"
         binding.connectTopAppBar.backButton.setOnClickListener {
-            parentFragmentManager.popBackStack()
+            parentFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
         }
+
 
         // Repository 초기화
         val accountApi = RetrofitClient.create(AccountApiService::class.java)

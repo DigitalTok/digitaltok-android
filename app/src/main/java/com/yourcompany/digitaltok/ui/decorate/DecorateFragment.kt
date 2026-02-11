@@ -6,6 +6,7 @@ import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -683,6 +684,8 @@ class DecorateFragment : Fragment() {
             Toast.makeText(requireContext(), "미리보기 정보를 불러올 수 없습니다.", Toast.LENGTH_SHORT).show()
             return
         }
+        Log.d("PREVIEW_DEBUG", "imageId=$imageId")
+        Log.d("PREVIEW_DEBUG", "previewUrl=$previewUrl")
         parentFragmentManager.beginTransaction()
             .add((requireView().parent as ViewGroup).id, ImagePreviewFragment.newInstance(imageId, previewUrl))
             .addToBackStack(null)
@@ -691,16 +694,24 @@ class DecorateFragment : Fragment() {
 
     private fun uriToFile(uri: Uri): File? {
         return try {
-            val inputStream = requireContext().contentResolver.openInputStream(uri) ?: return null
-            val file = File(requireContext().cacheDir, "upload_${System.currentTimeMillis()}.jpg")
-            file.outputStream().use { fileOut ->
-                inputStream.copyTo(fileOut)
+            val cr = requireContext().contentResolver
+            val mime = cr.getType(uri) ?: "image/png"
+
+            val ext = when (mime.lowercase()) {
+                "image/png" -> "png"
+                "image/jpeg", "image/jpg" -> "jpg"
+                else -> "png"
             }
-            inputStream.close()
-            file
+
+            cr.openInputStream(uri)?.use { input ->
+                val file = File(requireContext().cacheDir, "upload_${System.currentTimeMillis()}.$ext")
+                file.outputStream().use { out -> input.copyTo(out) }
+                file
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             null
         }
     }
+
 }

@@ -33,11 +33,23 @@
             android:layout_width="77dp"
             android:layout_height="77dp"
             android:paddingStart="4dp"
-            android:src="@drawable/none_profile"
+            android:src="@drawable/rectangle"
             android:contentDescription="@null"
             android:scaleType="centerCrop"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/ivPeople"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:src="@drawable/vector"
+            android:contentDescription="@null"
+            android:scaleType="centerCrop"
+            app:layout_constraintTop_toTopOf="@id/ivProfile"
+            app:layout_constraintStart_toStartOf="@id/ivProfile"
+            app:layout_constraintEnd_toEndOf="@id/ivProfile"
+            app:layout_constraintBottom_toBottomOf="@id/ivProfile"/>
 
         <TextView
             android:id="@+id/tvUserName"
@@ -47,7 +59,7 @@
             android:text="정재원님"
             android:textColor="@color/text_black"
             android:textSize="18sp"
-            android:textStyle="bold"
+            android:fontFamily="@font/pretendard_semibold"
             android:layout_marginTop="21dp"
             app:layout_constraintStart_toEndOf="@id/ivProfile"
             app:layout_constraintTop_toTopOf="@id/ivProfile"
@@ -62,6 +74,7 @@
             android:textStyle="normal"
             android:textColor="@color/text_gray_2"
             android:textSize="12sp"
+            android:fontFamily="@font/pretendard_medium"
             app:layout_constraintStart_toEndOf="@id/ivProfile"
             app:layout_constraintTop_toBottomOf="@id/tvUserName"
             app:layout_constraintEnd_toEndOf="parent" />
@@ -76,7 +89,7 @@
             android:text="프로필 편집"
             android:textColor="@color/white"
             android:textSize="16sp"
-            android:textStyle="bold"
+            android:fontFamily="@font/pretendard_medium"
             app:layout_constraintTop_toBottomOf="@id/ivProfile"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
@@ -103,7 +116,7 @@
             android:layout_height="wrap_content"
             android:text="도움말"
             android:textSize="14sp"
-            android:textStyle="bold"
+            android:fontFamily="@font/pretendard_semibold"
             android:textColor="@color/text_gray_3"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -135,6 +148,7 @@
                     android:text="자주 묻는 질문"
                     android:textSize="14sp"
                     android:textColor="@color/text_gray_1"
+                    android:fontFamily="@font/pretendard_medium"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -172,6 +186,7 @@
                     android:text="고객 지원"
                     android:textSize="14sp"
                     android:textColor="@color/text_gray_1"
+                    android:fontFamily="@font/pretendard_medium"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -217,7 +232,7 @@
             android:layout_height="wrap_content"
             android:text="정보"
             android:textSize="14sp"
-            android:textStyle="bold"
+            android:fontFamily="@font/pretendard_semibold"
             android:textColor="@color/gray1"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -239,6 +254,7 @@
                 android:text="앱 버전"
                 android:textSize="14sp"
                 android:textColor="@color/text_gray_1"
+                android:fontFamily="@font/pretendard_medium"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
@@ -250,6 +266,7 @@
                 android:text="DT v 1.12.6"
                 android:textSize="14sp"
                 android:textColor="@color/gray1"
+                android:fontFamily="@font/pretendard_regular"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />

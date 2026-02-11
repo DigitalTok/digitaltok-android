@@ -24,6 +24,10 @@
     <color name="gray1">#A0A0A0</color>
     <color name="Text1">#101010</color>
     <color name="defult_gray">#E0E0E0</color>
-     <color name="dt_black_50">#0A0A0A80</color>
-
+    <color name="dt_black_50">#0A0A0A80</color>
+    <color name="gray_box">#F4F4F4</color>
+    <color name="arrow_color">#333333</color>
+    <color name="withdraw">#FFF0F0</color>
+    <color name="info_solid">#EFF6FF</color>
+    <color name="info">#BEDBFF</color>
 </resources>
