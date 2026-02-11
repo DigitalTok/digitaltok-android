@@ -51,17 +51,7 @@ interface ApiService {
         @Body request: DeviceRegistrationRequest
     ): Response<ApiResponse<DeviceData>>
 
-    @GET("/api/v1/devices/{deviceId}")
-    suspend fun getDeviceById(
-        @Path("deviceId") deviceId: Int
-    ): Response<ApiResponse<DeviceData>>
-
-    @DELETE("/api/v1/devices/{deviceId}")
-    suspend fun deleteDevice(
-        @Path("deviceId") deviceId: Int
-    ): Response<ApiResponse<DeviceData>>
-
-    @GET("/api/v1/devices/nfc/{nfcUid}")
+    @GET("/api/v1/devices/{nfcUid}")
     suspend fun getDeviceByNfcUid(
         @Path("nfcUid") nfcUid: String
     ): Response<ApiResponse<DeviceData>>
