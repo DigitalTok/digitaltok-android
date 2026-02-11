@@ -77,7 +77,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
-        android:background="@color/gray_bg"
+        android:background="@color/gray_box"
         android:paddingStart="26dp"
         android:paddingEnd="26dp"
         android:paddingTop="14dp"

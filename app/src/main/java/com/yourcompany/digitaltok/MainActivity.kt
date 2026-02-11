@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -72,9 +72,11 @@ class MainActivity : AppCompatActivity() {
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
 
+        supportActionBar?.hide()
+        enableEdgeToEdge()
         // 기존 intent extra도 유지 (예전에 go_home으로 홈 띄우던 로직)
         val goHomeFromIntent = intent.getBooleanExtra("go_home", false)
         goHomeState = goHomeFromIntent
@@ -121,7 +123,7 @@ private fun AppEntry(
     var showSplash by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        delay(1200)
+        delay(1800)
         showSplash = false
     }
 
