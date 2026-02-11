@@ -89,4 +89,15 @@ interface ApiService {
     @Streaming
     @GET
     suspend fun downloadImageBinary(@Url url: String): Response<ResponseBody>
+
+    // ==========================
+    // Priority
+    // ==========================
+    @GET("/api/v1/templates/priority")
+    suspend fun getPriorityTemplates(): Response<ApiResponse<PriorityTemplateResponse>>
+
+    @GET("/api/v1/templates/priority/{templateId}")
+    suspend fun getPriorityTemplateDetail(
+        @Path("templateId") templateId: Int
+    ): Response<ApiResponse<PriorityTemplateDetail>>
 }

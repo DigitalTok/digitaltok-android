@@ -6,8 +6,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yourcompany.digitaltok.data.model.ImagePreview
 import com.yourcompany.digitaltok.data.model.ImageUploadResult
+import com.yourcompany.digitaltok.data.model.PriorityTemplate
+import com.yourcompany.digitaltok.data.model.PriorityTemplateDetail
 import com.yourcompany.digitaltok.data.model.RecentImagesResponse
 import com.yourcompany.digitaltok.data.repository.ImageRepository
+import com.yourcompany.digitaltok.data.repository.PriorityRepository
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -18,6 +21,7 @@ import java.lang.NumberFormatException
 class DecorateViewModel : ViewModel() {
 
     private val imageRepository = ImageRepository()
+    private val priorityRepository = PriorityRepository()
 
     // 이미지 업로드 UI 상태
     sealed class UploadUiState {
@@ -63,8 +67,53 @@ class DecorateViewModel : ViewModel() {
     private val _recentImagesState = MutableLiveData<RecentImagesUiState>(RecentImagesUiState.Idle)
     val recentImagesState: LiveData<RecentImagesUiState> = _recentImagesState
 
+    // 교통약자 템플릿 목록 UI 상태
+    sealed class PriorityTemplatesUiState {
+        object Loading : PriorityTemplatesUiState()
+        data class Success(val templates: List<PriorityTemplate>) : PriorityTemplatesUiState()
+        data class Error(val message: String) : PriorityTemplatesUiState()
+    }
+
+    private val _priorityTemplatesState = MutableLiveData<PriorityTemplatesUiState>()
+    val priorityTemplatesState: LiveData<PriorityTemplatesUiState> = _priorityTemplatesState
+
+    // 교통약자 템플릿 상세 정보 UI 상태
+    sealed class PriorityTemplateDetailUiState {
+        object Loading : PriorityTemplateDetailUiState()
+        data class Success(val templateDetail: PriorityTemplateDetail) : PriorityTemplateDetailUiState()
+        data class Error(val message: String) : PriorityTemplateDetailUiState()
+    }
+
+    private val _priorityTemplateDetailState = MutableLiveData<PriorityTemplateDetailUiState>()
+    val priorityTemplateDetailState: LiveData<PriorityTemplateDetailUiState> = _priorityTemplateDetailState
+
     init {
         fetchRecentImages()
+        fetchPriorityTemplates()
+    }
+
+    fun fetchPriorityTemplates() {
+        viewModelScope.launch {
+            _priorityTemplatesState.value = PriorityTemplatesUiState.Loading
+            val result = priorityRepository.getPriorityTemplates()
+            result.onSuccess {
+                _priorityTemplatesState.value = PriorityTemplatesUiState.Success(it)
+            }.onFailure {
+                _priorityTemplatesState.value = PriorityTemplatesUiState.Error(it.message ?: "템플릿 목록을 불러오는데 실패했습니다.")
+            }
+        }
+    }
+
+    fun fetchPriorityTemplateDetail(templateId: Int) {
+        viewModelScope.launch {
+            _priorityTemplateDetailState.value = PriorityTemplateDetailUiState.Loading
+            val result = priorityRepository.getPriorityTemplateDetail(templateId)
+            result.onSuccess {
+                _priorityTemplateDetailState.value = PriorityTemplateDetailUiState.Success(it)
+            }.onFailure {
+                _priorityTemplateDetailState.value = PriorityTemplateDetailUiState.Error(it.message ?: "템플릿 상세 정보를 불러오는데 실패했습니다.")
+            }
+        }
     }
 
     fun fetchRecentImages() {

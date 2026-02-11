@@ -6,19 +6,18 @@ import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.core.widget.addTextChangedListener
@@ -27,9 +26,7 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.yourcompany.digitaltok.R
@@ -39,7 +36,6 @@ import java.io.File
 class DecorateFragment : Fragment() {
 
     private val viewModel: DecorateViewModel by viewModels()
-    private var loadingDialog: AlertDialog? = null
 
     // TOP BAR
     private lateinit var connectTopAppBar: View
@@ -58,35 +54,34 @@ class DecorateFragment : Fragment() {
 
     // ----- Template menu (2 items) -----
     private lateinit var rvTemplateList: RecyclerView
-    private lateinit var templateAdapter: TemplateAdapter
+    private lateinit var templateAdapter: PriorityAdapter
 
     // ----- Stations list (reused UI) -----
     private lateinit var tilSearch: TextInputLayout
     private lateinit var etSearch: TextInputEditText
     private lateinit var tvStationHint: TextView
     private lateinit var rvStations: RecyclerView
-    private lateinit var stationAdapter: TemplateAdapter
+    private lateinit var stationAdapter: PriorityAdapter
     private val shownStations = mutableListOf<TemplateItem>()
 
     // ----- Transport seats list -----
     private lateinit var rvTransportSeats: RecyclerView
-    private lateinit var transportAdapter: TemplateAdapter
+    private lateinit var transportAdapter: PriorityAdapter
     private lateinit var tvTabHint: TextView
 
     private val shownTransport = mutableListOf<TemplateItem>()
 
     private enum class Tab { RECENT, TEMPLATE }
     private var currentTab: Tab = Tab.RECENT
+
     private enum class TemplateScreen {
         MENU,                  // 템플릿 메뉴(2개)
         SEAT_LIST,             // 교통약자 좌석 리스트
-        STATION_LIST_FROM_MENU,// 지하철역 클릭으로 들어온 역 리스트(A)
-        STATION_LIST_FROM_SEAT // 임산부석 등 좌석 클릭으로 들어온 역 리스트(B)
+        STATION_LIST_FROM_MENU // 지하철역 클릭으로 들어온 역 리스트(A)
     }
     private var currentScreen: TemplateScreen = TemplateScreen.MENU
 
     // API 분기용 선택값
-    private var selectedSeatId: String? = null
     private var selectedStationId: String? = null
 
     private val maxSlots = 15
@@ -95,7 +90,7 @@ class DecorateFragment : Fragment() {
     private var recentItems = mutableListOf<DecorateItem>()
 
     // 템플릿 메뉴 2개
-    private val templateList = listOf(
+    private var templateList = mutableListOf(
         TemplateItem(
             id = "template_transport",
             title = "교통약자 좌석",
@@ -108,13 +103,6 @@ class DecorateFragment : Fragment() {
             desc = "지하철 노선별로 정리된 템플릿",
             thumbRes = R.drawable.blank_img
         )
-    )
-
-    // 교통약자 좌석 리스트(샘플)
-    private val allTransportSeats: List<TemplateItem> = listOf(
-        TemplateItem("ts_pregnant", "임산부석", "UX라이팅 필요", R.drawable.blank_img),
-        TemplateItem("ts_elder", "노약자석", "UX라이팅 필요", R.drawable.blank_img),
-        TemplateItem("ts_disabled", "장애인석", "UX라이팅 필요", R.drawable.blank_img),
     )
 
     // 역 리스트(샘플)
@@ -224,60 +212,37 @@ class DecorateFragment : Fragment() {
 
         // ----- template menu (2 items) -----
         rvTemplateList.layoutManager = LinearLayoutManager(requireContext())
-        templateAdapter = TemplateAdapter(templateList) { item ->
+        templateAdapter = PriorityAdapter(templateList) { item ->
             when (item.id) {
-                "template_station" -> {
-                    // 템플릿 메뉴 → 지하철역 → 역 리스트(A)
-                    selectedSeatId = null
-                    showStationListFromMenu()
-                }
-
-                "template_transport" -> {
-                    // 템플릿 메뉴 → 교통약자 → 좌석 리스트
-                    selectedSeatId = null
-                    showSeatList()
-                }
+                "template_station" -> showStationListFromMenu()
+                "template_transport" -> showSeatList()
             }
         }
         rvTemplateList.adapter = templateAdapter
 
         // ----- transport seats list -----
         rvTransportSeats.layoutManager = LinearLayoutManager(requireContext())
-        shownTransport.clear()
-        shownTransport.addAll(allTransportSeats)
-        transportAdapter = TemplateAdapter(shownTransport) { seat ->
-            // 교통약자 → 좌석 클릭(예: 임산부석) → 역 리스트(B)
-            selectedSeatId = seat.id
-            showStationListFromSeat(seatTitle = seat.title)
+        transportAdapter = PriorityAdapter(shownTransport) { seat ->
+            seat.id.toIntOrNull()?.let {
+                viewModel.fetchPriorityTemplateDetail(it)
+            }
         }
         rvTransportSeats.adapter = transportAdapter
 
-        // ----- stations list (UI reused for A/B) -----
+        // ----- stations list (UI reused for A) -----
         rvStations.layoutManager = LinearLayoutManager(requireContext())
-        shownStations.clear()
-        shownStations.addAll(allStations)
-        stationAdapter = TemplateAdapter(shownStations) { station ->
+        stationAdapter = PriorityAdapter(shownStations) { station ->
             selectedStationId = station.id
 
             when (currentScreen) {
                 TemplateScreen.STATION_LIST_FROM_MENU -> {
-                    // 나중에 “지하철역 경로” 상세 API
-                    Toast.makeText(requireContext(),
+                    Toast.makeText(
+                        requireContext(),
                         "역 상세(지하철역 경로): ${station.title}",
                         Toast.LENGTH_SHORT
                     ).show()
                     // TODO: apiStation.getStationDetail(station.id)
                 }
-
-                TemplateScreen.STATION_LIST_FROM_SEAT -> {
-                    // 나중에 “좌석 경로” 상세 API
-                    Toast.makeText(requireContext(),
-                        "역 상세(좌석 경로, seat=${selectedSeatId}): ${station.title}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    // TODO: apiSeat.getStationDetailForSeat(selectedSeatId!!, station.id)
-                }
-
                 else -> Unit
             }
         }
@@ -285,14 +250,8 @@ class DecorateFragment : Fragment() {
 
         // ----- search: stations list에서만 -----
         etSearch.addTextChangedListener { editable ->
-            if (currentScreen != TemplateScreen.STATION_LIST_FROM_MENU &&
-                currentScreen != TemplateScreen.STATION_LIST_FROM_SEAT
-            ) return@addTextChangedListener
-
+            if (currentScreen != TemplateScreen.STATION_LIST_FROM_MENU) return@addTextChangedListener
             val q = editable?.toString()?.trim().orEmpty()
-
-            // 지금은 로컬 필터
-            // 나중에 source에 따라 API 검색으로도 분리 가능
             applyStationFilterLocal(q)
         }
 
@@ -326,14 +285,13 @@ class DecorateFragment : Fragment() {
             if (selected.id.startsWith("user_") && selected.imageUri != null) {
                 val imageFile = uriToFile(selected.imageUri)
                 if (imageFile != null) {
-                    viewModel.uploadImage(imageFile) // 업로드 후 observeViewModel에서 처리
+                    viewModel.uploadImage(imageFile)
                 } else {
                     Toast.makeText(requireContext(), "이미지 파일을 준비할 수 없습니다.", Toast.LENGTH_SHORT).show()
                 }
                 return@setOnClickListener
             }
 
-            // 3. 예외 케이스
             Toast.makeText(requireContext(), "이미지를 처리할 수 없습니다.", Toast.LENGTH_SHORT).show()
         }
 
@@ -342,8 +300,7 @@ class DecorateFragment : Fragment() {
     }
 
     private fun updateBackButtonVisibility() {
-        if (!::topBarBack.isInitialized) return  // 안전장치
-
+        if (!::topBarBack.isInitialized) return
         val show = (currentTab == Tab.TEMPLATE && currentScreen != TemplateScreen.MENU)
         topBarBack.visibility = if (show) View.VISIBLE else View.GONE
     }
@@ -352,13 +309,9 @@ class DecorateFragment : Fragment() {
     private fun setupOnBackPressed() {
         val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                // 템플릿 탭의 하위 메뉴(좌석 리스트, 역 리스트 등)에 있을 경우
                 if (currentTab == Tab.TEMPLATE && currentScreen != TemplateScreen.MENU) {
-                    // 이전 화면인 템플릿 메뉴로 돌아감
                     showTemplateMenu()
                 } else {
-                    // 그 외의 경우(최근 사진 탭, 템플릿 첫 화면)에는 기본 뒤로가기 동작 수행
-                    // 콜백을 비활성화하고, 액티비티의 기본 뒤로가기 로직을 다시 호출
                     isEnabled = false
                     requireActivity().onBackPressedDispatcher.onBackPressed()
                 }
@@ -368,7 +321,6 @@ class DecorateFragment : Fragment() {
     }
 
     // ----- TAB CONTROL -----
-
     private fun setTab(tab: Tab) {
         currentTab = tab
         val isRecent = tab == Tab.RECENT
@@ -387,7 +339,6 @@ class DecorateFragment : Fragment() {
             rvStations.visibility = View.GONE
 
             currentScreen = TemplateScreen.MENU
-            selectedSeatId = null
             selectedStationId = null
 
             val filled = recentItems.count { !it.isSlot }
@@ -403,7 +354,6 @@ class DecorateFragment : Fragment() {
         updateSendButtonUI()
     }
 
-
     private fun showTemplateMenu() {
         currentScreen = TemplateScreen.MENU
 
@@ -418,7 +368,6 @@ class DecorateFragment : Fragment() {
         updateBackButtonVisibility()
     }
 
-
     private fun showSeatList() {
         currentScreen = TemplateScreen.SEAT_LIST
 
@@ -430,13 +379,9 @@ class DecorateFragment : Fragment() {
         rvStations.visibility = View.GONE
 
         etSearch.setText("")
-        shownTransport.clear()
-        shownTransport.addAll(allTransportSeats)
-        transportAdapter.notifyDataSetChanged()
 
         updateBackButtonVisibility()
     }
-
 
     private fun showStationListFromMenu() {
         currentScreen = TemplateScreen.STATION_LIST_FROM_MENU
@@ -456,37 +401,8 @@ class DecorateFragment : Fragment() {
         updateBackButtonVisibility()
     }
 
-    private fun showStationListFromSeat(seatTitle: String) {
-        currentScreen = TemplateScreen.STATION_LIST_FROM_SEAT
-
-        rvTemplateList.visibility = View.GONE
-        rvTransportSeats.visibility = View.GONE
-        tilSearch.visibility = View.VISIBLE
-        tvStationHint.visibility = View.VISIBLE
-        rvStations.visibility = View.VISIBLE
-
-        tvStationHint.text = "${seatTitle}에 적용할 역을 선택해 주세요"
-        etSearch.hint = "더 많은 역을 검색해 보세요"
-        etSearch.setText("")
-
-        loadStationsForSeat(selectedSeatId)
-
-        updateBackButtonVisibility()
-    }
-
-
-
     // -------------------- DATA LOADING (NOW: SAMPLE / LATER: API) --------------------
-
     private fun loadStationsForMenu() {
-        // TODO: API A (지하철역 경로)로 교체
-        shownStations.clear()
-        shownStations.addAll(allStations)
-        stationAdapter.notifyDataSetChanged()
-    }
-
-    private fun loadStationsForSeat(seatId: String?) {
-        // TODO: API B (좌석 경로)로 교체 (seatId 사용)
         shownStations.clear()
         shownStations.addAll(allStations)
         stationAdapter.notifyDataSetChanged()
@@ -510,7 +426,6 @@ class DecorateFragment : Fragment() {
     }
 
     // -------------------- RECENT BUTTON UI --------------------
-
     private fun updateSendButtonUI() {
         if (currentTab != Tab.RECENT) return
         val selected = gridAdapter.getSelectedItem()
@@ -527,7 +442,6 @@ class DecorateFragment : Fragment() {
     }
 
     // -------------------- IMAGE PICKER & CROP --------------------
-
     private fun showAddImageDialog() {
         val dialogView = layoutInflater.inflate(R.layout.bottom_sheet_image_picker, null, false)
 
@@ -535,7 +449,6 @@ class DecorateFragment : Fragment() {
             .setView(dialogView)
             .create()
 
-        // 클릭 이벤트
         dialogView.findViewById<TextView>(R.id.tvCamera).setOnClickListener {
             dialog.dismiss()
             openCamera()
@@ -546,26 +459,18 @@ class DecorateFragment : Fragment() {
             openGallery()
         }
 
-        dialogView.findViewById<MaterialButton>(R.id.btnCancel).setOnClickListener {
-            dialog.dismiss()
-        }
+        dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel)
+            .setOnClickListener { dialog.dismiss() }
 
         dialog.setCanceledOnTouchOutside(true)
         dialog.show()
 
-        // 윈도우 설정은 show() 이후에 해야 적용됨
         dialog.window?.let { w ->
-            // 1) 배경 투명 (dialogView의 카드/라운드가 보이게)
             w.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-
-            // 2) 딤 강제 ON
             w.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             w.setDimAmount(0.55f)
-
-            // 3) 아래 붙이기
             w.setGravity(Gravity.BOTTOM)
 
-            // 4) 네비게이션 바 + margin 만큼 위로 올리기
             val navBarHeightPx = run {
                 val resId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
                 if (resId > 0) resources.getDimensionPixelSize(resId) else 0
@@ -581,16 +486,12 @@ class DecorateFragment : Fragment() {
                 y = navBarHeightPx + marginPx
             }
 
-            // 5) 폭/높이
             w.setLayout(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
     }
-
-
-
 
     private fun openGallery() {
         pickImageLauncher.launch(
@@ -647,92 +548,133 @@ class DecorateFragment : Fragment() {
     }
 
     // -------------------- VIEWMODEL & UPLOAD --------------------
-
     private fun observeViewModel() {
+        // 교통약자 템플릿 목록
+        viewModel.priorityTemplatesState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is DecorateViewModel.PriorityTemplatesUiState.Loading -> {
+                    // no-op
+                }
+                is DecorateViewModel.PriorityTemplatesUiState.Success -> {
+                    // 상세 목록 (원래 코드)
+                    val newItems = state.templates.map {
+                        TemplateItem(
+                            id = it.templateId.toString(),
+                            title = it.priorityType,
+                            thumbUrl = it.templateImageUrl
+                        )
+                    }
+                    shownTransport.clear()
+                    shownTransport.addAll(newItems)
+                    transportAdapter.notifyDataSetChanged()
+
+                    // 메인 메뉴 아이템 썸네일 업데이트
+                    state.templates.firstOrNull()?.let { firstTemplate ->
+                        val transportMenuIndex = templateList.indexOfFirst { it.id == "template_transport" }
+                        if (transportMenuIndex != -1) {
+                            val oldItem = templateList[transportMenuIndex]
+                            templateList[transportMenuIndex] = oldItem.copy(
+                                thumbUrl = firstTemplate.templateImageUrl,
+                                thumbRes = 0 // URL 사용할 것이므로 리소스 ID는 0으로
+                            )
+                            templateAdapter.notifyItemChanged(transportMenuIndex)
+                        }
+                    }
+                }
+                is DecorateViewModel.PriorityTemplatesUiState.Error -> {
+                    Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        // 교통약자 템플릿 상세
+        viewModel.priorityTemplateDetailState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is DecorateViewModel.PriorityTemplateDetailUiState.Loading -> {
+                    // 로딩 표시가 필요하다면 여기에 구현
+                }
+                is DecorateViewModel.PriorityTemplateDetailUiState.Success -> {
+                    val detail = state.templateDetail
+                    // TODO: 템플릿 전용 미리보기 및 전송 로직 구현 위치입니다.
+                    // 현재는 'ImagePreviewFragment'로 이동하는 대신 Toast 메시지만 표시합니다.
+                    // 'detail.templateImageUrl'과 'detail.templateDataUrl'을 사용하여
+                    // 새로운 미리보기 화면을 구성하고 바이너리 데이터를 기기에 전송하는 로직을 여기에 추가하세요.
+                    Toast.makeText(requireContext(), "템플릿 선택됨: ${detail.priorityType}", Toast.LENGTH_SHORT).show()
+                }
+                is DecorateViewModel.PriorityTemplateDetailUiState.Error -> {
+                    Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
         viewModel.uploadState.observe(viewLifecycleOwner) { state ->
             when (state) {
                 is DecorateViewModel.UploadUiState.Loading -> {
-                    showLoadingDialog()
+                    // no-op
                 }
                 is DecorateViewModel.UploadUiState.Success -> {
-                    hideLoadingDialog()
-                    // 업로드 성공 시, 미리보기 화면으로 이동
                     val result = state.result
                     goToPreviewScreen(result.image.imageId, result.image.previewUrl)
-
                 }
                 is DecorateViewModel.UploadUiState.Error -> {
-                    hideLoadingDialog()
                     Toast.makeText(requireContext(), "업로드 실패: ${state.message}", Toast.LENGTH_LONG).show()
                 }
-                is DecorateViewModel.UploadUiState.Idle -> {
-                    hideLoadingDialog()
-                }
+                is DecorateViewModel.UploadUiState.Idle -> Unit
             }
         }
 
         viewModel.favoriteState.observe(viewLifecycleOwner) { state ->
             when (state) {
                 is DecorateViewModel.FavoriteUiState.Loading -> {
-                    // 로딩 중 UI 표시가 필요하다면 여기에 구현 (예: 작은 스피너 표시)
+                    // no-op
                 }
                 is DecorateViewModel.FavoriteUiState.Success -> {
                     viewModel.fetchRecentImages()
                 }
                 is DecorateViewModel.FavoriteUiState.Error -> {
                     Toast.makeText(requireContext(), "오류: ${state.message}", Toast.LENGTH_SHORT).show()
-                    // 참고: API 에러 발생 시, 어댑터의 UI 상태를 원래대로 되돌리는 로직을 추가하면
-                    // 더 안정적인 사용자 경험을 제공할 수 있습니다.
                     viewModel.fetchRecentImages()
                 }
-                is DecorateViewModel.FavoriteUiState.Idle -> {
-                    // 아무것도 안 함
-                }
+                is DecorateViewModel.FavoriteUiState.Idle -> Unit
             }
         }
 
         viewModel.recentImagesState.observe(viewLifecycleOwner) { state ->
             when (state) {
                 is DecorateViewModel.RecentImagesUiState.Loading -> {
-                    // 로딩 UI 표시 없음 (사용자 요청)
+                    // no-op
                 }
                 is DecorateViewModel.RecentImagesUiState.Success -> {
                     val recentApiItems = state.response.items
 
-                    // 1. API 응답을 UI 모델 (DecorateItem) 리스트로 변환
                     val newItems = recentApiItems.map {
                         DecorateItem(
                             id = it.imageId.toString(),
-                            previewUrl = it.previewUrl, // 서버 URL을 올바르게 할당
-                            isFavorite = it.isFavorite, // 즐겨찾기 상태를 올바르게 할당
+                            previewUrl = it.previewUrl,
+                            isFavorite = it.isFavorite,
                             isSlot = false
                         )
                     }
 
-                    // 2. 즐겨찾기 된 아이템들을 위로 정렬
                     val sortedItems = newItems.sortedWith(compareByDescending { it.isFavorite })
 
-                    // 3. Fragment의 메인 리스트를 교체
                     recentItems.clear()
                     recentItems.addAll(sortedItems)
 
-                    // 4. 최대 슬롯(15개)에 맞춰 빈 아이템 추가
                     val emptySlots = maxSlots - recentItems.size
                     if (emptySlots > 0) {
-                        repeat(emptySlots) { idx -> recentItems.add(DecorateItem(id = "slot_$idx", isSlot = true)) }
+                        repeat(emptySlots) { idx ->
+                            recentItems.add(DecorateItem(id = "slot_$idx", isSlot = true))
+                        }
                     }
 
-                    // 5. 어댑터에 최종 리스트와 즐겨찾기 정보 전달
                     gridAdapter.submitList(recentItems.toList())
-
-                    // 6. 상단 카운트 UI 업데이트
                     updateCountUI()
                 }
                 is DecorateViewModel.RecentImagesUiState.Error -> {
                     Toast.makeText(requireContext(), "최근 이미지 로딩 실패: ${state.message}", Toast.LENGTH_SHORT).show()
-                    // TODO: 이미지 로딩 실패 시 UI/UX 개선 (예: 재시도 버튼 표시)
                 }
-                else -> { /* Idle */ }
+                else -> Unit
             }
         }
     }
@@ -742,6 +684,8 @@ class DecorateFragment : Fragment() {
             Toast.makeText(requireContext(), "미리보기 정보를 불러올 수 없습니다.", Toast.LENGTH_SHORT).show()
             return
         }
+        Log.d("PREVIEW_DEBUG", "imageId=$imageId")
+        Log.d("PREVIEW_DEBUG", "previewUrl=$previewUrl")
         parentFragmentManager.beginTransaction()
             .add((requireView().parent as ViewGroup).id, ImagePreviewFragment.newInstance(imageId, previewUrl))
             .addToBackStack(null)
@@ -750,36 +694,24 @@ class DecorateFragment : Fragment() {
 
     private fun uriToFile(uri: Uri): File? {
         return try {
-            val inputStream = requireContext().contentResolver.openInputStream(uri) ?: return null
-            // Create a temporary file in the cache directory
-            val file = File(requireContext().cacheDir, "upload_${System.currentTimeMillis()}.jpg")
-            file.outputStream().use { fileOut ->
-                inputStream.copyTo(fileOut)
+            val cr = requireContext().contentResolver
+            val mime = cr.getType(uri) ?: "image/png"
+
+            val ext = when (mime.lowercase()) {
+                "image/png" -> "png"
+                "image/jpeg", "image/jpg" -> "jpg"
+                else -> "png"
             }
-            inputStream.close()
-            file
+
+            cr.openInputStream(uri)?.use { input ->
+                val file = File(requireContext().cacheDir, "upload_${System.currentTimeMillis()}.$ext")
+                file.outputStream().use { out -> input.copyTo(out) }
+                file
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             null
         }
     }
 
-    private fun showLoadingDialog() {
-        if (loadingDialog == null) {
-            val progressBar = ProgressBar(requireContext()).apply {
-                val padding = 100
-                setPadding(padding, padding, padding, padding)
-            }
-            loadingDialog = MaterialAlertDialogBuilder(requireContext())
-                .setTitle("업로드 중...")
-                .setView(progressBar)
-                .setCancelable(false)
-                .create()
-        }
-        loadingDialog?.show()
-    }
-
-    private fun hideLoadingDialog() {
-        loadingDialog?.dismiss()
-    }
 }

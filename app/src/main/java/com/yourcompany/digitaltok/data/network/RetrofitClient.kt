@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
 
-    private const val BASE_URL = "http://3.37.213.174:8080/api/v1/"
+    private const val BASE_URL = "https://www.diring.site/api/v1/"
     private const val PREFS_NAME = "auth_prefs"
     private const val KEY_ACCESS_TOKEN = "accessToken"
 
@@ -26,13 +26,15 @@ object RetrofitClient {
         appContext = context.applicationContext
     }
 
+    fun providePublicOkHttpClient(): OkHttpClient = publicOkHttpClient
+
     private fun getAccessTokenFromPrefs(): String? {
         val ctx = appContext ?: return null
         val prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         return prefs.getString(KEY_ACCESS_TOKEN, null)
     }
 
-    private val authenticatedOkHttpClient: OkHttpClient by lazy {
+    val authenticatedOkHttpClient: OkHttpClient by lazy {
         val authInterceptor = Interceptor { chain ->
             val originalRequest = chain.request()
             val accessToken = getAccessTokenFromPrefs()

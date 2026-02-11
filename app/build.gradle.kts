@@ -91,5 +91,7 @@ dependencies {
     // Image Cropper
     implementation("com.github.CanHub:Android-Image-Cropper:4.5.0")
     implementation("com.github.chrisbanes:PhotoView:2.3.0")
+    
+    implementation("com.github.bumptech.glide:okhttp3-integration:4.12.0")
 
 }

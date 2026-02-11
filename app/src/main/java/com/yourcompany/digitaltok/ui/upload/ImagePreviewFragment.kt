@@ -75,7 +75,7 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
                 .placeholder(R.drawable.ic_launcher_background)
                 .into(binding.ivPreview)
         } else {
-            // ✅ 실패 시에도 동일한 실패 팝업(XML) 사용
+            // 실패 시에도 동일한 실패 팝업(XML) 사용
             showFailDialog("이미지 정보를 불러오는데 실패했습니다.")
         }
     }
@@ -377,7 +377,7 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
                 resultDialog?.dismiss()
                 disableNfcReaderMode()
 
-                // ✅ onSaveInstanceState 이후 popBackStack 크래시 방지
+                // onSaveInstanceState 이후 popBackStack 크래시 방지
                 if (parentFragmentManager.isStateSaved) {
                     pendingPopBack = true
                     Log.w(TAG, "State is saved. Will pop back onResume.")
@@ -399,7 +399,7 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
 
             val dialogView = layoutInflater.inflate(R.layout.dialog_transfer_fail, null)
 
-            // ✅ XML이 AppCompatButton이므로 MaterialButton 캐스팅 금지
+            // XML이 AppCompatButton이므로 MaterialButton 캐스팅 금지
             val btnRetry = dialogView.findViewById<Button>(R.id.btnRetry)
             val btnSupport = dialogView.findViewById<Button>(R.id.btnSupport)
 
