@@ -26,6 +26,8 @@ object RetrofitClient {
         appContext = context.applicationContext
     }
 
+    fun providePublicOkHttpClient(): OkHttpClient = publicOkHttpClient
+
     private fun getAccessTokenFromPrefs(): String? {
         val ctx = appContext ?: return null
         val prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
