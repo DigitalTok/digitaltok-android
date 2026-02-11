@@ -39,8 +39,11 @@ class ImageViewModel : ViewModel() {
             val binaryInfoResult = imageRepository.getImageBinaryInfo(imageId)
 
             binaryInfoResult.onSuccess { binaryInfo ->
-                // 2. 바이너리 데이터 다운로드
-                val downloadResult = imageRepository.downloadImageBinary(binaryInfo.einkDataUrl)
+                // 2. 바이너리 데이터 다운로드 (캐시 문제 해결)
+                // URL에 현재 시간을 쿼리 파라미터로 추가하여 매번 새로운 URL인 것처럼 요청합니다.
+                // 이렇게 하면 OkHttp 캐시가 이전 응답을 재사용하는 것을 방지할 수 있습니다.
+                val urlWithCacheBust = "${binaryInfo.einkDataUrl}?t=${System.currentTimeMillis()}"
+                val downloadResult = imageRepository.downloadImageBinary(urlWithCacheBust)
 
                 downloadResult.onSuccess { responseBody ->
                     val bytes = responseBody.bytes()
