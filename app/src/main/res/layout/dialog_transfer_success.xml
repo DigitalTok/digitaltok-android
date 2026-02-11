@@ -20,13 +20,14 @@
         android:text="전송 완료"
         android:textSize="22sp"
         android:textColor="@color/text_black"
-        android:textStyle="bold"/>
+        android:fontFamily="@font/pretendard_semibold"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:textColor="@color/text_gray_2"
-        android:text="성공적으로 이미지가 전송되었습니다"/>
+        android:text="성공적으로 이미지가 전송되었습니다"
+        android:fontFamily="@font/pretendard_regular"/>
 
 </LinearLayout>

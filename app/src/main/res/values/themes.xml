@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.DigitalTok" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- 필요하면 나중에 색/상태바 옵션 추가 -->
+        <item name="android:fontFamily">@font/pretendard_regular</item>
     </style>
 </resources>
