@@ -2,17 +2,22 @@ package com.yourcompany.digitaltok.ui.home
 
 import android.view.View
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -24,12 +29,14 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentContainerView
-import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.yourcompany.digitaltok.R
 import com.yourcompany.digitaltok.ui.MainUiViewModel
 import com.yourcompany.digitaltok.ui.MainViewModel
@@ -44,10 +51,7 @@ private object Variables {
 }
 
 @Composable
-private fun ComposableFragmentContainer(
-    modifier: Modifier = Modifier,
-    fragment: () -> Fragment
-) {
+private fun ComposableFragmentContainer(modifier: Modifier = Modifier, fragment: () -> Fragment) {
     val containerId = remember { View.generateViewId() }
     val context = LocalContext.current
 
@@ -72,13 +76,15 @@ fun HomeScreen(mainViewModel: MainViewModel) {
     val context = LocalContext.current
     val activity = context as FragmentActivity
 
+    // 탭 이동 이벤트는 MainUiViewModel
     val mainUiViewModel: MainUiViewModel = viewModel(viewModelStoreOwner = activity)
 
+    // 하단바 가시성 / 연결 상태는 MainViewModel (단일 소스)
     val isBottomNavVisible by mainViewModel.isBottomNavVisible.observeAsState(initial = true)
     val isDeviceConnected by mainViewModel.isDeviceConnected.observeAsState(initial = false)
 
+    // Fragment에서 요청한 탭 이동 처리
     val navigateTo by mainUiViewModel.navigateTo.collectAsState()
-
     LaunchedEffect(navigateTo) {
         navigateTo?.let { route ->
             navController.navigate(route) {
@@ -92,76 +98,59 @@ fun HomeScreen(mainViewModel: MainViewModel) {
     Scaffold(
         bottomBar = {
             if (isBottomNavVisible) {
-                BottomNavBar(
-                    navController = navController,
-                    onItemClick = { route ->
-                        if (route == "device" && isDeviceConnected) {
-                            Toast.makeText(context, "이미 기기가 연결되어 있습니다.", Toast.LENGTH_SHORT).show()
-                            false
-                        } else true
-                    }
-                )
+                BottomNavBar(navController = navController, onItemClick = { route ->
+                    if (route == "device" && isDeviceConnected) {
+                        Toast.makeText(context, "이미 기기가 연결되어 있습니다.", Toast.LENGTH_SHORT).show()
+                        false
+                    } else true
+                })
             }
         }
     ) { innerPadding ->
-
         NavHost(
             navController = navController,
             startDestination = "home",
             modifier = Modifier.padding(
+                start = 0.dp,
+                end = 0.dp,
                 top = innerPadding.calculateTopPadding(),
                 bottom = if (isBottomNavVisible) innerPadding.calculateBottomPadding() else 0.dp
             )
         ) {
-            composable("home") { HomeTab(mainViewModel) }
+            composable("home") {
+                HomeTab(
+                    mainViewModel = mainViewModel,
+                    navController = navController
+                )
+            }
+
 
             composable("device") {
-                ComposableFragmentContainer(Modifier.fillMaxSize()) {
-                    DeviceConnectFragment()
-                }
+                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) { DeviceConnectFragment() }
             }
 
             composable("decorate") {
-                // ✅ DecorateFragment 내부에서 Fragment backstack을 쌓는다면, 뒤로가기 처리 필요
-                val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
-
-                val backStackEntryCount by produceState(
-                    initialValue = fragmentManager?.backStackEntryCount ?: 0,
-                    key1 = fragmentManager
-                ) {
-                    val listener = FragmentManager.OnBackStackChangedListener {
-                        value = fragmentManager?.backStackEntryCount ?: 0
-                    }
-                    fragmentManager?.addOnBackStackChangedListener(listener)
-                    awaitDispose { fragmentManager?.removeOnBackStackChangedListener(listener) }
-                }
-
-                BackHandler(enabled = backStackEntryCount > 0) {
-                    fragmentManager?.popBackStack()
-                }
-
-                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) {
-                    DecorateFragment()
-                }
+                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) { DecorateFragment() }
             }
 
             composable("settings") {
-                ComposableFragmentContainer(Modifier.fillMaxSize()) {
-                    HelpFragment()
-                }
+                ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) { HelpFragment() }
             }
         }
     }
 }
 
 @Composable
-private fun HomeTab(mainViewModel: MainViewModel) {
+private fun HomeTab(mainViewModel: MainViewModel, navController: NavHostController) {
     val isDeviceConnected by mainViewModel.isDeviceConnected.observeAsState(initial = false)
 
     if (!isDeviceConnected) {
         HomeNoConnection()
     } else {
-        HomeConnected()
+        HomeConnected(
+            mainViewModel = mainViewModel,
+            navController = navController
+        )
     }
 }
 
@@ -244,16 +233,84 @@ private fun HomeNoConnection() {
     }
 }
 
+
 @Composable
-private fun HomeConnected() {
+private fun HomeConnected(mainViewModel: MainViewModel, navController: NavController) {
+    val lastImageUrl by mainViewModel.lastTransferredImageUrl.observeAsState()
+
+    val navigateToDecorate = {
+        navController.navigate("decorate")
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(Color.White)
     ) {
-        Spacer(Modifier.height(100.dp))
-        Text("연결된 상태 화면")
+            Text(
+                text = "DigitalTok",
+                style = TextStyle(
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight(600),
+                    color = Color(0xFF121212)
+                )
+            )
+
+        Spacer(Modifier.height(14.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(75.dp)
+                .background(Color(0xFFD9D9D9))
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            Box(
+                modifier = Modifier
+                    .shadow(20.dp, RoundedCornerShape(12.dp))
+                    .size(288.dp)
+                    .background(Color.White, RoundedCornerShape(12.dp))
+                    .padding(12.dp)
+                    .clickable { navigateToDecorate() },
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFFF4F4F4))
+                ) {
+                    AsyncImage(
+                        model = lastImageUrl ?: R.drawable.rectangle_95,
+                        contentDescription = "Last transferred image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        error = painterResource(id = R.drawable.rectangle_95),
+                        placeholder = painterResource(id = R.drawable.rectangle_95)
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(18.dp))
+
+        Text(
+            text = "터치하여 이미지 변경",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontWeight = FontWeight(600),
+                color = Variables.Point
+            ),
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .clickable { navigateToDecorate() }
+        )
     }
 }
 

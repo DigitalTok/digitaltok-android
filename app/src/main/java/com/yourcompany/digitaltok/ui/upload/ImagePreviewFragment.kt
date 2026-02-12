@@ -17,11 +17,13 @@ import android.widget.Button
 import android.widget.ProgressBar
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import com.bumptech.glide.Glide
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.yourcompany.digitaltok.R
 import com.yourcompany.digitaltok.databinding.FragmentImagePreviewBinding
+import com.yourcompany.digitaltok.ui.MainViewModel
 import com.yourcompany.digitaltok.ui.device.NfcDisabledFragment
 import com.yourcompany.digitaltok.ui.faq.HelpFragment
 import java.io.IOException
@@ -33,6 +35,7 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
     private val binding get() = _binding!!
 
     private val imageViewModel: ImageViewModel by viewModels()
+    private val mainViewModel: MainViewModel by activityViewModels()
 
     private var loadingDialog: AlertDialog? = null
     private var nfcTransferDialog: AlertDialog? = null
@@ -357,6 +360,8 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
     private fun showSuccessDialogAndExit() {
         activity?.runOnUiThread {
             if (!isAdded || activity == null) return@runOnUiThread
+
+            mainViewModel.setLastTransferredImageUrl(arguments?.getString(ARG_PREVIEW_URL))
 
             nfcTransferDialog?.dismiss()
             if (resultDialog?.isShowing == true) return@runOnUiThread
