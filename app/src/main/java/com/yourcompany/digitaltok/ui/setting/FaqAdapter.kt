@@ -12,7 +12,7 @@ class FaqAdapter(
     private val items: List<FaqItem>
 ) : RecyclerView.Adapter<FaqAdapter.FaqViewHolder>() {
 
-    // 여러 개 펼침을 위해 Set으로 관리
+
     private val expandedPositions = mutableSetOf<Int>()
 
     // FAQ ViewHolder
@@ -26,18 +26,18 @@ class FaqAdapter(
 
             val isExpanded = expandedPositions.contains(position)
 
-            // 답변 영역 보이기/숨기기
+
             binding.answerContainer.visibility = if (isExpanded) View.VISIBLE else View.GONE
 
-            // 화살표 변경
+
             binding.ivChevron.setImageResource(
                 if (isExpanded) R.drawable.vector_3 else R.drawable.vector_2
             )
 
-            // 펼치면 위 구분선만
+
             binding.dividerTop.visibility = if (isExpanded) View.VISIBLE else View.GONE
 
-            // 접히면 아래 구분선만
+
             binding.dividerBottom.visibility = if (isExpanded) View.GONE else View.VISIBLE
 
             // 클릭 시 해당 position만 토글
