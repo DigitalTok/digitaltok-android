@@ -145,6 +145,23 @@ fun HomeScreen(mainViewModel: MainViewModel) {
             }
 
             composable("decorate") {
+                val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
+
+                val backStackEntryCount by produceState(
+                    initialValue = fragmentManager?.backStackEntryCount ?: 0,
+                    key1 = fragmentManager
+                ) {
+                    val listener = FragmentManager.OnBackStackChangedListener {
+                        value = fragmentManager?.backStackEntryCount ?: 0
+                    }
+                    fragmentManager?.addOnBackStackChangedListener(listener)
+                    awaitDispose { fragmentManager?.removeOnBackStackChangedListener(listener) }
+                }
+
+                BackHandler(enabled = backStackEntryCount > 0) {
+                    fragmentManager?.popBackStack()
+                }
+
                 ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) { DecorateFragment() }
             }
 

@@ -9,11 +9,11 @@ import kotlinx.coroutines.flow.StateFlow
 
 class MainUiViewModel : ViewModel() {
 
-    // ✅ 홈 화면에서 "연결됨/안됨" UI 분기 (Compose에서 관찰 가능)
+    // 홈 화면에서 "연결됨/안됨" UI 분기 (Compose에서 관찰 가능)
     var isDeviceConnected by mutableStateOf(false)
         private set
 
-    // ✅ Fragment -> Compose로 탭 이동 요청
+    // Fragment -> Compose로 탭 이동 요청
     private val _navigateTo = MutableStateFlow<String?>(null)
     val navigateTo: StateFlow<String?> = _navigateTo
 
@@ -21,7 +21,7 @@ class MainUiViewModel : ViewModel() {
         isDeviceConnected = connected
     }
 
-    // ✅ 연결 성공 처리(홈으로 보내고 싶을 때 사용)
+    // 연결 성공 처리(홈으로 보내고 싶을 때 사용)
     fun onDeviceConnected() {
         isDeviceConnected = true
         _navigateTo.value = "home"
