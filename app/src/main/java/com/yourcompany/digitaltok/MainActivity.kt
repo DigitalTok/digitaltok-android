@@ -158,7 +158,7 @@ fun AppNavHost(
 ) {
     val context = LocalContext.current
 
-    // ✅ 온보딩 1회만: 완료했으면 login부터 시작
+    // 온보딩 1회만: 완료했으면 login부터 시작
     val startDestination =
         if (OnboardingPrefs.isDone(context)) "login" else "onboarding"
 
@@ -167,7 +167,7 @@ fun AppNavHost(
         composable("onboarding") {
             OnboardingScreen(
                 onFinish = {
-                    // ✅ 온보딩 완료 저장
+                    // 온보딩 완료 저장
                     OnboardingPrefs.setDone(context)
 
                     navController.navigate("login") {
