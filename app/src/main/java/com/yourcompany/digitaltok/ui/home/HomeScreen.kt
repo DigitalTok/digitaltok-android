@@ -156,7 +156,7 @@ private fun HomeTab(mainViewModel: MainViewModel, navController: NavHostControll
 
 @Composable
 private fun HomeNoConnection() {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
@@ -169,50 +169,70 @@ private fun HomeNoConnection() {
                 color = Color(0xFF121212)
             ),
             modifier = Modifier
-                .align(Alignment.Start)
+                .align(Alignment.TopStart)
                 .padding(top = 18.dp, start = 16.dp)
         )
 
-        Spacer(Modifier.weight(1f))
-
-        Column(
+        Image(
+            painter = painterResource(id = R.drawable.ic_no_connection),
+            contentDescription = null,
             modifier = Modifier
+                .align(Alignment.Center)
+                .offset(y = 40.dp)
+                .size(width = 198.dp, height = 156.dp)
+        )
+
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(bottom = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(bottom = 10.dp)
         ) {
-            Text(
-                text = "기기 연결 에서",
-                style = TextStyle(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight(700),
-                    color = Variables.Point
-                )
-            )
-            Text(
-                text = "\n디지털톡을 찾아주세요",
-                style = TextStyle(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight(600),
-                    color = Variables.Gray1,
-                    textAlign = TextAlign.Center
-                ),
-                textAlign = TextAlign.Center
-            )
+            Box(modifier = Modifier.weight(1f))
 
-            Spacer(Modifier.height(10.dp))
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "기기 연결",
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight(700),
+                            color = Variables.Point
+                        )
+                    )
+                    Text(
+                        text = "에서\n디지털톡을 찾아주세요",
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight(600),
+                            color = Variables.Gray1,
+                            textAlign = TextAlign.Center
+                        ),
+                        textAlign = TextAlign.Center
+                    )
 
-            Text(
-                text = "▼",
-                style = TextStyle(
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight(800),
-                    color = Variables.Point
-                )
-            )
+                    Spacer(Modifier.height(10.dp))
+
+                    Text(
+                        text = "▼",
+                        style = TextStyle(
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight(800),
+                            color = Variables.Point
+                        )
+                    )
+                }
+            }
+
+            Box(modifier = Modifier.weight(1f))
+            Box(modifier = Modifier.weight(1f))
         }
     }
 }
+
 
 @Composable
 private fun HomeConnected(mainViewModel: MainViewModel, navController: NavController) {
@@ -227,18 +247,6 @@ private fun HomeConnected(mainViewModel: MainViewModel, navController: NavContro
             .fillMaxSize()
             .background(Color.White)
     ) {
-        Spacer(Modifier.height(18.dp))
-
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            Text(
-                text = "당신만의 그립톡",
-                style = TextStyle(
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight(500),
-                    color = Variables.Gray1
-                )
-            )
-            Spacer(Modifier.height(6.dp))
             Text(
                 text = "DigitalTok",
                 style = TextStyle(
@@ -247,7 +255,6 @@ private fun HomeConnected(mainViewModel: MainViewModel, navController: NavContro
                     color = Color(0xFF121212)
                 )
             )
-        }
 
         Spacer(Modifier.height(14.dp))
 
