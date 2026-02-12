@@ -30,14 +30,13 @@ class PasswordResetActivity : AppCompatActivity() {
 
     private var isEmailValid = false
 
-    // ✅ Repository
     private val authRepository = AuthRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_password_reset)
 
-        // ✅ XML id와 정확히 매칭
+
         btnBackIcon = findViewById(R.id.btnBackIcon)
         tvTopTitle = findViewById(R.id.tvTopTitle)
 
@@ -46,7 +45,7 @@ class PasswordResetActivity : AppCompatActivity() {
         btnCancel = findViewById(R.id.btnCancel)
         tvResetStatus = findViewById(R.id.tvResetStatus)
 
-        // 상단 타이틀(혹시 동적으로 바꾸고 싶으면)
+
         tvTopTitle.text = "이메일로 로그인"
 
         // 뒤로가기
@@ -81,16 +80,16 @@ class PasswordResetActivity : AppCompatActivity() {
     }
 
     private fun requestPasswordReset(email: String) {
-        // 로딩 느낌: 버튼 비활성
+
         btnSendLink.isEnabled = false
 
         lifecycleScope.launch {
             try {
                 val res = withContext(Dispatchers.IO) {
-                    //  AuthRepository 함수명에 맞춰 호출
+
                     authRepository.resetPassword(email)
-                    // 만약 레포 함수명이 passwordReset(email) 이면 아래로 바꿔:
-                    // authRepository.passwordReset(email)
+
+
                 }
 
                 if (!res.isSuccessful) {
@@ -124,7 +123,7 @@ class PasswordResetActivity : AppCompatActivity() {
                     Toast.makeText(this@PasswordResetActivity, msg, Toast.LENGTH_SHORT).show()
                 }
 
-                // 성공/실패 후 버튼 상태 복구
+
                 setSendEnabled(isEmailValid)
 
             } catch (e: Exception) {

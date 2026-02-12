@@ -19,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -34,6 +35,7 @@ import com.yourcompany.digitaltok.ui.auth.AuthStartScreen
 import com.yourcompany.digitaltok.ui.auth.SignupActivity
 import com.yourcompany.digitaltok.ui.device.NfcViewModel
 import com.yourcompany.digitaltok.ui.home.HomeScreen
+import com.yourcompany.digitaltok.ui.onboarding.OnboardingPrefs
 import com.yourcompany.digitaltok.ui.onboarding.OnboardingScreen
 import com.yourcompany.digitaltok.ui.theme.DigitalTokTheme
 import kotlinx.coroutines.delay
@@ -154,11 +156,20 @@ fun AppNavHost(
     navController: NavHostController = rememberNavController(),
     onOpenSignUp: () -> Unit = {}
 ) {
-    NavHost(navController, startDestination = "onboarding") {
+    val context = LocalContext.current
+
+    // ✅ 온보딩 1회만: 완료했으면 login부터 시작
+    val startDestination =
+        if (OnboardingPrefs.isDone(context)) "login" else "onboarding"
+
+    NavHost(navController, startDestination = startDestination) {
 
         composable("onboarding") {
             OnboardingScreen(
                 onFinish = {
+                    // ✅ 온보딩 완료 저장
+                    OnboardingPrefs.setDone(context)
+
                     navController.navigate("login") {
                         popUpTo("onboarding") { inclusive = true }
                     }

@@ -12,7 +12,7 @@ class DeviceRepository {
 
     private val apiService = RetrofitClient.apiService
 
-    // nfcUid를 사용하여 서버에 장치 등록을 요청
+
     suspend fun registerDevice(nfcUid: String): Result<DeviceData> = try {
         val response = apiService.registerDevice(
             DeviceRegistrationRequest(nfcUid = nfcUid)

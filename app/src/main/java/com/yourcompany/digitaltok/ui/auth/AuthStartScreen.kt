@@ -15,14 +15,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.fontResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yourcompany.digitaltok.R
@@ -45,6 +47,13 @@ fun AuthStartScreen(
     var pwVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
+    val pretendard = FontFamily(
+        Font(R.font.pretendard_regular, FontWeight.Normal),
+        Font(R.font.pretendard_medium, FontWeight.Medium),
+        Font(R.font.pretendard_semibold, FontWeight.SemiBold),
+        Font(R.font.pretendard_bold, FontWeight.Bold)
+    )
+
     val isLoginEnabled =
         email.trim().isNotEmpty() &&
                 password.isNotEmpty() &&
@@ -63,35 +72,44 @@ fun AuthStartScreen(
         verticalArrangement = Arrangement.Center
     ) {
 
-        // ✅ 로고 (피그마 느낌으로 크게)
+
         Image(
             painter = painterResource(id = R.drawable.diringlogo),
-            contentDescription = "DiRing Logo",
+            contentDescription = null,
             modifier = Modifier
-                .fillMaxWidth(0.4f)
-                .aspectRatio(1f),
-            contentScale = ContentScale.Fit
+                .padding(0.70747.dp)
+                .width(48.dp)
+                .height(75.dp)
         )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(37.dp))
 
         Text(
             text = "DiRing",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF111111)
+            style = TextStyle(
+                fontSize = 42.sp,
+                lineHeight = 42.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF111111),
+                textAlign = TextAlign.Center
+            ),
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center
         )
-
-        Spacer(Modifier.height(8.dp))
 
         Text(
             text = "내 마음대로 꾸미는 나만의 키링",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = Color(0xFF505050)
+            style = TextStyle(
+                fontSize = 20.sp,
+                lineHeight = 20.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF505050),
+                textAlign = TextAlign.Center
+            ),
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center
         )
-
-        Spacer(Modifier.height(40.dp))
+        Spacer(Modifier.height(48.dp))
 
         OutlinedTextField(
             value = email,
@@ -100,12 +118,7 @@ fun AuthStartScreen(
                 .fillMaxWidth()
                 .height(52.dp),
             placeholder = {
-                Text(
-                    "이메일을 입력하세요 (예. diring@gmail.com)",
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    fontSize = 14.sp
-                )
+                Text("이메일을 입력하세요", fontSize = 14.sp)
             },
             singleLine = true,
             shape = RoundedCornerShape(10.dp),
@@ -126,10 +139,7 @@ fun AuthStartScreen(
                 .fillMaxWidth()
                 .height(52.dp),
             placeholder = {
-                Text(
-                    "비밀번호를 입력하세요",
-                    fontSize = 14.sp
-                )
+                Text("비밀번호를 입력하세요", fontSize = 14.sp)
             },
             singleLine = true,
             shape = RoundedCornerShape(10.dp),
@@ -171,18 +181,6 @@ fun AuthStartScreen(
                             Toast.makeText(context, "로그인 실패", Toast.LENGTH_SHORT).show()
                             return@launch
                         }
-
-                        val body = response.body()
-                        if (body?.isSuccess != true || body.result == null) {
-                            Toast.makeText(context, body?.message ?: "로그인 실패", Toast.LENGTH_SHORT).show()
-                            return@launch
-                        }
-
-                        saveAuth(context,
-                            body.result.accessToken,
-                            body.result.refreshToken,
-                            true
-                        )
 
                         Toast.makeText(context, "로그인 성공!", Toast.LENGTH_SHORT).show()
                         onLoginSuccess()
@@ -236,18 +234,4 @@ fun AuthStartScreen(
             }
         )
     }
-}
-
-private fun saveAuth(
-    context: Context,
-    accessToken: String,
-    refreshToken: String,
-    autoLogin: Boolean
-) {
-    val prefs = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
-    prefs.edit()
-        .putString("accessToken", accessToken)
-        .putString("refreshToken", refreshToken)
-        .putBoolean("autoLogin", autoLogin)
-        .apply()
 }
