@@ -10,8 +10,7 @@ class AccountRepository(
     private val api: AccountApiService,
     private val authLocalStore: AuthLocalStore
 ) {
-    // true  -> 서버 호출 없이 성공 처리(UI/플로우 테스트 가능)
-    // false -> 실제 서버 호출
+
     private val USE_FAKE_CHANGE_EMAIL_FOR_TEST = false
 
     suspend fun logout(): Result<Unit> = runCatching {
@@ -21,7 +20,7 @@ class AccountRepository(
         val res = api.logout(LogoutRequest(refresh))
         if (!res.isSuccess) throw RuntimeException(res.message)
 
-        // 로그아웃 성공 시, 토큰 및 네트워크 캐시 모두 삭제
+
         authLocalStore.clearAuth()
         RetrofitClient.clearCache()
     }
@@ -38,7 +37,7 @@ class AccountRepository(
 
         if (!res.isSuccess) throw RuntimeException(res.message)
 
-        // 회원탈퇴 성공 시, 토큰 및 네트워크 캐시 모두 삭제
+
         authLocalStore.clearAuth()
         RetrofitClient.clearCache()
         Log.d("Withdraw", "LOCAL AUTH and CACHE CLEARED")
