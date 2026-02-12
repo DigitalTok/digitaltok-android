@@ -77,7 +77,7 @@ class PasswordResetActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val res = withContext(Dispatchers.IO) {
-                    // ✅ AuthRepository 함수명에 맞춰 호출
+                    //  AuthRepository 함수명에 맞춰 호출
                     authRepository.resetPassword(email)
                     // 만약 네 레포지토리 함수명이 passwordReset(email) 이면 아래로 바꿔:
                     // authRepository.passwordReset(email)
