@@ -28,6 +28,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.yourcompany.digitaltok.ui.MainUiViewModel
 import com.yourcompany.digitaltok.ui.MainViewModel
 import com.yourcompany.digitaltok.ui.auth.AuthStartScreen
 import com.yourcompany.digitaltok.ui.auth.SignupActivity
@@ -41,6 +42,7 @@ class MainActivity : AppCompatActivity() {
 
     private val nfcViewModel: NfcViewModel by viewModels()
     private val mainViewModel: MainViewModel by viewModels()
+    private val mainUiViewModel: MainUiViewModel by viewModels()
 
     private val signupLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -60,6 +62,7 @@ class MainActivity : AppCompatActivity() {
             DigitalTokTheme {
                 AppEntry(
                     mainViewModel = mainViewModel,
+                    mainUiViewModel = mainUiViewModel,
                     onOpenSignUp = {
                         signupLauncher.launch(Intent(this, SignupActivity::class.java))
                     }
@@ -87,6 +90,7 @@ class MainActivity : AppCompatActivity() {
 @Composable
 private fun AppEntry(
     mainViewModel: MainViewModel,
+    mainUiViewModel: MainUiViewModel,
     onOpenSignUp: () -> Unit
 ) {
     var showSplash by remember { mutableStateOf(true) }
@@ -101,6 +105,7 @@ private fun AppEntry(
     } else {
         AppNavHost(
             mainViewModel = mainViewModel,
+            mainUiViewModel = mainUiViewModel,
             onOpenSignUp = onOpenSignUp
         )
     }
@@ -145,6 +150,7 @@ private fun SplashLanding() {
 @Composable
 fun AppNavHost(
     mainViewModel: MainViewModel,
+    mainUiViewModel: MainUiViewModel,
     navController: NavHostController = rememberNavController(),
     onOpenSignUp: () -> Unit = {}
 ) {
@@ -172,7 +178,7 @@ fun AppNavHost(
         }
 
         composable("home") {
-            HomeScreen(mainViewModel = mainViewModel)
+            HomeScreen(mainViewModel = mainViewModel, mainUiViewModel = mainUiViewModel)
         }
     }
 }

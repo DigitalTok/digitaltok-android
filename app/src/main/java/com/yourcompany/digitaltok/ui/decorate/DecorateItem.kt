@@ -11,9 +11,4 @@ data class DecorateItem(
     var isFavorite: Boolean = false,
     var isSelected: Boolean = false, // 선택 상태
     val onAddClick: (() -> Unit)? = null // 추가 버튼 클릭 리스너
-) {
-    companion object {
-        fun createAddSlot(onClick: () -> Unit) = DecorateItem(id = "add_slot", isSlot = true, onAddClick = onClick)
-        fun createEmptySlot() = DecorateItem(id = "empty_slot", isSlot = true)
-    }
-}
+)
