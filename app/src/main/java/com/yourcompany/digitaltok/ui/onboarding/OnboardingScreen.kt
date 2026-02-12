@@ -37,7 +37,7 @@ fun OnboardingScreen(
     onFinish: () -> Unit = {}
 ) {
     val pages = listOf(
-        // 1) 단일 이미지
+
         OnboardingPageData(
             title = "디링에 오신 것을\n환영합니다",
             subtitle = "스마트한 소통을 시작해보세요",
@@ -45,7 +45,7 @@ fun OnboardingScreen(
             singleImageSize = 180.dp
         ),
 
-        // 2) “한 장 이미지”
+
         OnboardingPageData(
             title = "전자 잉크\n디스플레이 ‘디링’",
             subtitle = "배터리 필요 없는 디스플레이로\n개성있는 메시지를 표현하세요",
@@ -54,14 +54,14 @@ fun OnboardingScreen(
             layers = emptyList()
         ),
 
-        // 3) 지하철 카드
+
         OnboardingPageData(
             title = "대중교통에서 편리하게",
             subtitle = "하차 정보나 배려 메시지를\n손쉽게 전달할 수 있어요",
             showSubwayCards = true
         ),
 
-        // 4) 사진 카드 3장 겹치기
+
         OnboardingPageData(
             title = "사진을 추가해보세요",
             subtitle = "앨범 속 사진으로\n디링을 꾸며보세요",
@@ -153,10 +153,10 @@ fun OnboardingScreen(
                     textAlign = TextAlign.Center
                 )
 
-                // 텍스트-이미지 간격
+
                 Spacer(Modifier.height(44.dp))
 
-                // 중앙 아트 영역 (3번=캐러셀, 4번=레이어, 1/2번=단일이미지)
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -186,13 +186,14 @@ fun OnboardingScreen(
                     }
                 }
 
-                Spacer(Modifier.weight(0.65f))
+
+                Spacer(Modifier.weight(0.35f))
 
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     OnboardingIndicator(total = pages.size, current = pageIndex)
                 }
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(14.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -233,7 +234,8 @@ fun OnboardingScreen(
                     }
                 }
 
-                Spacer(Modifier.height(28.dp))
+
+                Spacer(Modifier.height(18.dp))
             }
         }
     }
@@ -328,7 +330,7 @@ private fun LazyListState.centerItemIndex(): Int {
     val viewportCenter = (layout.viewportStartOffset + layout.viewportEndOffset) / 2
     val closest = visible.minByOrNull { item ->
         val itemCenter = item.offset + item.size / 2
-        abs(itemCenter - viewportCenter)
+        kotlin.math.abs(itemCenter - viewportCenter)
     }
     return closest?.index ?: 0
 }

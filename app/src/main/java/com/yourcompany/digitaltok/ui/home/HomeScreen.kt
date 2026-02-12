@@ -96,6 +96,7 @@ fun HomeScreen(mainViewModel: MainViewModel, mainUiViewModel: MainUiViewModel) {
     }
 
     Scaffold(
+        containerColor = Color.White,
         bottomBar = {
             if (isBottomNavVisible) {
                 BottomNavBar(navController = navController, onItemClick = { route ->
@@ -230,7 +231,6 @@ private fun HomeNoConnection() {
 }
 
 
-
 @Composable
 private fun HomeConnected(mainViewModel: MainViewModel, navController: NavController) {
     val lastImageUrl by mainViewModel.lastTransferredImageUrl.observeAsState()
@@ -242,31 +242,24 @@ private fun HomeConnected(mainViewModel: MainViewModel, navController: NavContro
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .padding(horizontal = 16.dp)
     ) {
-            Text(
-                text = "DigitalTok",
-                style = TextStyle(
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight(600),
-                    color = Color(0xFF121212)
-                )
+        Text(
+            text = "DigitalTok",
+            style = TextStyle(
+                fontSize = 26.sp,
+                fontWeight = FontWeight(600),
+                color = Color(0xFF121212)
             )
-
-        Spacer(Modifier.height(14.dp))
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(75.dp)
-                .background(Color(0xFFD9D9D9))
         )
 
         Spacer(Modifier.height(24.dp))
 
         Box(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(top = 150.dp),
             contentAlignment = Alignment.TopCenter
+
+
         ) {
             Box(
                 modifier = Modifier
@@ -310,4 +303,3 @@ private fun HomeConnected(mainViewModel: MainViewModel, navController: NavContro
         )
     }
 }
-
