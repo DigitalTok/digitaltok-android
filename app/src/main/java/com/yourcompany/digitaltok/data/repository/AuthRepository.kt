@@ -16,12 +16,6 @@ class AuthRepository {
     suspend fun duplicateCheck(email: String) =
         api.duplicateCheck(DuplicateCheckRequest(email))
 
-    suspend fun passwordReset(email: String) =
-        api.passwordReset(PasswordResetRequest(email))
-
-    suspend fun logout(refreshToken: String) =
-        api.logout(LogoutRequest(refreshToken))
-
     suspend fun resetPassword(email: String) =
         api.passwordReset(PasswordResetRequest(email))
 
