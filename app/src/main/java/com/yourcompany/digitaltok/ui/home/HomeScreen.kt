@@ -2,7 +2,6 @@ package com.yourcompany.digitaltok.ui.home
 
 import android.view.View
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,11 +10,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,12 +33,14 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentContainerView
-import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.yourcompany.digitaltok.R
 import com.yourcompany.digitaltok.ui.MainUiViewModel
 import com.yourcompany.digitaltok.ui.MainViewModel
@@ -57,20 +58,32 @@ private object Variables {
 private fun ComposableFragmentContainer(modifier: Modifier = Modifier, fragment: () -> Fragment) {
     val containerId = remember { View.generateViewId() }
     val context = LocalContext.current
+    val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
 
     AndroidView(
         factory = { FragmentContainerView(it).apply { id = containerId } },
         modifier = modifier,
         update = {
-            val fm = (context as? FragmentActivity)?.supportFragmentManager
-            if (fm != null && fm.findFragmentById(containerId) == null) {
-                fm.commit {
+            if (fragmentManager != null && fragmentManager.findFragmentById(containerId) == null) {
+                fragmentManager.commit {
                     setReorderingAllowed(true)
                     add(containerId, fragment())
                 }
             }
         }
     )
+
+    // Composable이 화면에서 사라질 때 Fragment를 정리하여 메모리 누수 및 크래시 방지
+    DisposableEffect(containerId, fragmentManager) {
+        onDispose {
+            val fragmentInstance = fragmentManager?.findFragmentById(containerId)
+            if (fragmentInstance != null && !fragmentManager.isStateSaved) {
+                fragmentManager.commit {
+                    remove(fragmentInstance)
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -79,20 +92,19 @@ fun HomeScreen(mainViewModel: MainViewModel) {
     val context = LocalContext.current
     val activity = context as FragmentActivity
 
-    // 탭 이동 이벤트는 MainUiViewModel
     val mainUiViewModel: MainUiViewModel = viewModel(viewModelStoreOwner = activity)
 
-    // 하단바 가시성 / 연결 상태는 MainViewModel (단일 소스)
     val isBottomNavVisible by mainViewModel.isBottomNavVisible.observeAsState(initial = true)
     val isDeviceConnected by mainViewModel.isDeviceConnected.observeAsState(initial = false)
 
-    // Fragment에서 요청한 탭 이동 처리
     val navigateTo by mainUiViewModel.navigateTo.collectAsState()
     LaunchedEffect(navigateTo) {
         navigateTo?.let { route ->
-            navController.navigate(route) {
-                popUpTo(navController.graph.startDestinationId)
-                launchSingleTop = true
+            if (route != "decorate") {
+                navController.navigate(route) {
+                    popUpTo(navController.graph.startDestinationId)
+                    launchSingleTop = true
+                }
             }
             mainUiViewModel.consumeNavigate()
         }
@@ -102,7 +114,6 @@ fun HomeScreen(mainViewModel: MainViewModel) {
         bottomBar = {
             if (isBottomNavVisible) {
                 BottomNavBar(navController = navController, onItemClick = { route ->
-                    // ✅ “이미 연결됨”이면 device 탭 이동 차단 (단일 소스 사용)
                     if (route == "device" && isDeviceConnected) {
                         Toast.makeText(context, "이미 기기가 연결되어 있습니다.", Toast.LENGTH_SHORT).show()
                         false
@@ -121,68 +132,23 @@ fun HomeScreen(mainViewModel: MainViewModel) {
                 bottom = if (isBottomNavVisible) innerPadding.calculateBottomPadding() else 0.dp
             )
         ) {
-            composable("home") { HomeTab(mainViewModel = mainViewModel) }
+            composable("home") {
+                HomeTab(
+                    mainViewModel = mainViewModel,
+                    navController = navController
+                )
+            }
+
 
             composable("device") {
-                val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
-
-                val backStackEntryCount by produceState(
-                    initialValue = fragmentManager?.backStackEntryCount ?: 0,
-                    key1 = fragmentManager
-                ) {
-                    val listener = FragmentManager.OnBackStackChangedListener {
-                        value = fragmentManager?.backStackEntryCount ?: 0
-                    }
-                    fragmentManager?.addOnBackStackChangedListener(listener)
-                    awaitDispose { fragmentManager?.removeOnBackStackChangedListener(listener) }
-                }
-
-                BackHandler(enabled = backStackEntryCount > 0) {
-                    fragmentManager?.popBackStack()
-                }
-
                 ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) { DeviceConnectFragment() }
             }
 
             composable("decorate") {
-                val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
-
-                val backStackEntryCount by produceState(
-                    initialValue = fragmentManager?.backStackEntryCount ?: 0,
-                    key1 = fragmentManager
-                ) {
-                    val listener = FragmentManager.OnBackStackChangedListener {
-                        value = fragmentManager?.backStackEntryCount ?: 0
-                    }
-                    fragmentManager?.addOnBackStackChangedListener(listener)
-                    awaitDispose { fragmentManager?.removeOnBackStackChangedListener(listener) }
-                }
-
-                BackHandler(enabled = backStackEntryCount > 0) {
-                    fragmentManager?.popBackStack()
-                }
-
                 ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) { DecorateFragment() }
             }
 
             composable("settings") {
-                val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
-
-                val backStackEntryCount by produceState(
-                    initialValue = fragmentManager?.backStackEntryCount ?: 0,
-                    key1 = fragmentManager
-                ) {
-                    val listener = FragmentManager.OnBackStackChangedListener {
-                        value = fragmentManager?.backStackEntryCount ?: 0
-                    }
-                    fragmentManager?.addOnBackStackChangedListener(listener)
-                    awaitDispose { fragmentManager?.removeOnBackStackChangedListener(listener) }
-                }
-
-                BackHandler(enabled = backStackEntryCount > 0) {
-                    fragmentManager?.popBackStack()
-                }
-
                 ComposableFragmentContainer(modifier = Modifier.fillMaxSize()) { HelpFragment() }
             }
         }
@@ -190,15 +156,19 @@ fun HomeScreen(mainViewModel: MainViewModel) {
 }
 
 @Composable
-private fun HomeTab(mainViewModel: MainViewModel) {
+private fun HomeTab(mainViewModel: MainViewModel, navController: NavHostController) {
     val isDeviceConnected by mainViewModel.isDeviceConnected.observeAsState(initial = false)
 
     if (!isDeviceConnected) {
         HomeNoConnection()
     } else {
-        HomeConnected()
+        HomeConnected(
+            mainViewModel = mainViewModel,
+            navController = navController
+        )
     }
 }
+
 
 @Composable
 private fun HomeNoConnection() {
@@ -295,8 +265,12 @@ private fun HomeNoConnection() {
 }
 
 @Composable
-private fun HomeConnected() {
-    val imageRes = R.drawable.rectangle_95
+private fun HomeConnected(mainViewModel: MainViewModel, navController: NavController) {
+    val lastImageUrl by mainViewModel.lastTransferredImageUrl.observeAsState()
+
+    val navigateToDecorate = {
+        navController.navigate("decorate")
+    }
 
     Column(
         modifier = Modifier
@@ -346,7 +320,7 @@ private fun HomeConnected() {
                     .size(288.dp)
                     .background(Color.White, RoundedCornerShape(12.dp))
                     .padding(12.dp)
-                    .clickable { },
+                    .clickable { navigateToDecorate() },
                 contentAlignment = Alignment.Center
             ) {
                 Box(
@@ -355,11 +329,13 @@ private fun HomeConnected() {
                         .clip(RoundedCornerShape(10.dp))
                         .background(Color(0xFFF4F4F4))
                 ) {
-                    Image(
-                        painter = painterResource(id = imageRes),
-                        contentDescription = null,
+                    AsyncImage(
+                        model = lastImageUrl ?: R.drawable.rectangle_95,
+                        contentDescription = "Last transferred image",
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        error = painterResource(id = R.drawable.rectangle_95),
+                        placeholder = painterResource(id = R.drawable.rectangle_95)
                     )
                 }
             }
@@ -374,7 +350,9 @@ private fun HomeConnected() {
                 fontWeight = FontWeight(600),
                 color = Variables.Point
             ),
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .clickable { navigateToDecorate() }
         )
     }
 }

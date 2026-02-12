@@ -15,17 +15,17 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.ProgressBar
-import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import com.bumptech.glide.Glide
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.yourcompany.digitaltok.R
 import com.yourcompany.digitaltok.databinding.FragmentTemplatePreviewBinding
+import com.yourcompany.digitaltok.ui.MainViewModel
 import com.yourcompany.digitaltok.ui.device.NfcDisabledFragment
 import com.yourcompany.digitaltok.ui.faq.HelpFragment
-import com.yourcompany.digitaltok.ui.upload.TemplatePreviewViewModel
 import java.io.IOException
 import kotlin.math.ceil
 
@@ -35,6 +35,7 @@ class TemplatePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
     private val binding get() = _binding!!
 
     private val viewModel: TemplatePreviewViewModel by viewModels()
+    private val mainViewModel: MainViewModel by activityViewModels()
 
     private var loadingDialog: AlertDialog? = null
     private var nfcTransferDialog: AlertDialog? = null
@@ -275,16 +276,34 @@ class TemplatePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
     private fun showSuccessDialogAndExit() {
         activity?.runOnUiThread {
             if (!isAdded || activity == null) return@runOnUiThread
+
+            mainViewModel.setLastTransferredImageUrl(arguments?.getString(ARG_TEMPLATE_IMAGE_URL))
+
             nfcTransferDialog?.dismiss()
             if (resultDialog?.isShowing == true) return@runOnUiThread
+
             val dialogView = layoutInflater.inflate(R.layout.dialog_transfer_success, null)
+
             resultDialog = MaterialAlertDialogBuilder(requireContext())
                 .setView(dialogView)
                 .setCancelable(false)
                 .create()
                 .apply { window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT)) }
+
             resultDialog?.show()
-            view?.postDelayed({ safePopBackStackOrPend() }, 2000)
+
+            binding.root.postDelayed({
+                if (!isAdded) return@postDelayed
+
+                resultDialog?.dismiss()
+                disableNfcReaderMode()
+
+                if (parentFragmentManager.isStateSaved) {
+                    pendingPopBack = true
+                    return@postDelayed
+                }
+                parentFragmentManager.popBackStack()
+            }, 2000)
         }
     }
 
@@ -370,7 +389,6 @@ class TemplatePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
 
     private fun transceiveHex(isoDep: IsoDep, hex: String): ByteArray {
         val req = hexToBytes(hex)
-        Log.d(TAG, "-> $hex")
         return isoDep.transceive(req)
     }
 

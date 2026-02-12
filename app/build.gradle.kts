@@ -88,6 +88,7 @@ dependencies {
     // Image Loading
     implementation("com.github.bumptech.glide:glide:4.16.0")
     kapt("com.github.bumptech.glide:compiler:4.16.0")
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
     // Image Cropper
     implementation("com.github.CanHub:Android-Image-Cropper:4.5.0")
