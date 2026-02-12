@@ -193,6 +193,18 @@ fun AuthStartScreen(
                             return@launch
                         }
 
+                        val body = response.body()
+                        if (body?.isSuccess != true || body.result == null) {
+                            Toast.makeText(context, body?.message ?: "로그인 실패", Toast.LENGTH_SHORT).show()
+                            return@launch
+                        }
+
+                        saveAuth(context,
+                            body.result.accessToken,
+                            body.result.refreshToken,
+                            true
+                        )
+
                         Toast.makeText(context, "로그인 성공!", Toast.LENGTH_SHORT).show()
                         onLoginSuccess()
 
@@ -245,4 +257,18 @@ fun AuthStartScreen(
             }
         )
     }
+}
+
+private fun saveAuth(
+    context: Context,
+    accessToken: String,
+    refreshToken: String,
+    autoLogin: Boolean
+) {
+    val prefs = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+    prefs.edit()
+        .putString("accessToken", accessToken)
+        .putString("refreshToken", refreshToken)
+        .putBoolean("autoLogin", autoLogin)
+        .apply()
 }
