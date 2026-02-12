@@ -1,6 +1,6 @@
 package com.yourcompany.digitaltok.data.model
 
-// ===== Requests =====
+
 data class SignupRequest(
     val email: String,
     val password: String,
@@ -24,7 +24,6 @@ data class LogoutRequest(
     val refreshToken: String
 )
 
-// ===== Results (response.result) =====
 data class SignupResult(
     val userId: Int,
     val email: String,

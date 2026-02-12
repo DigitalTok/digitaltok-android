@@ -50,7 +50,7 @@ fun OnboardingButton(
 ) {
     Box(
         modifier = modifier
-            .height(52.dp) // ✅ 피그마 느낌 버튼 높이
+            .height(52.dp)
             .background(
                 if (enabled) containerColor else Color(0xFFE9E9E9),
                 RoundedCornerShape(8.dp)

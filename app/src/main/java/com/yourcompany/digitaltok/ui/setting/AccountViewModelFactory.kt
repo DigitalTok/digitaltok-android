@@ -13,7 +13,7 @@ class AccountViewModelFactory(
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        // RetrofitClient에 retrofit 인스턴스가 있다고 가정
+
         val api = RetrofitClient.create(AccountApiService::class.java)
 
         val localStore: AuthLocalStore = PrefsAuthLocalStore(context.applicationContext)

@@ -30,7 +30,7 @@ private data class BottomItem(
 @Composable
 fun BottomNavBar(
     navController: NavController,
-    onItemClick: (String) -> Boolean = { true } // 클릭 이벤트를 처리할 람다 추가
+    onItemClick: (String) -> Boolean = { true }
 ) {
     val items = listOf(
         BottomItem("home", "홈", Icons.Outlined.Home),
@@ -50,7 +50,7 @@ fun BottomNavBar(
                 selected = selected,
                 onClick = {
                     if (!selected) {
-                        // 람다를 실행하고, 그 결과가 true일 때만 화면을 전환합니다.
+
                         if (onItemClick(item.route)) {
                             navController.navigate(item.route) {
                                 launchSingleTop = true
