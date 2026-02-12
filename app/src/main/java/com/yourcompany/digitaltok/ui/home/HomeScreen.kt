@@ -20,9 +20,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -30,7 +35,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.commit
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -71,13 +75,9 @@ private fun ComposableFragmentContainer(modifier: Modifier = Modifier, fragment:
 }
 
 @Composable
-fun HomeScreen(mainViewModel: MainViewModel) {
+fun HomeScreen(mainViewModel: MainViewModel, mainUiViewModel: MainUiViewModel) {
     val navController = rememberNavController()
     val context = LocalContext.current
-    val activity = context as FragmentActivity
-
-    // 탭 이동 이벤트는 MainUiViewModel
-    val mainUiViewModel: MainUiViewModel = viewModel(viewModelStoreOwner = activity)
 
     // 하단바 가시성 / 연결 상태는 MainViewModel (단일 소스)
     val isBottomNavVisible by mainViewModel.isBottomNavVisible.observeAsState(initial = true)
@@ -96,6 +96,7 @@ fun HomeScreen(mainViewModel: MainViewModel) {
     }
 
     Scaffold(
+        containerColor = Color.White,
         bottomBar = {
             if (isBottomNavVisible) {
                 BottomNavBar(navController = navController, onItemClick = { route ->
@@ -161,6 +162,7 @@ private fun HomeNoConnection() {
             .fillMaxSize()
             .background(Color.White)
     ) {
+        // 상단 타이틀
         Text(
             text = "Di-ring",
             style = TextStyle(
@@ -173,63 +175,58 @@ private fun HomeNoConnection() {
                 .padding(top = 18.dp, start = 16.dp)
         )
 
+        // 중앙 아이콘
         Image(
             painter = painterResource(id = R.drawable.ic_no_connection),
             contentDescription = null,
             modifier = Modifier
-                .align(Alignment.Center)
-                .offset(y = 40.dp)
+                .align(Alignment.TopCenter)
+                .padding(top = 217.dp)
                 .size(width = 198.dp, height = 156.dp)
         )
 
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(bottom = 10.dp)
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
-            Box(modifier = Modifier.weight(1f))
-
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .offset(x = (-50).dp)          // ✅ 왼쪽/오른쪽 이동 (여기만 조절)
+                    .padding(bottom = 0.dp),      // ✅ 아래에서 띄우기 (여기만 조절: 탭바 위)
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "기기 연결",
-                        style = TextStyle(
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight(700),
-                            color = Variables.Point
-                        )
-                    )
-                    Text(
-                        text = "에서\n디지털톡을 찾아주세요",
-                        style = TextStyle(
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight(600),
-                            color = Variables.Gray1,
-                            textAlign = TextAlign.Center
-                        ),
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(
+                            SpanStyle(
+                                color = Variables.Point,
+                                fontWeight = FontWeight(700)
+                            )
+                        ) { append("기기 연결") }
+                        append("에서\n디지털톡을 찾아주세요")
+                    },
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight(600),
+                        color = Variables.Gray1,
                         textAlign = TextAlign.Center
-                    )
+                    ),
+                    textAlign = TextAlign.Center
+                )
 
-                    Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(10.dp))
 
-                    Text(
-                        text = "▼",
-                        style = TextStyle(
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight(800),
-                            color = Variables.Point
-                        )
+                Text(
+                    text = "▼",
+                    style = TextStyle(
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight(800),
+                        color = Variables.Point
                     )
-                }
+                )
             }
-
-            Box(modifier = Modifier.weight(1f))
-            Box(modifier = Modifier.weight(1f))
         }
+
     }
 }
 
@@ -245,31 +242,24 @@ private fun HomeConnected(mainViewModel: MainViewModel, navController: NavContro
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .padding(horizontal = 16.dp)
     ) {
-            Text(
-                text = "DigitalTok",
-                style = TextStyle(
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight(600),
-                    color = Color(0xFF121212)
-                )
+        Text(
+            text = "DigitalTok",
+            style = TextStyle(
+                fontSize = 26.sp,
+                fontWeight = FontWeight(600),
+                color = Color(0xFF121212)
             )
-
-        Spacer(Modifier.height(14.dp))
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(75.dp)
-                .background(Color(0xFFD9D9D9))
         )
 
         Spacer(Modifier.height(24.dp))
 
         Box(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(top = 150.dp),
             contentAlignment = Alignment.TopCenter
+
+
         ) {
             Box(
                 modifier = Modifier
@@ -313,4 +303,3 @@ private fun HomeConnected(mainViewModel: MainViewModel, navController: NavContro
         )
     }
 }
-
