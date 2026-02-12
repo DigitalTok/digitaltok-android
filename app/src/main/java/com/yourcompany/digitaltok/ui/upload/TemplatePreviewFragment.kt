@@ -63,11 +63,10 @@ class TemplatePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val templateName = arguments?.getString(ARG_TEMPLATE_NAME)
         val templateImageUrl = arguments?.getString(ARG_TEMPLATE_IMAGE_URL)
         val templateDataUrl = arguments?.getString(ARG_TEMPLATE_DATA_URL)
 
-        setupToolbar(templateName)
+        setupToolbar()
         setupClickListeners(templateDataUrl)
         observeViewModel()
 
@@ -101,8 +100,8 @@ class TemplatePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
         super.onPause()
     }
 
-    private fun setupToolbar(templateName: String?) {
-        binding.templateAppBar.titleTextView.text = templateName ?: "템플릿 미리보기"
+    private fun setupToolbar() {
+        binding.templateAppBar.titleTextView.text = "템플릿 업로드"
         binding.templateAppBar.backButton.setOnClickListener { safePopBackStackOrPend() }
     }
 
@@ -243,7 +242,7 @@ class TemplatePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
 
     private fun pollRefreshResult(isoDep: IsoDep): Boolean {
         val poll = byteArrayOf(0xF0.toByte(), 0xDE.toByte(), 0x00.toByte(), 0x00.toByte(), 0x01.toByte())
-        repeat(100) {
+        repeat(1000) {
             try {
                 val resp = isoDep.transceive(poll)
                  when (bytesToHex(resp)) {

@@ -6,9 +6,8 @@ import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 
 class ImageRepository {
-    // [수정] 두 종류의 apiService를 모두 가져옴
     private val apiService = RetrofitClient.apiService
-    private val publicApiService = RetrofitClient.publicApiService // 인증이 필요 없는 요청용
+    private val publicApiService = RetrofitClient.publicApiService
 
     suspend fun uploadImage(
         imageName: String,
@@ -21,7 +20,7 @@ class ImageRepository {
                 val apiResponse = response.body()
                 if (apiResponse != null && apiResponse.isSuccess) {
                     apiResponse.result?.let {
-                        Result.success(it) // 성공 시 Result.success 반환
+                        Result.success(it)
                     } ?: Result.failure(Exception("API success but result data is missing."))
                 } else {
                     Result.failure(Exception(apiResponse?.message ?: "Unknown API error"))
@@ -30,7 +29,7 @@ class ImageRepository {
                 Result.failure(Exception("Upload failed: ${response.message()}"))
             }
         } catch (e: Exception) {
-            Result.failure(e) // 모든 예외를 Result.failure로 감싸서 반환
+            Result.failure(e)
         }
     }
 
@@ -109,7 +108,6 @@ class ImageRepository {
 
     suspend fun downloadImageBinary(url: String): Result<ResponseBody> {
         return try {
-            // [수정] 인증이 필요 없는 publicApiService를 사용하여 이미지 다운로드
             val response = publicApiService.downloadImageBinary(url)
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)

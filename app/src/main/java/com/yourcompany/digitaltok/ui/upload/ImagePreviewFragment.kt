@@ -102,7 +102,7 @@ class ImagePreviewFragment : Fragment(), NfcAdapter.ReaderCallback {
     }
 
     private fun setupToolbar() {
-        binding.appBar.titleTextView.text = "사진 미리보기"
+        binding.appBar.titleTextView.text = "사진 업로드"
         binding.appBar.backButton.setOnClickListener { safePopBackStackOrPend() }
     }
 

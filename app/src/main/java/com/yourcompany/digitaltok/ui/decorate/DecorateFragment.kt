@@ -82,15 +82,10 @@ class DecorateFragment : Fragment() {
     }
     private var currentScreen: TemplateScreen = TemplateScreen.MENU
 
-    // API 분기용 선택값
-    private var selectedStationId: String? = null
-
     private val maxSlots = 15
 
-    // 최근사진 15칸
     private var recentItems = mutableListOf<DecorateItem>()
 
-    // 템플릿 메뉴 2개
     private var templateList = mutableListOf(
         TemplateItem(
             id = "template_transport",
@@ -106,26 +101,16 @@ class DecorateFragment : Fragment() {
         )
     )
 
-    // 역 리스트(샘플)
-    private val allStations: List<TemplateItem> = listOf(
-        TemplateItem("st_gangnam", "강남역", "2호선", R.drawable.blank_img),
-        TemplateItem("st_gangbyeon", "강변역", "2호선", R.drawable.blank_img),
-        TemplateItem("st_konkuk", "건대입구역", "2호선", R.drawable.blank_img),
-        TemplateItem("st_gyodae", "교대역", "2호선", R.drawable.blank_img),
-        TemplateItem("st_guui", "구의역", "2호선", R.drawable.blank_img),
-    )
+    private val apiStations = mutableListOf<TemplateItem>()
 
-    // 카메라 촬영 저장용 Uri
     private var pendingCameraUri: Uri? = null
 
-    // 갤러리(시스템 Photo Picker)
     private val pickImageLauncher =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             if (uri == null) return@registerForActivityResult
             startCrop(uri)
         }
 
-    // 카메라(촬영 후 Uri에 저장)
     private val takePictureLauncher =
         registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             val uri = pendingCameraUri
@@ -133,7 +118,6 @@ class DecorateFragment : Fragment() {
             startCrop(uri)
         }
 
-    // 카메라 권한 요청
     private val requestCameraPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) openCameraInternal()
@@ -142,7 +126,6 @@ class DecorateFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // CropImageFragment로부터 크롭된 이미지 결과를 받기 위한 리스너 설정
         parentFragmentManager.setFragmentResultListener(CropImageFragment.REQUEST_KEY, this) { _, bundle ->
             val croppedUriString = bundle.getString(CropImageFragment.RESULT_CROPPED_URI)
             if (croppedUriString != null) {
@@ -162,7 +145,6 @@ class DecorateFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 상단바 include
         connectTopAppBar = view.findViewById(R.id.connectTopAppBar)
         topBarTitle = connectTopAppBar.findViewById(R.id.titleTextView)
         topBarBack = connectTopAppBar.findViewById(R.id.backButton)
@@ -175,25 +157,25 @@ class DecorateFragment : Fragment() {
         setupOnBackPressed()
         updateBackButtonVisibility()
 
-        // ----- bind -----
         toggleTabs = view.findViewById(R.id.toggleTabs)
         tvCount = view.findViewById(R.id.tvCount)
-
         rvGrid = view.findViewById(R.id.rvGrid)
         rvTemplateList = view.findViewById(R.id.rvTemplateList)
-
         tilSearch = view.findViewById(R.id.tilSearch)
         etSearch = view.findViewById(R.id.etSearch)
         tvStationHint = view.findViewById(R.id.tvStationHint)
         tvTabHint = view.findViewById(R.id.tvTabHint)
         rvStations = view.findViewById(R.id.rvStations)
-
         rvTransportSeats = view.findViewById(R.id.rvTransportSeats)
-
         sendContainer = view.findViewById(R.id.sendContainer)
         btnSend = view.findViewById(R.id.btnSend)
 
-        // ----- recent grid -----
+        setupAdapters()
+        setupClickListeners()
+        setTab(Tab.RECENT)
+    }
+
+    private fun setupAdapters() {
         val spanCount = 3
         rvGrid.layoutManager = GridLayoutManager(requireContext(), spanCount)
         val hSpace = resources.getDimensionPixelSize(R.dimen.grid_spacing_horizontal)
@@ -211,7 +193,6 @@ class DecorateFragment : Fragment() {
         )
         rvGrid.adapter = gridAdapter
 
-        // ----- template menu (2 items) -----
         rvTemplateList.layoutManager = LinearLayoutManager(requireContext())
         templateAdapter = PriorityAdapter(templateList) { item ->
             when (item.id) {
@@ -221,7 +202,6 @@ class DecorateFragment : Fragment() {
         }
         rvTemplateList.adapter = templateAdapter
 
-        // ----- transport seats list -----
         rvTransportSeats.layoutManager = LinearLayoutManager(requireContext())
         transportAdapter = PriorityAdapter(shownTransport) { seat ->
             seat.id.toIntOrNull()?.let {
@@ -230,42 +210,33 @@ class DecorateFragment : Fragment() {
         }
         rvTransportSeats.adapter = transportAdapter
 
-        // ----- stations list (UI reused for A) -----
         rvStations.layoutManager = LinearLayoutManager(requireContext())
         stationAdapter = PriorityAdapter(shownStations) { station ->
-            selectedStationId = station.id
-
-            when (currentScreen) {
-                TemplateScreen.STATION_LIST_FROM_MENU -> {
-                    Toast.makeText(
-                        requireContext(),
-                        "역 상세(지하철역 경로): ${station.title}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    // TODO: apiStation.getStationDetail(station.id)
-                }
-                else -> Unit
+            station.id.toIntOrNull()?.let {
+                viewModel.fetchSubwayTemplateDetail(it)
             }
         }
         rvStations.adapter = stationAdapter
+    }
 
-        // ----- search: stations list에서만 -----
+    private fun setupClickListeners() {
         etSearch.addTextChangedListener { editable ->
             if (currentScreen != TemplateScreen.STATION_LIST_FROM_MENU) return@addTextChangedListener
-            val q = editable?.toString()?.trim().orEmpty()
-            applyStationFilterLocal(q)
+            val keyword = editable?.toString()?.trim().orEmpty()
+            if (keyword.isNotBlank()) {
+                viewModel.searchSubwayTemplates(keyword)
+            } else {
+                // 검색어가 비었을 때는 전체 목록 다시 로드
+                viewModel.fetchSubwayTemplates()
+            }
         }
 
-        // ----- tabs -----
         toggleTabs.check(R.id.btnRecent)
-        setTab(Tab.RECENT)
-
         toggleTabs.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (!isChecked) return@addOnButtonCheckedListener
             if (checkedId == R.id.btnRecent) setTab(Tab.RECENT) else setTab(Tab.TEMPLATE)
         }
 
-        // ----- send button -----
         btnSend.setOnClickListener {
             if (currentTab != Tab.RECENT) return@setOnClickListener
 
@@ -275,14 +246,12 @@ class DecorateFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            // 1. 서버에 있는 이미지 (ID가 숫자)
             val imageId = selected.id.toIntOrNull()
             if (imageId != null && !selected.previewUrl.isNullOrEmpty()) {
                 goToPreviewScreen(imageId, selected.previewUrl)
                 return@setOnClickListener
             }
 
-            // 2. 로컬에만 있는 새 이미지 (ID가 "user_"로 시작)
             if (selected.id.startsWith("user_") && selected.imageUri != null) {
                 val imageFile = uriToFile(selected.imageUri)
                 if (imageFile != null) {
@@ -306,7 +275,6 @@ class DecorateFragment : Fragment() {
         topBarBack.visibility = if (show) View.VISIBLE else View.GONE
     }
 
-    // -------------------- BACK PRESS --------------------
     private fun setupOnBackPressed() {
         val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -321,7 +289,6 @@ class DecorateFragment : Fragment() {
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
     }
 
-    // ----- TAB CONTROL -----
     private fun setTab(tab: Tab) {
         currentTab = tab
         val isRecent = tab == Tab.RECENT
@@ -332,18 +299,12 @@ class DecorateFragment : Fragment() {
         if (isRecent) {
             tvCount.visibility = View.VISIBLE
             tvTabHint.visibility = View.GONE
-
             rvTemplateList.visibility = View.GONE
             rvTransportSeats.visibility = View.GONE
             tilSearch.visibility = View.GONE
             tvStationHint.visibility = View.GONE
             rvStations.visibility = View.GONE
-
             currentScreen = TemplateScreen.MENU
-            selectedStationId = null
-
-            val filled = recentItems.count { !it.isSlot }
-            tvCount.text = "최근 사용한 사진 ($filled/$maxSlots)"
         } else {
             tvCount.visibility = View.GONE
             tvTabHint.visibility = View.GONE
@@ -357,7 +318,6 @@ class DecorateFragment : Fragment() {
 
     private fun showTemplateMenu() {
         currentScreen = TemplateScreen.MENU
-
         tvTabHint.visibility = View.GONE
         rvTemplateList.visibility = View.VISIBLE
         rvTransportSeats.visibility = View.GONE
@@ -365,68 +325,41 @@ class DecorateFragment : Fragment() {
         tvStationHint.visibility = View.GONE
         rvStations.visibility = View.GONE
         etSearch.setText("")
-
         updateBackButtonVisibility()
     }
 
     private fun showSeatList() {
         currentScreen = TemplateScreen.SEAT_LIST
-
         tvTabHint.visibility = View.VISIBLE
         rvTemplateList.visibility = View.GONE
         rvTransportSeats.visibility = View.VISIBLE
         tilSearch.visibility = View.GONE
         tvStationHint.visibility = View.GONE
         rvStations.visibility = View.GONE
-
         etSearch.setText("")
-
         updateBackButtonVisibility()
     }
 
     private fun showStationListFromMenu() {
         currentScreen = TemplateScreen.STATION_LIST_FROM_MENU
-
         rvTemplateList.visibility = View.GONE
         rvTransportSeats.visibility = View.GONE
         tilSearch.visibility = View.VISIBLE
         tvStationHint.visibility = View.VISIBLE
         rvStations.visibility = View.VISIBLE
-
         tvStationHint.text = "역명과 노선 색상이 포함된 템플릿"
         etSearch.hint = "더 많은 역을 검색해 보세요"
         etSearch.setText("")
-
-        loadStationsForMenu()
-
+        loadInitialStations()
         updateBackButtonVisibility()
     }
 
-    // -------------------- DATA LOADING (NOW: SAMPLE / LATER: API) --------------------
-    private fun loadStationsForMenu() {
+    private fun loadInitialStations() {
         shownStations.clear()
-        shownStations.addAll(allStations)
+        shownStations.addAll(apiStations)
         stationAdapter.notifyDataSetChanged()
     }
 
-    private fun applyStationFilterLocal(query: String) {
-        val base = allStations
-        shownStations.clear()
-
-        if (query.isBlank()) {
-            shownStations.addAll(base)
-        } else {
-            shownStations.addAll(
-                base.filter {
-                    it.title.contains(query, ignoreCase = true) ||
-                            it.desc.contains(query, ignoreCase = true)
-                }
-            )
-        }
-        stationAdapter.notifyDataSetChanged()
-    }
-
-    // -------------------- RECENT BUTTON UI --------------------
     private fun updateSendButtonUI() {
         if (currentTab != Tab.RECENT) return
         val selected = gridAdapter.getSelectedItem()
@@ -442,62 +375,28 @@ class DecorateFragment : Fragment() {
         tvCount.text = "최근 사용한 사진 ($filled/$maxSlots)"
     }
 
-    // -------------------- IMAGE PICKER & CROP --------------------
     private fun showAddImageDialog() {
         val dialogView = layoutInflater.inflate(R.layout.bottom_sheet_image_picker, null, false)
-
-        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
-            .setView(dialogView)
-            .create()
-
-        dialogView.findViewById<TextView>(R.id.tvCamera).setOnClickListener {
-            dialog.dismiss()
-            openCamera()
-        }
-
-        dialogView.findViewById<TextView>(R.id.tvGallery).setOnClickListener {
-            dialog.dismiss()
-            openGallery()
-        }
-
-        dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel)
-            .setOnClickListener { dialog.dismiss() }
-
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext()).setView(dialogView).create()
+        dialogView.findViewById<TextView>(R.id.tvCamera).setOnClickListener { dialog.dismiss(); openCamera() }
+        dialogView.findViewById<TextView>(R.id.tvGallery).setOnClickListener { dialog.dismiss(); openGallery() }
+        dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel).setOnClickListener { dialog.dismiss() }
         dialog.setCanceledOnTouchOutside(true)
         dialog.show()
-
         dialog.window?.let { w ->
             w.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             w.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             w.setDimAmount(0.55f)
             w.setGravity(Gravity.BOTTOM)
-
-            val navBarHeightPx = run {
-                val resId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
-                if (resId > 0) resources.getDimensionPixelSize(resId) else 0
-            }
-
-            val marginPx = TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP,
-                32f,
-                resources.displayMetrics
-            ).toInt()
-
-            w.attributes = w.attributes.apply {
-                y = navBarHeightPx + marginPx
-            }
-
-            w.setLayout(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
+            val navBarHeightPx = run { val resId = resources.getIdentifier("navigation_bar_height", "dimen", "android"); if (resId > 0) resources.getDimensionPixelSize(resId) else 0 }
+            val marginPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 32f, resources.displayMetrics).toInt()
+            w.attributes = w.attributes.apply { y = navBarHeightPx + marginPx }
+            w.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         }
     }
 
     private fun openGallery() {
-        pickImageLauncher.launch(
-            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-        )
+        pickImageLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
     }
 
     private fun openCamera() {
@@ -512,29 +411,18 @@ class DecorateFragment : Fragment() {
 
     private fun startCrop(uri: Uri) {
         val containerId = (requireView().parent as ViewGroup).id
-        parentFragmentManager.beginTransaction()
-            .add(containerId, CropImageFragment.newInstance(uri))
-            .addToBackStack(null)
-            .commit()
+        parentFragmentManager.beginTransaction().add(containerId, CropImageFragment.newInstance(uri)).addToBackStack(null).commit()
     }
 
     private fun addRecentImage(uri: Uri) {
-        val newItem = DecorateItem(
-            id = "user_${System.currentTimeMillis()}",
-            imageUri = uri,
-            isSlot = false
-        )
-
+        val newItem = DecorateItem(id = "user_${System.currentTimeMillis()}", imageUri = uri, isSlot = false)
         val firstEmptySlotIndex = recentItems.indexOfFirst { it.isSlot }
         if (firstEmptySlotIndex != -1) {
             recentItems[firstEmptySlotIndex] = newItem
         } else {
-            if (recentItems.size >= maxSlots) {
-                recentItems.removeAt(recentItems.lastIndex)
-            }
+            if (recentItems.size >= maxSlots) recentItems.removeAt(recentItems.lastIndex)
             recentItems.add(0, newItem)
         }
-
         gridAdapter.submitList(recentItems.toList())
         updateCountUI()
         updateSendButtonUI()
@@ -543,64 +431,82 @@ class DecorateFragment : Fragment() {
     private fun createImageUriForCamera(): Uri {
         val imagesDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         val imageFile = File(imagesDir, "camera_${System.currentTimeMillis()}.jpg")
-
         val authority = "${requireContext().packageName}.fileprovider"
         return FileProvider.getUriForFile(requireContext(), authority, imageFile)
     }
 
-    // -------------------- VIEWMODEL & UPLOAD --------------------
     private fun observeViewModel() {
-        // 교통약자 템플릿 목록
         viewModel.priorityTemplatesState.observe(viewLifecycleOwner) { state ->
             when (state) {
-                is DecorateViewModel.PriorityTemplatesUiState.Loading -> {
-                    // no-op
-                }
+                is DecorateViewModel.PriorityTemplatesUiState.Loading -> { /* no-op */ }
                 is DecorateViewModel.PriorityTemplatesUiState.Success -> {
-                    // 상세 목록 (원래 코드)
-                    val newItems = state.templates.map {
-                        TemplateItem(
-                            id = it.templateId.toString(),
-                            title = it.priorityType,
-                            thumbUrl = it.templateImageUrl
-                        )
-                    }
+                    val newItems = state.templates.map { TemplateItem(id = it.templateId.toString(), title = it.priorityType, thumbUrl = it.templateImageUrl) }
                     shownTransport.clear()
                     shownTransport.addAll(newItems)
                     transportAdapter.notifyDataSetChanged()
 
-                    // 메인 메뉴 아이템 썸네일 업데이트
                     state.templates.firstOrNull()?.let { firstTemplate ->
                         val transportMenuIndex = templateList.indexOfFirst { it.id == "template_transport" }
                         if (transportMenuIndex != -1) {
                             val oldItem = templateList[transportMenuIndex]
-                            templateList[transportMenuIndex] = oldItem.copy(
-                                thumbUrl = firstTemplate.templateImageUrl,
-                                thumbRes = 0 // URL 사용할 것이므로 리소스 ID는 0으로
-                            )
+                            templateList[transportMenuIndex] = oldItem.copy(thumbUrl = firstTemplate.templateImageUrl, thumbRes = 0)
                             templateAdapter.notifyItemChanged(transportMenuIndex)
                         }
                     }
                 }
-                is DecorateViewModel.PriorityTemplatesUiState.Error -> {
-                    Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
-                }
+                is DecorateViewModel.PriorityTemplatesUiState.Error -> Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
             }
         }
 
-        // 교통약자 템플릿 상세
         viewModel.priorityTemplateDetailState.observe(viewLifecycleOwner) { state ->
             when (state) {
-                is DecorateViewModel.PriorityTemplateDetailUiState.Loading -> {
-                    // 로딩 표시가 필요하다면 여기에 구현
-                }
+                is DecorateViewModel.PriorityTemplateDetailUiState.Loading -> { /* 로딩 표시 */ }
                 is DecorateViewModel.PriorityTemplateDetailUiState.Success -> {
+                    val detail = state.templateDetail
+                    parentFragmentManager.beginTransaction().add((requireView().parent as ViewGroup).id, TemplatePreviewFragment.newInstance(name = detail.priorityType, imageUrl = detail.templateImageUrl, dataUrl = detail.templateDataUrl)).addToBackStack(null).commit()
+                }
+                is DecorateViewModel.PriorityTemplateDetailUiState.Error -> Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        viewModel.subwayTemplatesState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is DecorateViewModel.SubwayTemplatesUiState.Loading -> { /* no-op */ }
+                is DecorateViewModel.SubwayTemplatesUiState.Success -> {
+                    val newItems = state.response.items.map { TemplateItem(id = it.templateId.toString(), title = it.stationName, desc = it.lineName, thumbUrl = it.templateImageUrl) }
+                    apiStations.clear()
+                    apiStations.addAll(newItems)
+
+                    // 검색이 아닌, 초기 로드 또는 검색어 클리어 시에만 화면 목록 갱신
+                    if (etSearch.text.toString().isBlank()) {
+                        shownStations.clear()
+                        shownStations.addAll(newItems)
+                        stationAdapter.notifyDataSetChanged()
+                    }
+
+                    state.response.items.firstOrNull()?.let { firstItem ->
+                        val stationMenuIndex = templateList.indexOfFirst { it.id == "template_station" }
+                        if (stationMenuIndex != -1) {
+                            val oldItem = templateList[stationMenuIndex]
+                            templateList[stationMenuIndex] = oldItem.copy(thumbUrl = firstItem.templateImageUrl, thumbRes = 0)
+                            templateAdapter.notifyItemChanged(stationMenuIndex)
+                        }
+                    }
+                }
+                is DecorateViewModel.SubwayTemplatesUiState.Error -> Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        viewModel.subwayTemplateDetailState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is DecorateViewModel.SubwayTemplateDetailUiState.Loading -> { /* 로딩 UI 필요 시 여기에 구현 */ }
+                is DecorateViewModel.SubwayTemplateDetailUiState.Success -> {
                     val detail = state.templateDetail
                     parentFragmentManager.beginTransaction()
                         .add(
                             (requireView().parent as ViewGroup).id,
                             TemplatePreviewFragment.newInstance(
-                                name = detail.priorityType,
+                                name = detail.stationName,
                                 imageUrl = detail.templateImageUrl,
                                 dataUrl = detail.templateDataUrl
                             )
@@ -608,7 +514,23 @@ class DecorateFragment : Fragment() {
                         .addToBackStack(null)
                         .commit()
                 }
-                is DecorateViewModel.PriorityTemplateDetailUiState.Error -> {
+                is DecorateViewModel.SubwayTemplateDetailUiState.Error -> Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // 지하철역 검색 결과 구독
+        viewModel.subwaySearchState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is DecorateViewModel.SubwaySearchUiState.Loading -> {
+                    // 로딩 UI 필요 시 여기에 구현 (예: 스피너 표시)
+                }
+                is DecorateViewModel.SubwaySearchUiState.Success -> {
+                    val newItems = state.response.items.map { TemplateItem(id = it.templateId.toString(), title = it.stationName, desc = it.lineName, thumbUrl = it.templateImageUrl) }
+                    shownStations.clear()
+                    shownStations.addAll(newItems)
+                    stationAdapter.notifyDataSetChanged()
+                }
+                is DecorateViewModel.SubwaySearchUiState.Error -> {
                     Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
                 }
             }
@@ -616,28 +538,17 @@ class DecorateFragment : Fragment() {
 
         viewModel.uploadState.observe(viewLifecycleOwner) { state ->
             when (state) {
-                is DecorateViewModel.UploadUiState.Loading -> {
-                    // no-op
-                }
-                is DecorateViewModel.UploadUiState.Success -> {
-                    val result = state.result
-                    goToPreviewScreen(result.image.imageId, result.image.previewUrl)
-                }
-                is DecorateViewModel.UploadUiState.Error -> {
-                    Toast.makeText(requireContext(), "업로드 실패: ${state.message}", Toast.LENGTH_LONG).show()
-                }
+                is DecorateViewModel.UploadUiState.Loading -> { /* no-op */ }
+                is DecorateViewModel.UploadUiState.Success -> goToPreviewScreen(state.result.image.imageId, state.result.image.previewUrl)
+                is DecorateViewModel.UploadUiState.Error -> Toast.makeText(requireContext(), "업로드 실패: ${state.message}", Toast.LENGTH_LONG).show()
                 is DecorateViewModel.UploadUiState.Idle -> Unit
             }
         }
 
         viewModel.favoriteState.observe(viewLifecycleOwner) { state ->
             when (state) {
-                is DecorateViewModel.FavoriteUiState.Loading -> {
-                    // no-op
-                }
-                is DecorateViewModel.FavoriteUiState.Success -> {
-                    viewModel.fetchRecentImages()
-                }
+                is DecorateViewModel.FavoriteUiState.Loading -> { /* no-op */ }
+                is DecorateViewModel.FavoriteUiState.Success -> viewModel.fetchRecentImages()
                 is DecorateViewModel.FavoriteUiState.Error -> {
                     Toast.makeText(requireContext(), "오류: ${state.message}", Toast.LENGTH_SHORT).show()
                     viewModel.fetchRecentImages()
@@ -648,39 +559,21 @@ class DecorateFragment : Fragment() {
 
         viewModel.recentImagesState.observe(viewLifecycleOwner) { state ->
             when (state) {
-                is DecorateViewModel.RecentImagesUiState.Loading -> {
-                    // no-op
-                }
+                is DecorateViewModel.RecentImagesUiState.Loading -> { /* no-op */ }
                 is DecorateViewModel.RecentImagesUiState.Success -> {
                     val recentApiItems = state.response.items
-
-                    val newItems = recentApiItems.map {
-                        DecorateItem(
-                            id = it.imageId.toString(),
-                            previewUrl = it.previewUrl,
-                            isFavorite = it.isFavorite,
-                            isSlot = false
-                        )
-                    }
-
+                    val newItems = recentApiItems.map { DecorateItem(id = it.imageId.toString(), previewUrl = it.previewUrl, isFavorite = it.isFavorite, isSlot = false) }
                     val sortedItems = newItems.sortedWith(compareByDescending { it.isFavorite })
-
                     recentItems.clear()
                     recentItems.addAll(sortedItems)
-
                     val emptySlots = maxSlots - recentItems.size
                     if (emptySlots > 0) {
-                        repeat(emptySlots) { idx ->
-                            recentItems.add(DecorateItem(id = "slot_$idx", isSlot = true))
-                        }
+                        repeat(emptySlots) { idx -> recentItems.add(DecorateItem(id = "slot_$idx", isSlot = true)) }
                     }
-
                     gridAdapter.submitList(recentItems.toList())
                     updateCountUI()
                 }
-                is DecorateViewModel.RecentImagesUiState.Error -> {
-                    Toast.makeText(requireContext(), "최근 이미지 로딩 실패: ${state.message}", Toast.LENGTH_SHORT).show()
-                }
+                is DecorateViewModel.RecentImagesUiState.Error -> Toast.makeText(requireContext(), "최근 이미지 로딩 실패: ${state.message}", Toast.LENGTH_SHORT).show()
                 else -> Unit
             }
         }
@@ -693,23 +586,18 @@ class DecorateFragment : Fragment() {
         }
         Log.d("PREVIEW_DEBUG", "imageId=$imageId")
         Log.d("PREVIEW_DEBUG", "previewUrl=$previewUrl")
-        parentFragmentManager.beginTransaction()
-            .add((requireView().parent as ViewGroup).id, ImagePreviewFragment.newInstance(imageId, previewUrl))
-            .addToBackStack(null)
-            .commit()
+        parentFragmentManager.beginTransaction().add((requireView().parent as ViewGroup).id, ImagePreviewFragment.newInstance(imageId, previewUrl)).addToBackStack(null).commit()
     }
 
     private fun uriToFile(uri: Uri): File? {
         return try {
             val cr = requireContext().contentResolver
             val mime = cr.getType(uri) ?: "image/png"
-
             val ext = when (mime.lowercase()) {
                 "image/png" -> "png"
                 "image/jpeg", "image/jpg" -> "jpg"
                 else -> "png"
             }
-
             cr.openInputStream(uri)?.use { input ->
                 val file = File(requireContext().cacheDir, "upload_${System.currentTimeMillis()}.$ext")
                 file.outputStream().use { out -> input.copyTo(out) }
@@ -720,5 +608,4 @@ class DecorateFragment : Fragment() {
             null
         }
     }
-
 }
