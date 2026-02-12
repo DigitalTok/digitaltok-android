@@ -27,9 +27,7 @@
 
         <activity android:name="com.canhub.cropper.CropImageActivity" />
 
-        <activity
-            android:name=".ui.auth.EmailLoginActivity"
-            android:exported="false" />
+
 
         <activity
             android:name=".ui.auth.SignupActivity"
@@ -38,6 +36,7 @@
         <activity
             android:name=".ui.auth.PasswordResetActivity"
             android:exported="false" />
+
 
         <activity
             android:name=".MainActivity"
