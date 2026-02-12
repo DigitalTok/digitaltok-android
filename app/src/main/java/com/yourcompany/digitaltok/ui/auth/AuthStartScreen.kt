@@ -88,8 +88,8 @@ fun AuthStartScreen(
         Text(
             text = "DiRing",
             style = TextStyle(
-                fontSize = 42.sp,
-                lineHeight = 42.sp,
+                fontSize = 36.sp,
+                lineHeight = 40.sp,
                 fontFamily = pretendard,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF111111),
@@ -107,7 +107,7 @@ fun AuthStartScreen(
         Text(
             text = "내 마음대로 꾸미는 나만의 키링",
             style = TextStyle(
-                fontSize = 20.sp,
+                fontSize = 18.sp,
                 lineHeight = 20.sp,
                 fontFamily = pretendard,
                 fontWeight = FontWeight.Medium,
