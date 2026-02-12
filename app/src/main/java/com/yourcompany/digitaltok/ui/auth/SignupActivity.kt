@@ -51,7 +51,7 @@ class SignupActivity : AppCompatActivity() {
 
         bindViews()
 
-
+        // background 강제 적용되게
         btnCheckEmail.backgroundTintList = null
         btnSignup.backgroundTintList = null
 
@@ -81,7 +81,7 @@ class SignupActivity : AppCompatActivity() {
     }
 
     private fun setupInitialUi() {
-
+        // 기본: 중복확인(파랑) / 이메일 유효할 때만 enabled
         btnCheckEmail.isEnabled = false
         btnCheckEmail.text = "중복확인"
         btnCheckEmail.setBackgroundResource(R.drawable.bg_btn_blue)
@@ -129,7 +129,7 @@ class SignupActivity : AppCompatActivity() {
         etEmail.addTextChangedListener(SimpleTextWatcher { raw ->
             val email = raw.trim()
 
-
+            // 이메일 수정하면 다시 중복확인(파랑) 상태로
             resetEmailCheckState()
 
             isEmailValid = Patterns.EMAIL_ADDRESS.matcher(email).matches()
@@ -185,7 +185,7 @@ class SignupActivity : AppCompatActivity() {
     }
 
     private fun checkEmailDuplicate(email: String) {
-
+        // 확인 중에는 버튼 비활성만 (색은 selector가 유지)
         btnCheckEmail.isEnabled = false
 
         lifecycleScope.launch {
@@ -206,7 +206,7 @@ class SignupActivity : AppCompatActivity() {
 
                     val msg = when (res.code()) {
                         409 -> "이미 사용 중인 이메일이에요."
-                        else -> "중복확인 실패 (HTTP ${res.code()})"
+                        else -> "중복확인 실패 (HTTPS ${res.code()})"
                     }
                     showEmailStatus(msg, false)
                 }
@@ -216,7 +216,7 @@ class SignupActivity : AppCompatActivity() {
                 btnCheckEmail.setBackgroundResource(R.drawable.bg_btn_blue)
                 showEmailStatus("네트워크 오류: ${e.message}", false)
             } finally {
-
+                // 이메일이 유효하면 다시 누를 수 있게
                 btnCheckEmail.isEnabled = isEmailValid
                 updateSignupButton()
             }
@@ -241,7 +241,7 @@ class SignupActivity : AppCompatActivity() {
                 if (!res.isSuccessful) {
                     Toast.makeText(
                         this@SignupActivity,
-                        "회원가입 실패 (HTTP ${res.code()})",
+                        "회원가입 실패 (HTTPS ${res.code()})",
                         Toast.LENGTH_SHORT
                     ).show()
                     updateSignupButton()
