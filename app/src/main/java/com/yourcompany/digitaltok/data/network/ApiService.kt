@@ -93,11 +93,32 @@ interface ApiService {
     // ==========================
     // Priority
     // ==========================
-    @GET("/api/v1/templates/priority")
+    @GET("templates/priority")
     suspend fun getPriorityTemplates(): Response<ApiResponse<PriorityTemplateResponse>>
 
-    @GET("/api/v1/templates/priority/{templateId}")
+    @GET("templates/priority/{templateId}")
     suspend fun getPriorityTemplateDetail(
         @Path("templateId") templateId: Int
     ): Response<ApiResponse<PriorityTemplateDetail>>
+
+    // ==========================
+    // Subway
+    // ==========================
+    @POST("templates/subway/generate")
+    suspend fun generateSubwayTemplate(
+        @Body body: SubwayGenerateRequest
+    ): Response<ApiResponse<String>>
+
+    @GET("templates/subway")
+    suspend fun getSubwayTemplates(): Response<ApiResponse<SubwayTemplateResponse>>
+
+    @GET("templates/subway/{templateId}")
+    suspend fun getSubwayTemplateDetail(
+        @Path("templateId") templateId: Int
+    ): Response<ApiResponse<SubwayTemplateDetail>>
+
+    @GET("templates/subway/search")
+    suspend fun searchSubwayTemplates(
+        @Query("keyword") keyword: String
+    ): Response<ApiResponse<SubwayTemplateResponse>>
 }

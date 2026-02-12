@@ -9,8 +9,11 @@ import com.yourcompany.digitaltok.data.model.ImageUploadResult
 import com.yourcompany.digitaltok.data.model.PriorityTemplate
 import com.yourcompany.digitaltok.data.model.PriorityTemplateDetail
 import com.yourcompany.digitaltok.data.model.RecentImagesResponse
+import com.yourcompany.digitaltok.data.model.SubwayGenerateRequest
+import com.yourcompany.digitaltok.data.model.SubwayTemplateDetail
+import com.yourcompany.digitaltok.data.model.SubwayTemplateResponse
 import com.yourcompany.digitaltok.data.repository.ImageRepository
-import com.yourcompany.digitaltok.data.repository.PriorityRepository
+import com.yourcompany.digitaltok.data.repository.TemplateRepository
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -21,7 +24,7 @@ import java.lang.NumberFormatException
 class DecorateViewModel : ViewModel() {
 
     private val imageRepository = ImageRepository()
-    private val priorityRepository = PriorityRepository()
+    private val templateRepository = TemplateRepository()
 
     // 이미지 업로드 UI 상태
     sealed class UploadUiState {
@@ -87,15 +90,46 @@ class DecorateViewModel : ViewModel() {
     private val _priorityTemplateDetailState = MutableLiveData<PriorityTemplateDetailUiState>()
     val priorityTemplateDetailState: LiveData<PriorityTemplateDetailUiState> = _priorityTemplateDetailState
 
+    // 지하철역 목록 UI 상태
+    sealed class SubwayTemplatesUiState {
+        object Loading : SubwayTemplatesUiState()
+        data class Success(val response: SubwayTemplateResponse) : SubwayTemplatesUiState()
+        data class Error(val message: String) : SubwayTemplatesUiState()
+    }
+
+    private val _subwayTemplatesState = MutableLiveData<SubwayTemplatesUiState>()
+    val subwayTemplatesState: LiveData<SubwayTemplatesUiState> = _subwayTemplatesState
+
+    // 단일 지하철역 템플릿 상세 정보 UI 상태
+    sealed class SubwayTemplateDetailUiState {
+        object Loading : SubwayTemplateDetailUiState()
+        data class Success(val templateDetail: SubwayTemplateDetail) : SubwayTemplateDetailUiState()
+        data class Error(val message: String) : SubwayTemplateDetailUiState()
+    }
+
+    private val _subwayTemplateDetailState = MutableLiveData<SubwayTemplateDetailUiState>()
+    val subwayTemplateDetailState: LiveData<SubwayTemplateDetailUiState> = _subwayTemplateDetailState
+
+    // 지하철역 검색 결과 UI 상태
+    sealed class SubwaySearchUiState {
+        object Loading : SubwaySearchUiState()
+        data class Success(val response: SubwayTemplateResponse) : SubwaySearchUiState()
+        data class Error(val message: String) : SubwaySearchUiState()
+    }
+
+    private val _subwaySearchState = MutableLiveData<SubwaySearchUiState>()
+    val subwaySearchState: LiveData<SubwaySearchUiState> = _subwaySearchState
+
     init {
         fetchRecentImages()
         fetchPriorityTemplates()
+        fetchSubwayTemplates()
     }
 
     fun fetchPriorityTemplates() {
         viewModelScope.launch {
             _priorityTemplatesState.value = PriorityTemplatesUiState.Loading
-            val result = priorityRepository.getPriorityTemplates()
+            val result = templateRepository.getPriorityTemplates()
             result.onSuccess {
                 _priorityTemplatesState.value = PriorityTemplatesUiState.Success(it)
             }.onFailure {
@@ -107,11 +141,48 @@ class DecorateViewModel : ViewModel() {
     fun fetchPriorityTemplateDetail(templateId: Int) {
         viewModelScope.launch {
             _priorityTemplateDetailState.value = PriorityTemplateDetailUiState.Loading
-            val result = priorityRepository.getPriorityTemplateDetail(templateId)
+            val result = templateRepository.getPriorityTemplateDetail(templateId)
             result.onSuccess {
                 _priorityTemplateDetailState.value = PriorityTemplateDetailUiState.Success(it)
             }.onFailure {
                 _priorityTemplateDetailState.value = PriorityTemplateDetailUiState.Error(it.message ?: "템플릿 상세 정보를 불러오는데 실패했습니다.")
+            }
+        }
+    }
+
+    fun fetchSubwayTemplates() {
+        viewModelScope.launch {
+            _subwayTemplatesState.value = SubwayTemplatesUiState.Loading
+            val result = templateRepository.getSubwayTemplates()
+            result.onSuccess {
+                _subwayTemplatesState.value = SubwayTemplatesUiState.Success(it)
+            }.onFailure {
+                _subwayTemplatesState.value = SubwayTemplatesUiState.Error(it.message ?: "지하철역 목록을 불러오는데 실패했습니다.")
+            }
+        }
+    }
+
+    fun fetchSubwayTemplateDetail(templateId: Int) {
+        viewModelScope.launch {
+            _subwayTemplateDetailState.value = SubwayTemplateDetailUiState.Loading
+            val result = templateRepository.getSubwayTemplateDetail(templateId)
+            result.onSuccess {
+                _subwayTemplateDetailState.value = SubwayTemplateDetailUiState.Success(it)
+            }.onFailure {
+                _subwayTemplateDetailState.value = SubwayTemplateDetailUiState.Error(it.message ?: "지하철 템플릿 상세 정보를 불러오는데 실패했습니다.")
+            }
+        }
+    }
+
+    // 지하철역 검색
+    fun searchSubwayTemplates(keyword: String) {
+        viewModelScope.launch {
+            _subwaySearchState.value = SubwaySearchUiState.Loading
+            val result = templateRepository.searchSubwayTemplates(keyword)
+            result.onSuccess {
+                _subwaySearchState.value = SubwaySearchUiState.Success(it)
+            }.onFailure {
+                _subwaySearchState.value = SubwaySearchUiState.Error(it.message ?: "지하철역 검색에 실패했습니다.")
             }
         }
     }

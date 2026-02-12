@@ -21,6 +21,10 @@ class MainViewModel : ViewModel() {
     private val _isImageTransferring = MutableLiveData<Boolean>()
     val isImageTransferring: LiveData<Boolean> = _isImageTransferring
 
+    // --- Last Transferred Image URL ---
+    private val _lastTransferredImageUrl = MutableLiveData<String?>()
+    val lastTransferredImageUrl: LiveData<String?> = _lastTransferredImageUrl
+
 
     init {
         // 초기 상태 설정
@@ -28,6 +32,7 @@ class MainViewModel : ViewModel() {
         _isDeviceConnecting.value = false
         _isImageTransferring.value = false
         _isBottomNavVisible.value = true
+        _lastTransferredImageUrl.value = null
     }
 
     fun setBottomNavVisibility(isVisible: Boolean) {
@@ -47,5 +52,9 @@ class MainViewModel : ViewModel() {
 
     fun setImageTransferring(isTransferring: Boolean) {
         _isImageTransferring.value = isTransferring
+    }
+
+    fun setLastTransferredImageUrl(url: String?) {
+        _lastTransferredImageUrl.value = url
     }
 }

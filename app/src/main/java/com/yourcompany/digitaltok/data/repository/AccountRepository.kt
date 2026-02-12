@@ -4,6 +4,7 @@ import android.util.Log
 import com.yourcompany.digitaltok.data.model.EmailChangeRequest
 import com.yourcompany.digitaltok.data.model.LogoutRequest
 import com.yourcompany.digitaltok.data.network.AccountApiService
+import com.yourcompany.digitaltok.data.network.RetrofitClient
 
 class AccountRepository(
     private val api: AccountApiService,
@@ -20,7 +21,9 @@ class AccountRepository(
         val res = api.logout(LogoutRequest(refresh))
         if (!res.isSuccess) throw RuntimeException(res.message)
 
+        // 로그아웃 성공 시, 토큰 및 네트워크 캐시 모두 삭제
         authLocalStore.clearAuth()
+        RetrofitClient.clearCache()
     }
 
     suspend fun withdraw(): Result<Unit> = runCatching {
@@ -35,8 +38,10 @@ class AccountRepository(
 
         if (!res.isSuccess) throw RuntimeException(res.message)
 
+        // 회원탈퇴 성공 시, 토큰 및 네트워크 캐시 모두 삭제
         authLocalStore.clearAuth()
-        Log.d("Withdraw", "LOCAL AUTH CLEARED")
+        RetrofitClient.clearCache()
+        Log.d("Withdraw", "LOCAL AUTH and CACHE CLEARED")
     }
 
 

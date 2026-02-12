@@ -7,6 +7,7 @@ import android.util.Patterns
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -19,7 +20,9 @@ import kotlinx.coroutines.withContext
 
 class PasswordResetActivity : AppCompatActivity() {
 
-    private lateinit var btnBack: TextView
+    private lateinit var btnBackIcon: ImageView
+    private lateinit var tvTopTitle: TextView
+
     private lateinit var etResetEmail: EditText
     private lateinit var btnSendLink: Button
     private lateinit var btnCancel: Button
@@ -34,13 +37,20 @@ class PasswordResetActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_password_reset)
 
-        btnBack = findViewById(R.id.btnBack)
+        // ✅ XML id와 정확히 매칭
+        btnBackIcon = findViewById(R.id.btnBackIcon)
+        tvTopTitle = findViewById(R.id.tvTopTitle)
+
         etResetEmail = findViewById(R.id.etResetEmail)
         btnSendLink = findViewById(R.id.btnSendLink)
         btnCancel = findViewById(R.id.btnCancel)
         tvResetStatus = findViewById(R.id.tvResetStatus)
 
-        btnBack.setOnClickListener { finish() }
+        // 상단 타이틀(혹시 동적으로 바꾸고 싶으면)
+        tvTopTitle.text = "이메일로 로그인"
+
+        // 뒤로가기
+        btnBackIcon.setOnClickListener { finish() }
         btnCancel.setOnClickListener { finish() }
 
         // 시작은 비활성
@@ -77,36 +87,32 @@ class PasswordResetActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val res = withContext(Dispatchers.IO) {
-                    // ✅ AuthRepository 함수명에 맞춰 호출
+                    //  AuthRepository 함수명에 맞춰 호출
                     authRepository.resetPassword(email)
-                    // 만약 네 레포지토리 함수명이 passwordReset(email) 이면 아래로 바꿔:
+                    // 만약 레포 함수명이 passwordReset(email) 이면 아래로 바꿔:
                     // authRepository.passwordReset(email)
                 }
 
                 if (!res.isSuccessful) {
-                    // HTTP 에러 (404/400/500 등)
+                    val msg = "요청 실패 (HTTP ${res.code()})"
                     tvResetStatus.visibility = View.VISIBLE
-                    tvResetStatus.text = "요청 실패 (HTTP ${res.code()})"
-                    Toast.makeText(
-                        this@PasswordResetActivity,
-                        "요청 실패 (HTTP ${res.code()})",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    tvResetStatus.text = msg
+                    Toast.makeText(this@PasswordResetActivity, msg, Toast.LENGTH_SHORT).show()
                     setSendEnabled(isEmailValid)
                     return@launch
                 }
 
                 val body = res.body()
                 if (body == null) {
+                    val msg = "응답이 비어있어요."
                     tvResetStatus.visibility = View.VISIBLE
-                    tvResetStatus.text = "응답이 비어있어요."
-                    Toast.makeText(this@PasswordResetActivity, "응답이 비어있어요.", Toast.LENGTH_SHORT).show()
+                    tvResetStatus.text = msg
+                    Toast.makeText(this@PasswordResetActivity, msg, Toast.LENGTH_SHORT).show()
                     setSendEnabled(isEmailValid)
                     return@launch
                 }
 
                 if (body.isSuccess == true) {
-                    // 서버 result가 String이면 메시지로 활용 가능
                     val msg = body.result ?: body.message ?: "재설정 요청이 완료됐어요."
                     tvResetStatus.visibility = View.VISIBLE
                     tvResetStatus.text = msg
@@ -118,17 +124,14 @@ class PasswordResetActivity : AppCompatActivity() {
                     Toast.makeText(this@PasswordResetActivity, msg, Toast.LENGTH_SHORT).show()
                 }
 
-                // 성공이든 실패든 버튼 상태는 입력값 기준으로 복구
+                // 성공/실패 후 버튼 상태 복구
                 setSendEnabled(isEmailValid)
 
             } catch (e: Exception) {
+                val msg = "네트워크 오류: ${e.message}"
                 tvResetStatus.visibility = View.VISIBLE
-                tvResetStatus.text = "네트워크 오류: ${e.message}"
-                Toast.makeText(
-                    this@PasswordResetActivity,
-                    "네트워크 오류: ${e.message}",
-                    Toast.LENGTH_SHORT
-                ).show()
+                tvResetStatus.text = msg
+                Toast.makeText(this@PasswordResetActivity, msg, Toast.LENGTH_SHORT).show()
                 setSendEnabled(isEmailValid)
             }
         }
