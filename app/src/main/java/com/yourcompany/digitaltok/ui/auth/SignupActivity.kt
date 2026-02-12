@@ -1,6 +1,6 @@
 package com.yourcompany.digitaltok.ui.auth
 
-import android.content.Intent
+import android.app.Activity
 import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
@@ -10,11 +10,7 @@ import android.text.TextWatcher
 import android.text.style.ForegroundColorSpan
 import android.util.Patterns
 import android.view.View
-import android.widget.Button
-import android.widget.CheckBox
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.yourcompany.digitaltok.R
@@ -33,7 +29,7 @@ class SignupActivity : AppCompatActivity() {
     private var isPasswordValid = false
     private var isPasswordMatch = false
 
-    private lateinit var btnBack: TextView
+    private lateinit var btnBack: ImageView
     private lateinit var tvGoLogin: TextView
     private lateinit var etEmail: EditText
     private lateinit var btnCheckEmail: Button
@@ -53,6 +49,22 @@ class SignupActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_signup)
 
+        bindViews()
+
+        // ✅ background 강제 적용되게(머터리얼 tint 제거)
+        btnCheckEmail.backgroundTintList = null
+        btnSignup.backgroundTintList = null
+
+        btnBack.setOnClickListener { finish() }
+        tvGoLogin.setOnClickListener { finish() }
+
+        setupRequiredTagColor()
+        setupInitialUi()
+        setupListeners()
+        updateSignupButton()
+    }
+
+    private fun bindViews() {
         btnBack = findViewById(R.id.btnBack)
         tvGoLogin = findViewById(R.id.tvGoLogin)
         etEmail = findViewById(R.id.etEmail)
@@ -66,32 +78,22 @@ class SignupActivity : AppCompatActivity() {
         cbTerms2 = findViewById(R.id.cbTerms2)
         cbTerms3 = findViewById(R.id.cbTerms3)
         btnSignup = findViewById(R.id.btnSignup)
-
-        // ✅ 상단 "뒤로" -> 이전 화면
-        btnBack.setOnClickListener { finish() }
-
-        // ✅ 하단 "로그인" -> 로그인 화면 이동
-        tvGoLogin.setOnClickListener {
-            startActivity(Intent(this, EmailLoginActivity::class.java))
-            finish()
-        }
-
-        setupRequiredTagColor()
-        setupInitialUi()
-        setupListeners()
-        updateSignupButton()
     }
 
     private fun setupInitialUi() {
+        // ✅ 기본: 중복확인(파랑) / 이메일 유효할 때만 enabled
         btnCheckEmail.isEnabled = false
-        btnCheckEmail.alpha = 0.5f
         btnCheckEmail.text = "중복확인"
+        btnCheckEmail.setBackgroundResource(R.drawable.bg_btn_blue)
+        btnCheckEmail.setTextColor(Color.WHITE)
 
         tvEmailStatus.visibility = View.GONE
         tvPwStatus.visibility = View.GONE
         tvPwConfirmStatus.visibility = View.GONE
 
         btnSignup.isEnabled = false
+        btnSignup.setBackgroundResource(R.drawable.bg_btn_gray)
+        btnSignup.setTextColor(Color.WHITE)
     }
 
     private fun setupRequiredTagColor() {
@@ -116,20 +118,23 @@ class SignupActivity : AppCompatActivity() {
         cb.text = spannable
     }
 
+    private fun resetEmailCheckState() {
+        isEmailChecked = false
+        btnCheckEmail.text = "중복확인"
+        btnCheckEmail.setBackgroundResource(R.drawable.bg_btn_blue)
+        tvEmailStatus.visibility = View.GONE
+    }
+
     private fun setupListeners() {
         etEmail.addTextChangedListener(SimpleTextWatcher { raw ->
             val email = raw.trim()
 
-            // 이메일 바뀌면 중복확인 다시 해야 함
-            isEmailChecked = false
-            btnCheckEmail.text = "중복확인"
+            // ✅ 이메일 수정하면 다시 중복확인(파랑) 상태로
+            resetEmailCheckState()
 
             isEmailValid = Patterns.EMAIL_ADDRESS.matcher(email).matches()
-
             btnCheckEmail.isEnabled = isEmailValid
-            btnCheckEmail.alpha = if (isEmailValid) 1.0f else 0.5f
 
-            tvEmailStatus.visibility = View.GONE
             updateSignupButton()
         })
 
@@ -137,9 +142,9 @@ class SignupActivity : AppCompatActivity() {
             val email = etEmail.text.toString().trim()
             if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                 showEmailStatus("이메일 형식을 확인해주세요.", false)
+                resetEmailCheckState()
                 return@setOnClickListener
             }
-            // ✅ 1번 API: 이메일 중복확인
             checkEmailDuplicate(email)
         }
 
@@ -166,12 +171,7 @@ class SignupActivity : AppCompatActivity() {
         btnSignup.setOnClickListener {
             val email = etEmail.text.toString().trim()
             val pw = etPassword.text.toString()
-
-            // ✅ 2번 API: 회원가입
-            // Swagger에 phoneNumber가 required로 보이는 경우가 많아서 임시값 넣어둠.
-            // 너 UI에 전화번호 입력이 있으면 그 값으로 바꾸면 끝!
             val phoneNumber = "000-0000-0000"
-
             signup(email, pw, phoneNumber)
         }
     }
@@ -180,14 +180,13 @@ class SignupActivity : AppCompatActivity() {
         val requiredAgreed = cbTerms1.isChecked && cbTerms2.isChecked
         val enabled = isEmailChecked && isPasswordValid && isPasswordMatch && requiredAgreed
         btnSignup.isEnabled = enabled
+        btnSignup.setBackgroundResource(if (enabled) R.drawable.bg_btn_blue else R.drawable.bg_btn_gray)
+        btnSignup.setTextColor(Color.WHITE)
     }
 
-    // -------------------------
-    // API 1) 이메일 중복확인
-    // -------------------------
     private fun checkEmailDuplicate(email: String) {
+        // ✅ 확인 중에는 버튼 비활성만 (색은 selector가 유지)
         btnCheckEmail.isEnabled = false
-        btnCheckEmail.alpha = 0.5f
 
         lifecycleScope.launch {
             try {
@@ -196,14 +195,15 @@ class SignupActivity : AppCompatActivity() {
                 }
 
                 if (res.isSuccessful && res.body()?.isSuccess == true) {
-                    // ✅ 사용 가능 (200)
                     isEmailChecked = true
-                    btnCheckEmail.text = "확인완료"
+                    btnCheckEmail.text = "확인됨"
+                    btnCheckEmail.setBackgroundResource(R.drawable.bg_btn_green)
                     showEmailStatus("사용 가능한 이메일이에요.", true)
                 } else {
-                    // 보통 중복이면 409, 아니면 400/404 등
                     isEmailChecked = false
                     btnCheckEmail.text = "중복확인"
+                    btnCheckEmail.setBackgroundResource(R.drawable.bg_btn_blue)
+
                     val msg = when (res.code()) {
                         409 -> "이미 사용 중인 이메일이에요."
                         else -> "중복확인 실패 (HTTP ${res.code()})"
@@ -213,11 +213,11 @@ class SignupActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 isEmailChecked = false
                 btnCheckEmail.text = "중복확인"
+                btnCheckEmail.setBackgroundResource(R.drawable.bg_btn_blue)
                 showEmailStatus("네트워크 오류: ${e.message}", false)
             } finally {
-                // 다시 눌러볼 수 있게
+                // 이메일이 유효하면 다시 누를 수 있게
                 btnCheckEmail.isEnabled = isEmailValid
-                btnCheckEmail.alpha = if (isEmailValid) 1.0f else 0.5f
                 updateSignupButton()
             }
         }
@@ -229,9 +229,6 @@ class SignupActivity : AppCompatActivity() {
         tvEmailStatus.text = text
     }
 
-    // -------------------------
-    // API 2) 회원가입
-    // -------------------------
     private fun signup(email: String, password: String, phoneNumber: String) {
         btnSignup.isEnabled = false
 
@@ -254,8 +251,7 @@ class SignupActivity : AppCompatActivity() {
                 val body = res.body()
                 if (body?.isSuccess == true) {
                     Toast.makeText(this@SignupActivity, "회원가입 성공!", Toast.LENGTH_SHORT).show()
-                    // 회원가입 성공 -> 로그인 화면으로
-                    startActivity(Intent(this@SignupActivity, EmailLoginActivity::class.java))
+                    setResult(Activity.RESULT_OK)
                     finish()
                 } else {
                     Toast.makeText(
@@ -272,9 +268,6 @@ class SignupActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
                 updateSignupButton()
-            } finally {
-                // enabled는 updateSignupButton이 결정
-                // 여기서 true로 강제하지 않음
             }
         }
     }
