@@ -5,7 +5,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,19 +45,13 @@ fun OnboardingScreen(
             singleImageSize = 180.dp
         ),
 
-        // 2) 겹치기
+        // 2) ✅ 여기만 “한 장 이미지”
         OnboardingPageData(
             title = "전자 잉크\n디스플레이 ‘디링’",
             subtitle = "배터리 필요 없는 디스플레이로\n개성있는 메시지를 표현하세요",
-            layers = listOf(
-                OnboardingImageLayer(R.drawable.ic_onboard_ring, size = 250.dp),
-                OnboardingImageLayer(R.drawable.ic_onboard_battery, size = 145.dp, offsetY = 18.dp),
-                OnboardingImageLayer(R.drawable.ic_onboard_slash, size = 220.dp),
-
-                // 번개 뱃지(오른쪽 아래)
-                OnboardingImageLayer(R.drawable.ic_onboard_badge_bg, size = 48.dp, offsetX = 92.dp, offsetY = 92.dp),
-                OnboardingImageLayer(R.drawable.ic_onboard_lightning, size = 18.dp, offsetX = 92.dp, offsetY = 92.dp)
-            )
+            singleImageRes = R.drawable.img_onboard_eink_dring,
+            singleImageSize = 250.dp,
+            layers = emptyList()
         ),
 
         // 3) 지하철 카드
@@ -126,7 +123,6 @@ fun OnboardingScreen(
                     .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
                 Spacer(Modifier.height(120.dp))
 
                 Text(
@@ -160,11 +156,11 @@ fun OnboardingScreen(
                 // 텍스트-이미지 간격
                 Spacer(Modifier.height(44.dp))
 
-                // 중앙 아트 영역
+                // ✅ 중앙 아트 영역 (3번=캐러셀, 4번=레이어, 1/2번=단일이미지)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(250.dp),
+                        .height(260.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     when {
@@ -190,7 +186,6 @@ fun OnboardingScreen(
                     }
                 }
 
-                // indicator/버튼 위 공간을 줄여서 더 피그마처럼
                 Spacer(Modifier.weight(0.65f))
 
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -209,7 +204,7 @@ fun OnboardingScreen(
                         containerColor = Color(0xFFE0E0E0),
                         textColor = Color(0xFF9E9E9E),
                         enabled = pageIndex != 0 || (isStationPage && currentStationIndex > 0),
-                        modifier = Modifier.weight(1f) // 반반
+                        modifier = Modifier.weight(1f)
                     ) {
                         scope.launch {
                             if (isStationPage && currentStationIndex > 0) {
@@ -225,7 +220,7 @@ fun OnboardingScreen(
                         containerColor = Color(0xFF36ABFF),
                         textColor = Color.White,
                         enabled = true,
-                        modifier = Modifier.weight(1f) // 반반
+                        modifier = Modifier.weight(1f)
                     ) {
                         scope.launch {
                             if (isStationPage && currentStationIndex < lastStationIndex) {

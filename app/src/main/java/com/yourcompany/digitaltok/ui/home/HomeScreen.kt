@@ -4,24 +4,15 @@ import android.view.View
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -58,32 +49,20 @@ private object Variables {
 private fun ComposableFragmentContainer(modifier: Modifier = Modifier, fragment: () -> Fragment) {
     val containerId = remember { View.generateViewId() }
     val context = LocalContext.current
-    val fragmentManager = (context as? FragmentActivity)?.supportFragmentManager
 
     AndroidView(
         factory = { FragmentContainerView(it).apply { id = containerId } },
         modifier = modifier,
         update = {
-            if (fragmentManager != null && fragmentManager.findFragmentById(containerId) == null) {
-                fragmentManager.commit {
+            val fm = (context as? FragmentActivity)?.supportFragmentManager
+            if (fm != null && fm.findFragmentById(containerId) == null) {
+                fm.commit {
                     setReorderingAllowed(true)
                     add(containerId, fragment())
                 }
             }
         }
     )
-
-    // Composable이 화면에서 사라질 때 Fragment를 정리하여 메모리 누수 및 크래시 방지
-    DisposableEffect(containerId, fragmentManager) {
-        onDispose {
-            val fragmentInstance = fragmentManager?.findFragmentById(containerId)
-            if (fragmentInstance != null && !fragmentManager.isStateSaved) {
-                fragmentManager.commit {
-                    remove(fragmentInstance)
-                }
-            }
-        }
-    }
 }
 
 @Composable
@@ -92,19 +71,20 @@ fun HomeScreen(mainViewModel: MainViewModel) {
     val context = LocalContext.current
     val activity = context as FragmentActivity
 
+    // 탭 이동 이벤트는 MainUiViewModel
     val mainUiViewModel: MainUiViewModel = viewModel(viewModelStoreOwner = activity)
 
+    // 하단바 가시성 / 연결 상태는 MainViewModel (단일 소스)
     val isBottomNavVisible by mainViewModel.isBottomNavVisible.observeAsState(initial = true)
     val isDeviceConnected by mainViewModel.isDeviceConnected.observeAsState(initial = false)
 
+    // Fragment에서 요청한 탭 이동 처리
     val navigateTo by mainUiViewModel.navigateTo.collectAsState()
     LaunchedEffect(navigateTo) {
         navigateTo?.let { route ->
-            if (route != "decorate") {
-                navController.navigate(route) {
-                    popUpTo(navController.graph.startDestinationId)
-                    launchSingleTop = true
-                }
+            navController.navigate(route) {
+                popUpTo(navController.graph.startDestinationId)
+                launchSingleTop = true
             }
             mainUiViewModel.consumeNavigate()
         }
@@ -132,6 +112,7 @@ fun HomeScreen(mainViewModel: MainViewModel) {
                 bottom = if (isBottomNavVisible) innerPadding.calculateBottomPadding() else 0.dp
             )
         ) {
+            composable("home") { HomeTab(mainViewModel) }
             composable("home") {
                 HomeTab(
                     mainViewModel = mainViewModel,
@@ -168,7 +149,6 @@ private fun HomeTab(mainViewModel: MainViewModel, navController: NavHostControll
         )
     }
 }
-
 
 @Composable
 private fun HomeNoConnection() {
