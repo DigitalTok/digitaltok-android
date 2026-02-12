@@ -4,7 +4,9 @@ import android.view.View
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -12,7 +14,10 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -112,7 +117,6 @@ fun HomeScreen(mainViewModel: MainViewModel) {
                 bottom = if (isBottomNavVisible) innerPadding.calculateBottomPadding() else 0.dp
             )
         ) {
-            composable("home") { HomeTab(mainViewModel) }
             composable("home") {
                 HomeTab(
                     mainViewModel = mainViewModel,
@@ -157,51 +161,17 @@ private fun HomeNoConnection() {
             .fillMaxSize()
             .background(Color.White)
     ) {
-        Spacer(Modifier.height(18.dp))
-
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            Text(
-                text = "당신만의 그~~",
-                style = TextStyle(
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight(500),
-                    color = Variables.Gray1
-                )
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = "Di-ring",
-                style = TextStyle(
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight(600),
-                    color = Color(0xFF121212)
-                )
-            )
-        }
-
-        Spacer(Modifier.height(110.dp))
-
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_no_connection),
-                contentDescription = null,
-                modifier = Modifier.size(width = 198.dp, height = 156.dp)
-            )
-
-            Spacer(Modifier.height(10.dp))
-
-            Text(
-                text = "아직 연결된 기기가 없습니다",
-                style = TextStyle(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight(600),
-                    color = Color(0xFFA0A0A0)
-                )
-            )
-        }
+        Text(
+            text = "Di-ring",
+            style = TextStyle(
+                fontSize = 26.sp,
+                fontWeight = FontWeight(600),
+                color = Color(0xFF121212)
+            ),
+            modifier = Modifier
+                .align(Alignment.Start)
+                .padding(top = 18.dp, start = 16.dp)
+        )
 
         Spacer(Modifier.weight(1f))
 
@@ -212,7 +182,7 @@ private fun HomeNoConnection() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "기기 연결",
+                text = "기기 연결 에서",
                 style = TextStyle(
                     fontSize = 16.sp,
                     fontWeight = FontWeight(700),
@@ -220,7 +190,7 @@ private fun HomeNoConnection() {
                 )
             )
             Text(
-                text = "에서\n디지털톡을 찾아주세요",
+                text = "\n디지털톡을 찾아주세요",
                 style = TextStyle(
                     fontSize = 16.sp,
                     fontWeight = FontWeight(600),
