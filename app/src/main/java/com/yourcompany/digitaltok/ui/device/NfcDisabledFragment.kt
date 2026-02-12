@@ -34,7 +34,7 @@ class NfcDisabledFragment : DialogFragment() {
 
         binding.btnConfirm.setOnClickListener {
             startActivity(Intent(Settings.ACTION_NFC_SETTINGS))
-            dismiss() // 설정으로 이동 후에는 바로 닫는 것이 자연스러움
+            dismiss() // 설정으로 이동 후에는 바로 닫기
         }
 
         binding.btnCancel.setOnClickListener {

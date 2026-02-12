@@ -12,7 +12,7 @@
         android:orientation="vertical"
         android:background="@android:color/transparent">
 
-        <!-- 위 2개: 흰 카드 (돌아가기 버튼과 동일한 폭) -->
+        <!-- 위 2개: 흰 카드 -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardActions"
             android:layout_width="match_parent"

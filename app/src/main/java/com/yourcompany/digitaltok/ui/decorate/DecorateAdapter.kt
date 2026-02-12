@@ -74,7 +74,7 @@ class DecorateAdapter(
             onItemClick(item)
         }
 
-        // 별 클릭 시, ViewModel에만 알림 (어댑터는 아무것도 하지 않음)
+        // 별 클릭 시, ViewModel에만 알림
         holder.ivStar.setOnClickListener {
             onFavoriteClick(item.id, !item.isFavorite)
         }

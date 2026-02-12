@@ -23,7 +23,7 @@ object RetrofitClient {
     @Volatile
     private var appContext: Context? = null
 
-    // 추가: OkHttp 캐시 인스턴스
+    // OkHttp 캐시 인스턴스
     private var okHttpCache: Cache? = null
 
     // Application.onCreate()에서 1번 호출

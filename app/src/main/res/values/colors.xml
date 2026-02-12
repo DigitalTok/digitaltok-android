@@ -30,4 +30,5 @@
     <color name="withdraw">#FFF0F0</color>
     <color name="info_solid">#EFF6FF</color>
     <color name="info">#BEDBFF</color>
+    <color name="black_top">#121212</color>
 </resources>

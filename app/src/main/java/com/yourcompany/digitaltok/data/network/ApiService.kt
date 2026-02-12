@@ -45,7 +45,6 @@ interface ApiService {
     // ==========================
     // Devices
     // ==========================
-    // (현재 프로젝트 기존 흐름: deviceId(Int) 기반 유지)
     @POST("/api/v1/devices")
     suspend fun registerDevice(
         @Body request: DeviceRegistrationRequest

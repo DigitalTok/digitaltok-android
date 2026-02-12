@@ -63,7 +63,7 @@ fun AuthStartScreen(
         verticalArrangement = Arrangement.Center
     ) {
 
-        // ✅ 로고 (피그마 느낌으로 크게)
+        // 로고
         Image(
             painter = painterResource(id = R.drawable.diringlogo),
             contentDescription = "DiRing Logo",

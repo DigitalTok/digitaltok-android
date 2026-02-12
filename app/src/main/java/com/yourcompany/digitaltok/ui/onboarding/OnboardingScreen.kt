@@ -45,7 +45,7 @@ fun OnboardingScreen(
             singleImageSize = 180.dp
         ),
 
-        // 2) ✅ 여기만 “한 장 이미지”
+        // 2) “한 장 이미지”
         OnboardingPageData(
             title = "전자 잉크\n디스플레이 ‘디링’",
             subtitle = "배터리 필요 없는 디스플레이로\n개성있는 메시지를 표현하세요",
@@ -156,7 +156,7 @@ fun OnboardingScreen(
                 // 텍스트-이미지 간격
                 Spacer(Modifier.height(44.dp))
 
-                // ✅ 중앙 아트 영역 (3번=캐러셀, 4번=레이어, 1/2번=단일이미지)
+                // 중앙 아트 영역 (3번=캐러셀, 4번=레이어, 1/2번=단일이미지)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
