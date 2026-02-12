@@ -23,10 +23,10 @@ object RetrofitClient {
     @Volatile
     private var appContext: Context? = null
 
-
+    // OkHttp 캐시 인스턴스
     private var okHttpCache: Cache? = null
 
-
+    // Application.onCreate()에서 1번 호출
     fun init(context: Context) {
         appContext = context.applicationContext
         // 추가: 캐시 초기화
@@ -36,7 +36,7 @@ object RetrofitClient {
         }
     }
 
-
+    // 로그아웃 시 호출하여 OkHttp 캐시를 모두 삭제
     fun clearCache() {
         okHttpCache?.evictAll()
     }
@@ -73,7 +73,7 @@ object RetrofitClient {
             .build()
     }
 
-
+    // 인증이 필요 없는(공개) 요청을 위한 OkHttpClient (인증 인터셉터 없음)
     private val publicOkHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
@@ -84,7 +84,7 @@ object RetrofitClient {
             .build()
     }
 
-
+    // 인증이 필요한 요청을 위한 Retrofit 인스턴스
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
@@ -93,7 +93,7 @@ object RetrofitClient {
             .build()
     }
 
-
+    // 인증이 필요 없는(공개) 요청을 위한 Retrofit 인스턴스
     private val publicRetrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
@@ -102,17 +102,17 @@ object RetrofitClient {
             .build()
     }
 
-
+    // 기본 ApiService는 인증이 필요한 요청을 처리
     val apiService: ApiService by lazy {
         retrofit.create(ApiService::class.java)
     }
 
-
+    // 공개 ApiService는 인증이 필요 없는 요청을 처리
     val publicApiService: ApiService by lazy {
         publicRetrofit.create(ApiService::class.java)
     }
 
-
+    // 기존 create 함수는 유지 (인증된 서비스 생성)
     fun <T> create(service: Class<T>): T {
         return retrofit.create(service)
     }

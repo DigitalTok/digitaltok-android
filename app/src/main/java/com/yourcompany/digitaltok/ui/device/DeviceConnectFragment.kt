@@ -20,7 +20,7 @@ class DeviceConnectFragment : Fragment() {
     //  연결 상태는 MainViewModel (단일 소스)
     private val mainViewModel: MainViewModel by activityViewModels()
 
-    //  탭 이동 이벤트는 MainUiViewModel (필요시 사용)
+    //  탭 이동 이벤트는 MainUiViewModel
     private val mainUiViewModel: MainUiViewModel by activityViewModels()
 
     override fun onCreateView(

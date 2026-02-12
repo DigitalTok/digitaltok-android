@@ -26,7 +26,7 @@ class DeviceSearchingFragment : Fragment() {
     // MainActivity와 NFC 태그 정보를 공유하기 위한 ViewModel
     private val nfcViewModel: NfcViewModel by activityViewModels()
 
-    // ✅ 연결 상태 단일 소스
+    // 연결 상태 단일 소스
     private val mainViewModel: MainViewModel by activityViewModels()
 
     // NFC 관련 객체

@@ -21,7 +21,7 @@ class MainUiViewModel : ViewModel() {
         isDeviceConnected = connected
     }
 
-    // 연결 성공 처리(홈으로 보내고 싶을 때 사용)
+    // 연결 성공 처리
     fun onDeviceConnected() {
         isDeviceConnected = true
         _navigateTo.value = "home"

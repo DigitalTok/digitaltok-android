@@ -56,7 +56,7 @@ class CropOverlayView @JvmOverloads constructor(
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
 
-        // ✅ 핀치 줌은 어디서든 사진으로
+        // 핀치 줌은 어디서든 사진으로
         if (event.pointerCount > 1) {
             dragging = false
             gestureDelegate?.dispatchTouchEvent(event)

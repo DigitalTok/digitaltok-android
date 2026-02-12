@@ -13,6 +13,9 @@ import retrofit2.http.*
  */
 interface ApiService {
 
+    // ==========================
+    // Auth (인증)
+    // ==========================
 
     @POST("/api/v1/auth/signup")
     suspend fun signup(
@@ -39,6 +42,9 @@ interface ApiService {
         @Body body: LogoutRequest
     ): Response<ApiResponse<String>>
 
+    // ==========================
+    // Devices
+    // ==========================
     @POST("/api/v1/devices")
     suspend fun registerDevice(
         @Body request: DeviceRegistrationRequest
@@ -54,7 +60,9 @@ interface ApiService {
         @Path("nfcUid") nfcUid: String
     ): Response<ApiResponse<DeviceData>>
 
-
+    // ==========================
+    // Images
+    // ==========================
     @Multipart
     @POST("images")
     suspend fun uploadImage(
@@ -81,7 +89,9 @@ interface ApiService {
     @GET
     suspend fun downloadImageBinary(@Url url: String): Response<ResponseBody>
 
-
+    // ==========================
+    // Priority
+    // ==========================
     @GET("templates/priority")
     suspend fun getPriorityTemplates(): Response<ApiResponse<PriorityTemplateResponse>>
 
@@ -90,7 +100,9 @@ interface ApiService {
         @Path("templateId") templateId: Int
     ): Response<ApiResponse<PriorityTemplateDetail>>
 
-
+    // ==========================
+    // Subway
+    // ==========================
     @POST("templates/subway/generate")
     suspend fun generateSubwayTemplate(
         @Body body: SubwayGenerateRequest
