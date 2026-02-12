@@ -126,7 +126,7 @@ fun OnboardingScreen(
                     .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // ✅ 피그마처럼 전체를 조금 내려오게
+
                 Spacer(Modifier.height(120.dp))
 
                 Text(
@@ -157,10 +157,10 @@ fun OnboardingScreen(
                     textAlign = TextAlign.Center
                 )
 
-                // ✅ 텍스트-이미지 간격(피그마 느낌)
+                // 텍스트-이미지 간격
                 Spacer(Modifier.height(44.dp))
 
-                // ✅ 중앙 아트 영역
+                // 중앙 아트 영역
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -190,7 +190,7 @@ fun OnboardingScreen(
                     }
                 }
 
-                // ✅ indicator/버튼 위 공간을 줄여서 더 피그마처럼
+                // indicator/버튼 위 공간을 줄여서 더 피그마처럼
                 Spacer(Modifier.weight(0.65f))
 
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -209,7 +209,7 @@ fun OnboardingScreen(
                         containerColor = Color(0xFFE0E0E0),
                         textColor = Color(0xFF9E9E9E),
                         enabled = pageIndex != 0 || (isStationPage && currentStationIndex > 0),
-                        modifier = Modifier.weight(1f) // ✅ 반반
+                        modifier = Modifier.weight(1f) // 반반
                     ) {
                         scope.launch {
                             if (isStationPage && currentStationIndex > 0) {
@@ -225,7 +225,7 @@ fun OnboardingScreen(
                         containerColor = Color(0xFF36ABFF),
                         textColor = Color.White,
                         enabled = true,
-                        modifier = Modifier.weight(1f) // ✅ 반반
+                        modifier = Modifier.weight(1f) // 반반
                     ) {
                         scope.launch {
                             if (isStationPage && currentStationIndex < lastStationIndex) {

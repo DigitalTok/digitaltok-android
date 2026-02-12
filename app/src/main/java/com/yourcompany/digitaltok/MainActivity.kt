@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -33,16 +33,26 @@ import com.yourcompany.digitaltok.ui.home.HomeScreen
 import com.yourcompany.digitaltok.ui.onboarding.OnboardingScreen
 import com.yourcompany.digitaltok.ui.theme.DigitalTokTheme
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 class MainActivity : AppCompatActivity() {
 
     private val nfcViewModel: NfcViewModel by viewModels()
     private val mainViewModel: MainViewModel by viewModels()
 
-    // ✅ 로그인 성공 여부를 Activity 쪽 상태로 들고 있다가 Compose로 전달
+    // 로그인 성공 여부를 Activity 쪽 상태로 들고 있다가 Compose로 전달
     private var goHomeState by mutableStateOf(false)
 
-    // ✅ EmailLoginActivity 결과를 받아서 "로그인 성공" 확인 + 홈 이동 트리거
+    // EmailLoginActivity 결과를 받아서 "로그인 성공" 확인 + 홈 이동 트리거
     private val emailLoginLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -62,9 +72,11 @@ class MainActivity : AppCompatActivity() {
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
 
+        supportActionBar?.hide()
+        enableEdgeToEdge()
         // 기존 intent extra도 유지 (예전에 go_home으로 홈 띄우던 로직)
         val goHomeFromIntent = intent.getBooleanExtra("go_home", false)
         goHomeState = goHomeFromIntent
@@ -111,12 +123,12 @@ private fun AppEntry(
     var showSplash by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        delay(1200)
+        delay(1800)
         showSplash = false
     }
 
     if (showSplash) {
-        SplashImage()
+        SplashLanding()
     } else {
         AppNavHost(
             mainViewModel = mainViewModel,
@@ -128,17 +140,38 @@ private fun AppEntry(
 }
 
 @Composable
-private fun SplashImage() {
+private fun SplashLanding() {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White),
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.splash_full),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+            Image(
+                painter = painterResource(id = R.drawable.diringlogo),
+                contentDescription = null,
+                modifier = Modifier.size(width = 48.dp, height = 75.dp)
+            )
+
+            Spacer(modifier = Modifier.height(37.dp))
+
+            Text(
+                text = "DiRing",
+                fontSize = 42.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(13.dp))
+
+            Text(
+                text = "내 마음대로 꾸미는 나만의 키링",
+                fontSize = 20.sp,
+                color = Color(0xFF6B6B6B)
+            )
+        }
     }
 }
 
@@ -150,7 +183,7 @@ fun AppNavHost(
     onOpenEmailLogin: () -> Unit = {},
     onOpenSignUp: () -> Unit = {}
 ) {
-    // ✅ goHome가 true가 되는 순간(=로그인 성공) home으로 이동
+    // goHome가 true가 되는 순간(=로그인 성공) home으로 이동
     LaunchedEffect(goHome) {
         if (goHome) {
             navController.navigate("home") {
