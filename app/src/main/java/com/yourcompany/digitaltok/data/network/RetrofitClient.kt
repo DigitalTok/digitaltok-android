@@ -1,11 +1,13 @@
 package com.yourcompany.digitaltok.data.network
 
 import android.content.Context
+import okhttp3.Cache
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
@@ -21,9 +23,22 @@ object RetrofitClient {
     @Volatile
     private var appContext: Context? = null
 
+    // 추가: OkHttp 캐시 인스턴스
+    private var okHttpCache: Cache? = null
+
     // Application.onCreate()에서 1번 호출
     fun init(context: Context) {
         appContext = context.applicationContext
+        // 추가: 캐시 초기화
+        if (okHttpCache == null) {
+            val cacheSize = (10 * 1024 * 1024).toLong() // 10 MB
+            okHttpCache = Cache(File(context.cacheDir, "http-cache"), cacheSize)
+        }
+    }
+
+    // 로그아웃 시 호출하여 OkHttp 캐시를 모두 삭제
+    fun clearCache() {
+        okHttpCache?.evictAll()
     }
 
     fun providePublicOkHttpClient(): OkHttpClient = publicOkHttpClient
@@ -54,6 +69,7 @@ object RetrofitClient {
             .connectTimeout(60, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
+            .cache(okHttpCache) // 추가: 캐시 사용
             .build()
     }
 
@@ -64,6 +80,7 @@ object RetrofitClient {
             .connectTimeout(60, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
+            .cache(okHttpCache) // 추가: 캐시 사용
             .build()
     }
 
